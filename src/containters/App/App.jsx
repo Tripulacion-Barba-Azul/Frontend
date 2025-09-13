@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import TitleScreen from '../../components/TitleScreen/TitleScreen';
 
 function App() {
 
   return (
-    <div className="App">
-      Hello World !
+    <div>
+      <TitleScreen />
     </div>
   )
 }
