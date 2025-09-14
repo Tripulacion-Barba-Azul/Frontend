@@ -1,0 +1,16 @@
+.CreateGameButton {
+    color: #f4e1a3;            
+    background-color: rgb(163, 34, 34);
+    padding: 12px 20px;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    font-family: 'Metropolis';
+    width: 100px;      
+    height: 50px;      
+    margin: 10px;     
+    display: flex;              
+    justify-content: center;   
+    align-items: center;   
+}
