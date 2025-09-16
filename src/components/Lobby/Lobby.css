@@ -1,0 +1,77 @@
+body{
+    background: linear-gradient(135deg, rgb(16, 2, 23), rgb(99 16 148),rgb(127 20 189));
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+.Lobby {
+    padding: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.players-section {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: white;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+}
+
+.players-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.player-item {
+    padding: 8px 12px;
+    margin: 5px 0;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.player-item:hover {
+    background-color: #e9ecef;
+}
+
+.creator-badge {
+    color: #007bff;
+    font-weight: bold;
+    font-size: 0.8em;
+    margin-left: auto;
+}
+
+.current-badge{
+    color: #AD2437;
+    font-weight: bold;
+    font-size: 0.8em;
+    margin-left: auto;
+}
+
+.no-players {
+    color: #6c757d;
+    font-style: italic;
+    text-align: center;
+    padding: 15px;
+}
+
+.full-lobby-badge {
+    color: #dc3545;
+    font-weight: bold;
+    font-size: 0.8em;
+    background-color: #f8d7da;
+    padding: 2px 6px;
+    border-radius: 3px;
+    border: 1px solid #f5c6cb;
+}
