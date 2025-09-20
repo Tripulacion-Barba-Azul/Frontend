@@ -1,5 +1,5 @@
-import CreateGameButton from '../../components/CreateGameButton/CreateGameButton'
-import JoinGameButton from '../../components/JoinGameButton/JoinGameButton'
+import CreateGameButton from '../../components/TitleScreen/CreateGameButton/CreateGameButton'
+import JoinGameButton from '../../components/TitleScreen/JoinGameButton/JoinGameButton'
 import "./TitleScreen.css";
 
 export default function TitleScreen() {
