@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import JoinGameScreen from '../../components/JoinGameScreen/JoinGameScreen';
 
 function App() {
 
   return (
-    <div className="App">
-      Hello World !
+    <div>
+      <JoinGameScreen />
     </div>
   )
 }
