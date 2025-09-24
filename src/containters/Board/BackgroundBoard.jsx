@@ -1,6 +1,6 @@
-import backgroundBoard from "../../assets/backgroundBoard.png";
+import backgroundBoard from "../../../public/Board/backgroundBoard.png";
 
-export default function BaseBoard() {
+export default function BackgroundBoard() {
   return (
     <div
       style={{

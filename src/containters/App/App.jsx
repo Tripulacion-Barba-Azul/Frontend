@@ -1,10 +1,10 @@
 import { useState } from "react";
-import BaseBoard from "../Board/BaseBoard";
+import Board from "../Board/Board.jsx";
 
 function App() {
   return (
     <div>
-      <BaseBoard />
+      <Board />
     </div>
   );
 }

@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+/* Main container */
+.player-badge {
+  @apply flex flex-col items-center gap-1;
+}
+
+/* Text on top of avatar */
+.player-name {
+  @apply px-2 py-0.5 rounded-md text-white font-medium leading-none;
+  background-color: rgb(0 0 0 / 0.5);
+}
+
+/* Circle of avatar */
+.avatar-circle {
+  @apply rounded-full overflow-hidden ring-2 shadow bg-slate-300 grid place-items-center;
+
+  --tw-ring-color: rgb(51 65 85 / 0.7);
+  --ring-width: 5px;
+  box-shadow: 0 0 0 var(--ring-width) var(--tw-ring-color),
+    /* Configurable ring */ 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    /* Soft shadow (tailwind shadow) */ 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* Sizes */
+.badge-small {
+  @apply w-35 h-35 text-lg;
+}
+.badge-big {
+  @apply w-50 h-50 text-lg;
+}
+
+/* Image of avatar */
+.avatar-img {
+  @apply w-full h-full object-cover;
+}
