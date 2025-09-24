@@ -1,12 +1,12 @@
-import { useState } from 'react'
+import { useState } from "react";
+import BaseBoard from "../Board/BaseBoard";
 
 function App() {
-
   return (
-    <div className="App">
-      Hello World !
+    <div>
+      <BaseBoard />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

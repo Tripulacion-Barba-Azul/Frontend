@@ -1,0 +1,41 @@
+# --- Node / Vite ---
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.tsbuildinfo
+
+# --- Environment variables ---
+.env
+.env.local
+.env.*.local
+
+# --- Logs / Debugging ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log
+
+# --- Caches / Tools ---
+.eslintcache
+.stylelintcache
+.cache/
+*.cache
+parcel-cache/
+
+# --- OS / Editor files ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# --- Temporary files ---
+tmp/
+temp/
+*.swp
