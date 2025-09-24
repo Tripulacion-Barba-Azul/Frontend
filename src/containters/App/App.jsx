@@ -2,9 +2,17 @@ import { useState } from "react";
 import Board from "../Board/Board.jsx";
 
 function App() {
+  const players = [
+    "Robotito",
+    "Wolovick",
+    "Parce",
+    "Gunther",
+    "Santi Avalos",
+    "Demetrio",
+  ];
   return (
     <div>
-      <Board />
+      <Board players={players} />;
     </div>
   );
 }
