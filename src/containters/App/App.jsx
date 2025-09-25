@@ -1,10 +1,22 @@
-import { useState } from 'react'
+import ViewSecrets from '../../components/ViewSecrets/ViewSecrets';
 
 function App() {
 
+  const secretsList = [
+    { id: 1, revealed: true },
+    { id: 2, revealed: false },
+    { id: 3, revealed: true },
+    { id: 1, revealed: true },
+    { id: 2, revealed: false },
+    { id: 3, revealed: true },
+    { id: 1, revealed: true },
+    { id: 2, revealed: false },
+    { id: 3, revealed: true },
+  ]  
+
   return (
-    <div className="App">
-      Hello World !
+    <div>
+      <ViewSecrets secrets={secretsList} />
     </div>
   )
 }
