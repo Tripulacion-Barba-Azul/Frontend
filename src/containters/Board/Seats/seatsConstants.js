@@ -1,33 +1,38 @@
+// Max length for player names; longer names will be truncated.
+export const MAX_NAME_LEN = 20;
+
 // A fixed map of seat anchors around the board.
-// Styles use percent-based offsets aligned with your current background board.
+// Styles use percent-based offsets aligned with the current background board.
 export const SEAT_POSITIONS = {
   // bottom center
   p1: {
     id: "p1",
-    style: { bottom: "0%", top: "76%", right: "53%", left: "0%" },
+    style: { bottom: "00%", top: "76%", right: "53%", left: "00%" },
   },
   // mid right
   p2: {
     id: "p2",
-    style: { bottom: "0%", top: "40%", right: "0%", left: "90%" },
+    style: { bottom: "00%", top: "40%", right: "00%", left: "90%" },
   },
   // top right
-
   p3: {
     id: "p3",
-    style: { bottom: "0%", top: "3%", right: "0%", left: "55%" },
+    style: { bottom: "00%", top: "03%", right: "00%", left: "55%" },
   },
   // top center
-  p4: { id: "p4", style: { bottom: "0%", top: "0%", right: "0%", left: "0%" } },
+  p4: {
+    id: "p4",
+    style: { bottom: "00%", top: "00%", right: "00%", left: "00%" },
+  },
   // top left
   p5: {
     id: "p5",
-    style: { bottom: "0%", top: "3%", right: "55%", left: "0%" },
+    style: { bottom: "00%", top: "03%", right: "55%", left: "00%" },
   },
   // mid left
   p6: {
     id: "p6",
-    style: { bottom: "0%", top: "40%", right: "90%", left: "0%" },
+    style: { bottom: "00%", top: "40%", right: "90%", left: "00%" },
   },
 };
 

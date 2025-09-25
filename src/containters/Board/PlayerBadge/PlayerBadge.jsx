@@ -1,45 +1,44 @@
 import React from "react";
 import "./PlayerBadge.css";
+import {
+  sizes,
+  ringColors,
+  nameBgColors,
+  avatarMap,
+} from "./playerBadgeConstants.js";
 
 export default function PlayerBadge({
   name = "Jugador",
-  src,
+  avatar = "default1",
   size = "small",
   ringColor = "black",
+  nameBgColor = "white",
 }) {
-  const sizes = {
-    big: "badge-big",
-    small: "badge-small",
-  };
-  const colors = {
-    black: "rgb(51 65 85 / 0.70)",
-    green: "rgb(34 197 94 / 0.70)",
-    red: "rgb(239 68 68 / 0.70)",
-    blue: "rgb(59 130 246 / 0.70)",
-    yellow: "rgb(234 179 8 / 0.70)",
-    purple: "rgb(168 85 247 / 0.70)",
-    pink: "rgb(236 72 153 / 0.70)",
-    gray: "rgb(107 114 128 / 0.70)",
-  };
-
   const circleSize = sizes[size] ?? sizes.small;
-  const ringCol = colors[ringColor] ?? colors.black;
+  const ringCol = ringColors[ringColor] ?? ringColors.black;
+  const nameBgCol = nameBgColors[nameBgColor] ?? nameBgColors.white;
+  const avatarSrc = avatarMap[avatar] ?? avatarMap.default1;
 
   return (
     <div className="player-badge">
-      {/* Name */}
-      <span className="player-name">{name}</span>
+      {/* Name box with background color */}
+      <span className="player-name-box" style={{ ["--name-bg"]: nameBgCol }}>
+        {name}
+      </span>
 
-      {/* Avatar */}
+      {/* Avatar circle with ring color */}
       <div
         className={`avatar-circle ${circleSize}`}
         style={{ ["--tw-ring-color"]: ringCol }}
+        aria-label={`Avatar of ${name}`}
       >
-        {src ? (
-          <img src={src} alt={`Avatar de ${name}`} className="avatar-img" />
-        ) : (
-          <span className="avatar-placeholder">?</span>
-        )}
+        {
+          <img
+            src={avatarSrc}
+            alt={`Avatar of ${name}`}
+            className="avatar-img"
+          />
+        }
       </div>
     </div>
   );

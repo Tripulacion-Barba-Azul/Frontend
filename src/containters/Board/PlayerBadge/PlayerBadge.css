@@ -5,13 +5,23 @@
   @apply flex flex-col items-center gap-1;
 }
 
+/* Name box */
+.player-name-box {
+  @apply font-medium leading-none text-slate-800;
+  @apply px-3 py-1 rounded-lg;
+
+  background-color: var(--name-bg, #ffffff);
+  border: 1px solid rgb(0, 0, 0);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.06), 0 1px 1px -1px rgb(0 0 0 / 0.08);
+}
+
 /* Text on top of avatar */
 .player-name {
   @apply px-2 py-0.5 rounded-md text-white font-medium leading-none;
   background-color: rgb(0 0 0 / 0.5);
 }
 
-/* Circle of avatar */
+/* Avatar circle */
 .avatar-circle {
   @apply rounded-full overflow-hidden ring-2 shadow bg-slate-300 grid place-items-center;
 
@@ -22,7 +32,7 @@
     /* Soft shadow (tailwind shadow) */ 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
-/* Sizes */
+/* Sizes for the avatar circle*/
 .badge-small {
   @apply w-35 h-35 text-lg;
 }
@@ -33,4 +43,10 @@
 /* Image of avatar */
 .avatar-img {
   @apply w-full h-full object-cover;
+}
+
+/* Placeholder (shown when no src) */
+.avatar-placeholder {
+  @apply select-none;
+  color: rgb(51 65 85 / 0.8);
 }
