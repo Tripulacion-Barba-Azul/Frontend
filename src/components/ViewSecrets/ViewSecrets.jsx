@@ -8,24 +8,9 @@ import secret_murderer from '../../assets/cards/03-secret_murderer.png'
 import shh_icon from '../../assets/icons/shh.png'
 
 const imageMap = {
-  1:  secret_murderer,
-  2:  secret_accompice,
-  3:  secret_back,
-  4:  secret_back,
-  5:  secret_back,
-  6:  secret_back,
-  7:  secret_back,
-  8:  secret_back,
-  9:  secret_back,
-  10: secret_back,
-  11: secret_back,
-  12: secret_back,
-  13: secret_back,
-  14: secret_back,
-  15: secret_back,
-  16: secret_back,
-  17: secret_back,
-  18: secret_back,
+  "murderer" : secret_murderer,
+  "accomplice" : secret_accompice,
+  "regular" : secret_back
 }
 
 
@@ -51,9 +36,9 @@ export default function ViewSecrets({ secrets }) {
         <div className="light-dots">
           {secrets.map(secret => (
             <div 
-              key={secret.id}
+              key={secret.class}
               className={`light-dot ${secret.revealed ? 'revealed' : 'hidden'}`}
-              title={secret.revealed ? `Secret ${secret.id} revealed` : `Secret ${secret.id} hidden`}
+              title={secret.revealed ? `Secret ${secret.class}` : `Secret hidden`}
             />
           ))}
         </div>
@@ -67,9 +52,9 @@ export default function ViewSecrets({ secrets }) {
           <div onClick={toggleViewSecrets} className="overlay"></div>
           <div className="secrets-grid">
             {secrets.map(secret => (
-              <div key={secret.id} className="secret-card">
+              <div key={secret.class} className="secret-card">
                 {secret.revealed ? (
-                  <img src={imageMap[secret.id]} alt={`Secret ${secret.id}`} />
+                  <img src={imageMap[secret.class]} alt={`Secret ${secret.class}`} />
                 ) : (
                   <img src={secret_front} alt={`Secret hidden`} />
                 )}
