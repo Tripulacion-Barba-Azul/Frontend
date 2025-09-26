@@ -170,8 +170,8 @@ it('should call the API with correct data when form is valid', async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        player: { name: 'Robotito', birthday: '1990-01-01' },
-        newgame: { name: 'Test Game', minp: 2, maxp: 4 }
+        player_info: { playerName: 'Robotito', birthDate: '1990-01-01' },
+        game_info: { gameName: 'Test Game', minPlayers: 2, maxPlayers: 4 }
       })
     })
   )

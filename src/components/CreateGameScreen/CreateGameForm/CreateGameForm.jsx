@@ -14,15 +14,15 @@ export default function CreateGameForm() {
 
     if (Object.keys(errors).length === 0) {
       const requestData = {
-        player: {
-          name: settings.PlayerName,
-          birthday: String(settings.PlayerBirthday)
+        player_info: {
+          playerName: settings.PlayerName,
+          birthDate: String(settings.PlayerBirthday),
         },
-        newgame:{
-          name: settings.GameName,
-          minp: Number(settings.MinPlayers),
-          maxp: Number(settings.MaxPlayers),
-        } 
+        game_info: {
+          gameName: settings.GameName,
+          minPlayers: Number(settings.MinPlayers),
+          maxPlayers: Number(settings.MaxPlayers),
+        }
       }
 
       async function postData() {
@@ -38,8 +38,11 @@ export default function CreateGameForm() {
           if (!response.ok) {
           throw new Error(`Error HTTP: ${response.status} ${response.statusText}`);
         }
-        
+
           console.log(response.status, response.statusText);
+
+          const gameID = response.body.gameID;
+          const yourID = response.body.ownerId;
 
           //IMPORTANTE: en "response.body" (o en otro lado qsy) debería contener el ID de la partida.
           //en caso de 200 OK, se debería redirigir al usuario al lobby de esa partida.
@@ -168,4 +171,5 @@ export default function CreateGameForm() {
       </form>
     </div>
   );
+  
 }
