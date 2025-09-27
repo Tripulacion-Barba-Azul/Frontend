@@ -16,8 +16,7 @@ export default function ViewSecrets({ secrets }) {
     setViewSecrets(!ViewSecrets);
   };
 
-  const revealedCount = secrets.filter((secret) => secret.revealed).length;
-  const hiddenCount = secrets.length - revealedCount;
+  const hasSecrets = secrets && secrets.length > 0;
 
   if (ViewSecrets) {
     document.body.classList.add("my-active-viewsecrets");
@@ -42,39 +41,42 @@ export default function ViewSecrets({ secrets }) {
           ))}
         </div>
 
-        <img src={imageMap["shhIcon"]} alt="shh" />
+        <img src={imageMap["shhIcon"]} alt="shhIcon" />
       </button>
 
       {ViewSecrets && (
         <div className="my-viewsecrets">
           <div onClick={toggleViewSecrets} className="overlay"></div>
           <div className="my-secrets-grid">
-            {secrets.map((secret) => (
-              <div key={secret.class} className="my-secret-card">
-                {secret.revealed ? (
-                  <img
-                    className="front"
-                    src={imageMap[secret.class]}
-                    alt={`Secret ${secret.class}`}
-                  />
-                ) : (
-                  <>
-                    {/* front underneath */}
+          {hasSecrets ? (
+              secrets.map((secret) => (
+                <div key={secret.class} className="my-secret-card">
+                  {secret.revealed ? (
                     <img
-                      className="front"
                       src={imageMap[secret.class]}
                       alt={`Secret ${secret.class}`}
                     />
-                    {/* back on top, fades out on hover */}
-                    <img
-                      className="back"
-                      src={imageMap["secretFront"]}
-                      alt="Card back"
-                    />
-                  </>
-                )}
+                  ) : (
+                    <>
+                      <img
+                        className="front"
+                        src={imageMap[secret.class]}
+                        alt={`Secret ${secret.class}`}
+                      />
+                      <img
+                        className="back"
+                        src={imageMap["secretFront"]}
+                        alt="Card back"
+                      />
+                    </>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="my-no-secrets-message">
+                <p>Out of secrets!</p>
               </div>
-            ))}
+            )}
           </div>
           <button className="my-close-viewsecrets" onClick={toggleViewSecrets}>
             X

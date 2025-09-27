@@ -16,8 +16,7 @@ export default function ViewSecrets({ secrets }) {
     setViewSecrets(!ViewSecrets);
   };
 
-  const revealedCount = secrets.filter((secret) => secret.revealed).length;
-  const hiddenCount = secrets.length - revealedCount;
+  const hasSecrets = secrets && secrets.length > 0;
 
   if (ViewSecrets) {
     document.body.classList.add("active-viewsecrets");
@@ -40,25 +39,31 @@ export default function ViewSecrets({ secrets }) {
           ))}
         </div>
 
-        <img src={imageMap["shhIcon"]} alt="secretIcon" />
+        <img src={imageMap["shhIcon"]} alt="shhIcon" />
       </button>
 
       {ViewSecrets && (
         <div className="viewsecrets">
           <div onClick={toggleViewSecrets} className="overlay"></div>
           <div className="secrets-grid">
-            {secrets.map((secret) => (
-              <div key={secret.class} className="secret-card">
-                {secret.revealed ? (
-                  <img
-                    src={imageMap[secret.class]}
-                    alt={`Secret ${secret.class}`}
-                  />
-                ) : (
-                  <img src={imageMap["secretFront"]} alt={`Secret hidden`} />
-                )}
+          {hasSecrets ? (
+              secrets.map((secret) => (
+                <div key={secret.class} className="secret-card">
+                  {secret.revealed ? (
+                    <img
+                      src={imageMap[secret.class]}
+                      alt={`Secret ${secret.class}`}
+                    />
+                  ) : (
+                    <img src={imageMap["secretFront"]} alt={`Secret hidden`} />
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="no-secrets-message">
+                <p>Out of secrets!</p>
               </div>
-            ))}
+            )}
           </div>
           <button className="close-viewsecrets" onClick={toggleViewSecrets}>
             X

@@ -10,6 +10,8 @@ const mockSecrets = [
   { class: "regular", revealed: false },
 ];
 
+const mockNoSecrets = [ ];
+
 describe("ViewMySecrets", () => {
   it("renders the correct number of dots", () => {
     render(<ViewMySecrets secrets={mockSecrets} />);
@@ -78,5 +80,13 @@ describe("ViewMySecrets", () => {
 
     await user.click(screen.getByText("X"));
     expect(screen.queryByText("X")).not.toBeInTheDocument();
+  });
+
+  it("Shows message when there are no secrets", async () => {
+    const user = userEvent.setup();
+    render(<ViewMySecrets secrets={mockNoSecrets} />);
+
+    await user.click(screen.getByRole("button"));
+    expect(screen.getByText(/Out of secrets/i)).toBeInTheDocument();
   });
 });
