@@ -29,31 +29,31 @@ beforeAll(() => {
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-// Mock data similar to what backend returns
+// Mock data matching the new API format
 const mockBackendData = [
   {
-    id: 1,
-    name: "Batalla Épica",
-    owner: { name: "JugadorPro" },
-    minp: 2,
-    maxp: 6,
-    players: [{ id: 1 }] // 1 player currently
+    gameId: 1,
+    gameName: "Batalla Épica",
+    ownerName: "JugadorPro",
+    minPlayers: 2,
+    maxPlayers: 6,
+    actualPlayers: 1 // 1 player currently
   },
   {
-    id: 2,
-    name: "Arena de Combate",
-    owner: { name: "WarriorX" },
-    minp: 4,
-    maxp: 8,
-    players: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }] // 4 players currently
+    gameId: 2,
+    gameName: "Arena de Combate",
+    ownerName: "WarriorX",
+    minPlayers: 4,
+    maxPlayers: 8,
+    actualPlayers: 4 // 4 players currently
   },
   {
-    id: 3,
-    name: "Misión Secreta",
-    owner: { name: "ShadowHunter" },
-    minp: 3,
-    maxp: 5,
-    players: [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }, { id: 5 }] // 5 players - full
+    gameId: 3,
+    gameName: "Misión Secreta",
+    ownerName: "ShadowHunter",
+    minPlayers: 3,
+    maxPlayers: 5,
+    actualPlayers: 5 // 5 players - full
   }
 ];
 
@@ -217,12 +217,12 @@ describe('GameMatchesList', () => {
       // Mock refresh response
       const refreshedData = [
         {
-          id: 4,
-          name: "Nueva Partida",
-          owner: { name: "NewPlayer" },
-          minp: 2,
-          maxp: 4,
-          players: [{ id: 1 }, { id: 2 }]
+          gameId: 4,
+          gameName: "Nueva Partida",
+          ownerName: "NewPlayer",
+          minPlayers: 2,
+          maxPlayers: 4,
+          actualPlayers: 2
         }
       ];
 
