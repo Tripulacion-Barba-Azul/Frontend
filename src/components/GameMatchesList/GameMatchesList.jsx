@@ -31,12 +31,12 @@ const GameMatchesList = () => {
       const data = await response.json();
       
       const mappedData = data.map(game => ({
-        id: game.id,
-        name: game.name,
-        creator: game.owner.name,
-        minPlayers: game.minp,
-        maxPlayers: game.maxp,
-        currentPlayers: game.players.length
+        id: game.gameId,
+        name: game.gameName,
+        creator: game.ownerName,
+        minPlayers: game.minPlayers,
+        maxPlayers: game.maxPlayers,
+        currentPlayers: game.actualPlayers
       }));
 
       setMatches(mappedData);
