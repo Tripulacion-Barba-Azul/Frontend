@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest --environment jsdom --globals"
+    "test": "vitest"
   },
   "dependencies": {
     "lucide-react": "^0.544.0",

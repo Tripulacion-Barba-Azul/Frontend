@@ -1,11 +1,10 @@
-import { useState } from 'react'
-import GameMatchesList from '../../components/GameMatchesList/GameMatchesList'
+import TitleScreen from '../../components/TitleScreen/TitleScreen';
 
 function App() {
 
   return (
-    <div className="App">
-      <GameMatchesList />
+    <div>
+      <TitleScreen />
     </div>
   )
 }
