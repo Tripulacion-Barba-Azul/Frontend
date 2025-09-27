@@ -25,6 +25,9 @@
 .avatar-circle {
   @apply rounded-full overflow-hidden ring-2 shadow bg-slate-300 grid place-items-center;
 
+  /* To position the turn indicator */
+  position: relative;
+
   --tw-ring-color: rgb(51 65 85 / 0.7);
   --ring-width: 5px;
   box-shadow: 0 0 0 var(--ring-width) var(--tw-ring-color),
@@ -32,7 +35,7 @@
     /* Soft shadow (tailwind shadow) */ 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
-/* Sizes for the avatar circle*/
+/* Sizes for the avatar circle */
 .badge-small {
   @apply w-35 h-35 text-lg;
 }
@@ -49,4 +52,38 @@
 .avatar-placeholder {
   @apply select-none;
   color: rgb(51 65 85 / 0.8);
+}
+
+/* Turn indicator */
+/* Base */
+.turn-indicator {
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+
+  /* Position */
+  display: block;
+  margin-top: 6px;
+
+  /* Default visuals */
+  background: #334155;
+  box-shadow: 0 0 0 2px #ffffff;
+  opacity: 0.6;
+
+  /* Smooth transitions */
+  transition: background-color 160ms ease, box-shadow 160ms ease,
+    opacity 160ms ease;
+}
+
+/* "Player's turn" indicator */
+.turn-indicator.on {
+  background: #22c55e;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 8px 2px rgba(34, 197, 94, 0.55);
+  opacity: 1;
+}
+
+/* "Not player's turn" indicator */
+.turn-indicator.off {
+  background: #334155;
+  opacity: 0.6;
 }

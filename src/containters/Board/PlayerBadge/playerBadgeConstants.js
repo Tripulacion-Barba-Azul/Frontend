@@ -1,11 +1,14 @@
+// Max length for player names; longer names will be truncated.
+export const MAX_NAME_LEN = 20;
+
 // Size presets mapped to CSS classes
-export const sizes = {
+export const SIZES = {
   big: "badge-big",
   small: "badge-small",
 };
 
 // Ring color colors
-export const ringColors = {
+export const RING_COLORS = {
   black: "rgb(51 65 85 / 0.70)",
   green: "rgb(34 197 94 / 0.70)",
   red: "rgb(239 68 68 / 0.70)",
@@ -18,7 +21,7 @@ export const ringColors = {
 };
 
 // Name background colors
-export const nameBgColors = {
+export const NAME_BG_COLORS = {
   white: "#ffffff",
   black: "#000000",
   green: "#22c55e",
@@ -32,6 +35,11 @@ export const nameBgColors = {
 };
 
 // Avatars name->path mapping
-export const avatarMap = {
-  default1: "/Board/Icons/default1.png",
+export const AVATAR_MAP = {
+  default: "/Board/Avatars/default.png",
+  robot: "/Board/Avatars/robot.png",
+  police: "/Board/Avatars/police.png",
+  wolovick: "/Board/Avatars/wolovick.png",
+  penazzi: "/Board/Avatars/penazzi.png",
+  parcero: "/Board/Avatars/parcero.png",
 };

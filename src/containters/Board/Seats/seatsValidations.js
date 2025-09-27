@@ -1,20 +1,6 @@
-import { MAX_NAME_LEN } from "./seatsConstants";
-
 export default function validatePlayersOrThrow(players) {
-  // Basic shape validation
-  if (!Array.isArray(players) || players.length === 0) {
-    throw new Error("Players must be a non-empty array.");
-  }
-
   // Filter valid player entries
-  const valid = players.filter(
-    (p) =>
-      p &&
-      typeof p.name === "string" &&
-      Number.isInteger(p.order) &&
-      p.order >= 1 &&
-      p.order <= 6
-  );
+  const valid = players.filter((p) => p.order >= 1 && p.order <= 6);
   if (valid.length < 2) {
     throw new Error("At least 2 valid players are required.");
   }
@@ -57,12 +43,5 @@ export default function validatePlayersOrThrow(players) {
     }
   }
 
-  // If all checks pass, return a valid copy
-  return valid.map((p) => ({
-    ...p,
-    name:
-      p.name.length > MAX_NAME_LEN
-        ? p.name.slice(0, MAX_NAME_LEN) + "…"
-        : p.name,
-  }));
+  return valid;
 }

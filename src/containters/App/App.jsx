@@ -3,12 +3,48 @@ import Board from "../Board/Board.jsx";
 
 function App() {
   const players = [
-    { name: "Demetrio", order: 3, actualPlayer: false, rol: "asesino" },
-    { name: "Robotito", order: 5, actualPlayer: false, rol: "detective" },
-    { name: "Parce", order: 6, actualPlayer: false, rol: "detective" },
-    { name: "Gunter", order: 1, actualPlayer: false, rol: "detective" },
-    { name: "Wolovick", order: 2, actualPlayer: true, rol: "complice" },
-    { name: "Penazzi", order: 4, actualPlayer: false, rol: "detective" },
+    {
+      name: "Demetrio",
+      order: 3,
+      actualPlayer: false,
+      role: "murderer",
+      turn: false,
+    },
+    {
+      name: "Robotito",
+      order: 5,
+      actualPlayer: false,
+      role: "detective",
+      turn: true,
+    },
+    {
+      name: "Parce",
+      order: 6,
+      actualPlayer: false,
+      role: "detective",
+      turn: false,
+    },
+    {
+      name: "Gunter",
+      order: 1,
+      actualPlayer: false,
+      role: "detective",
+      turn: false,
+    },
+    {
+      name: "Wolovick",
+      order: 2,
+      actualPlayer: true,
+      role: "accomplice",
+      turn: false,
+    },
+    {
+      name: "Penazzi",
+      order: 4,
+      actualPlayer: false,
+      role: "detective",
+      turn: false,
+    },
   ];
 
   return (

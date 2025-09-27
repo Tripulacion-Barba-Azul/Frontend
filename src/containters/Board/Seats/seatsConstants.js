@@ -1,8 +1,4 @@
-// Max length for player names; longer names will be truncated.
-export const MAX_NAME_LEN = 20;
-
 // A fixed map of seat anchors around the board.
-// Styles use percent-based offsets aligned with the current background board.
 export const SEAT_POSITIONS = {
   // bottom center
   p1: {
@@ -45,12 +41,5 @@ export const SEATING_BY_COUNT = {
   6: ["p1", "p2", "p3", "p4", "p5", "p6"], // all seats
 };
 
-// A color palette to differentiate rings; cycles if there are more players than colors.
-export const RING_COLORS = [
-  "black",
-  "blue",
-  "green",
-  "red",
-  "purple",
-  "yellow",
-];
+// A color palette to differentiate rings
+export const RING_COLORS = ["black", "blue", "pink", "red", "purple", "yellow"];
