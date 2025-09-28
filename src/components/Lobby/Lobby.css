@@ -52,11 +52,16 @@ body{
     margin-left: auto;
 }
 
-.current-badge{
+.current-player-badge {
     color: #AD2437;
     font-weight: bold;
     font-size: 0.8em;
     margin-left: auto;
+}
+
+/* Cuando hay ambos badges, el primero no debería tener margin-left auto */
+.creator-badge + .current-player-badge {
+    margin-left: 5px;
 }
 
 .no-players {

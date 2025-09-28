@@ -1,10 +1,10 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 import '@testing-library/jest-dom';
 import Lobby from './Lobby';
 
-// Mock del componente StartGameButton
+
 vi.mock('../StartGameButton/StartGameButton', () => ({
     default: function MockStartGameButton({ disabled, onClick }) {
         return (
@@ -19,238 +19,330 @@ vi.mock('../StartGameButton/StartGameButton', () => ({
     }
 }));
 
+
+global.WebSocket = vi.fn().mockImplementation(() => ({
+    close: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+}));
+
+
+global.fetch = vi.fn();
+
 describe('Lobby Component', () => {
-    const defaultProps = {
-        MatchName: 'Partida Test',
-        MatchCreator: 'Creador',
-        CurrentUser: 'UsuarioActual',
-        MinPlayers: 2,
-        MaxPlayers: 4,
-        Players: [],
-        onStartGame: vi.fn()
+    const mockGameData = {
+        gameId: 1,
+        gameName: 'Partida Test',
+        ownerId: 5,
+        minPlayers: 2,
+        maxPlayers: 4,
+        players: [
+            { playerId: 5, playerName: 'Owner_test_2' },
+            { playerId: 3, playerName: 'Player_test_1' }
+        ]
     };
 
     beforeEach(() => {
         vi.clearAllMocks();
+        fetch.mockResolvedValue({
+            ok: true,
+            json: () => Promise.resolve(mockGameData)
+        });
     });
 
     describe('Renderizado básico', () => {
-        test('renderiza correctamente con props básicas', () => {
-            render(<Lobby {...defaultProps} />);
+        test('renderiza correctamente como owner', async () => {
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
             
-            expect(screen.getByText('Partida: Partida Test')).toBeInTheDocument();
-            expect(screen.getByText('Creador de la partida: Creador')).toBeInTheDocument();
-            expect(screen.getByText('Min: 2, Max: 4')).toBeInTheDocument();
+            render(<Lobby {...ownerProps} />);
+            
+            await waitFor(() => {
+                expect(screen.getByText('Partida: Partida Test')).toBeInTheDocument();
+                expect(screen.getByText('Creador de la partida: Owner_test_2')).toBeInTheDocument();
+                expect(screen.getByText('Min: 2, Max: 4')).toBeInTheDocument();
+                
+                expect(screen.getByTestId('start-game-button')).toBeInTheDocument();
+            });
         });
 
-        test('muestra el título de jugadores en espera con el conteo correcto', () => {
-            render(<Lobby {...defaultProps} />);
+        test('renderiza correctamente como player', async () => {
+            const playerProps = { id: 1, playerId: 3, playerName: 'Player_test_1' };
             
-            expect(screen.getByText(/Jugadores en espera \(2\)/)).toBeInTheDocument();
+            render(<Lobby {...playerProps} />);
+            
+            await waitFor(() => {
+                expect(screen.getByText('Partida: Partida Test')).toBeInTheDocument();
+                expect(screen.getByText('Creador de la partida: Owner_test_2')).toBeInTheDocument();
+                
+                expect(screen.queryByTestId('start-game-button')).not.toBeInTheDocument();
+            });
+        });
+
+        test('muestra mensaje de carga inicial', () => {
+            render(<Lobby id={1} playerId={5} />);
+            
+            expect(screen.getByText('Cargando información del juego...')).toBeInTheDocument();
+        });
+
+        test('diferencia correctamente entre owner y player por la presencia del botón Start Game', async () => {
+            
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            const { unmount } = render(<Lobby {...ownerProps} />);
+            
+            await waitFor(() => {
+                expect(screen.getByTestId('start-game-button')).toBeInTheDocument();
+            });
+
+            
+            unmount();
+
+            
+            const playerProps = { id: 1, playerId: 3, playerName: 'Player_test_1' };
+            render(<Lobby {...playerProps} />);
+            
+            await waitFor(() => {
+                expect(screen.queryByTestId('start-game-button')).not.toBeInTheDocument();
+            });
         });
     });
 
     describe('Lógica de jugadores', () => {
-        test('siempre incluye al creador y usuario actual en la lista', () => {
-            render(<Lobby {...defaultProps} />);
+        test('muestra todos los jugadores correctamente', async () => {
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
             
-            expect(screen.getByText('Creador')).toBeInTheDocument();
-            expect(screen.getByText('UsuarioActual')).toBeInTheDocument();
+            render(<Lobby {...ownerProps} />);
+            
+            await waitFor(() => {
+                expect(screen.getByText('Owner_test_2')).toBeInTheDocument();
+                expect(screen.getByText('Player_test_1')).toBeInTheDocument();
+                expect(screen.getByText(/Jugadores en espera \(2\)/)).toBeInTheDocument();
+            });
         });
 
-        test('muestra badges correctos para creador y usuario actual', () => {
-            render(<Lobby {...defaultProps} />);
+        test('muestra badges correctos para owner', async () => {
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
             
-            expect(screen.getByText('(Creador)')).toBeInTheDocument();
-            expect(screen.getByText('(Tú)')).toBeInTheDocument();
+            render(<Lobby {...ownerProps} />);
+            
+            await waitFor(() => {
+                expect(screen.getByText('(Creador)')).toBeInTheDocument();
+                expect(screen.getByText('(Tú)')).toBeInTheDocument();
+            });
         });
 
-        test('incluye jugadores adicionales de la prop Players', () => {
-            const propsWithPlayers = {
-                ...defaultProps,
-                Players: ['Jugador1', 'Jugador2']
+        test('muestra badge correcto para player normal', async () => {
+            const playerProps = { id: 1, playerId: 3, playerName: 'Player_test_1' };
+            
+            render(<Lobby {...playerProps} />);
+            
+            await waitFor(() => {
+                expect(screen.getByText('(Creador)')).toBeInTheDocument(); 
+                expect(screen.getByText('(Tú)')).toBeInTheDocument(); 
+            });
+        });
+
+        test('maneja correctamente cuando el jugador no está en la partida', async () => {
+            const invalidPlayerProps = { id: 1, playerId: 999, playerName: 'InvalidPlayer' };
+            
+            render(<Lobby {...invalidPlayerProps} />);
+            
+            await waitFor(() => {
+                expect(screen.getByText('No tienes acceso a esta partida')).toBeInTheDocument();
+                expect(screen.queryByText('Owner_test_2')).not.toBeInTheDocument();
+            });
+        });
+
+        test('muestra conteo correcto de jugadores', async () => {
+            const mockGameDataWithMorePlayers = {
+                ...mockGameData,
+                players: [
+                    { playerId: 5, playerName: 'Owner_test_2' },
+                    { playerId: 3, playerName: 'Player_test_1' },
+                    { playerId: 7, playerName: 'Player_test_2' }
+                ]
             };
             
-            render(<Lobby {...propsWithPlayers} />);
-            
-            expect(screen.getByText('Jugador1')).toBeInTheDocument();
-            expect(screen.getByText('Jugador2')).toBeInTheDocument();
-            expect(screen.getByText(/Jugadores en espera \(4\)/)).toBeInTheDocument();
-        });
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve(mockGameDataWithMorePlayers)
+            });
 
-        test('elimina duplicados cuando el creador o usuario actual están en Players', () => {
-            const propsWithDuplicates = {
-                ...defaultProps,
-                Players: ['Creador', 'UsuarioActual', 'Jugador1']
-            };
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
             
-            render(<Lobby {...propsWithDuplicates} />);
+            render(<Lobby {...ownerProps} />);
             
-            // Debe mostrar solo una instancia de cada jugador en la lista de jugadores
-            // El "Creador" aparece en: título, lista de jugadores, y badge
-            const creadorElements = screen.getAllByText(/Creador/);
-            const usuarioElements = screen.getAllByText(/UsuarioActual/);
-            
-            expect(creadorElements).toHaveLength(3); // Título + lista + badge
-            expect(usuarioElements).toHaveLength(1); // Solo en la lista
-            expect(screen.getByText('Jugador1')).toBeInTheDocument();
-            
-            // Verificar que el conteo sea correcto (no duplicados)
-            expect(screen.getByText(/Jugadores en espera \(3\)/)).toBeInTheDocument();
-        });
-
-        test('limita el número de jugadores al máximo permitido', () => {
-            const propsWithManyPlayers = {
-                ...defaultProps,
-                MaxPlayers: 3,
-                Players: ['Jugador1', 'Jugador2', 'Jugador3', 'Jugador4']
-            };
-            
-            render(<Lobby {...propsWithManyPlayers} />);
-            
-            expect(screen.getByText(/Jugadores en espera \(3\)/)).toBeInTheDocument();
-            expect(screen.getByText('Jugador1')).toBeInTheDocument();
-            expect(screen.queryByText('Jugador4')).not.toBeInTheDocument();
+            await waitFor(() => {
+                expect(screen.getByText(/Jugadores en espera \(3\)/)).toBeInTheDocument();
+            });
         });
     });
 
     describe('Estado de partida llena', () => {
-        test('muestra badge de partida llena cuando se alcanza el máximo', () => {
-            const propsFullLobby = {
-                ...defaultProps,
-                MaxPlayers: 2,
-                Players: []
+        test('muestra badge de partida llena cuando se alcanza el máximo', async () => {
+            const mockGameDataFull = {
+                ...mockGameData,
+                maxPlayers: 2,
+                players: [
+                    { playerId: 5, playerName: 'Owner_test_2' },
+                    { playerId: 3, playerName: 'Player_test_1' }
+                ]
             };
             
-            render(<Lobby {...propsFullLobby} />);
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve(mockGameDataFull)
+            });
+
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
             
-            expect(screen.getByText('- PARTIDA LLENA')).toBeInTheDocument();
+            render(<Lobby {...ownerProps} />);
+            
+            await waitFor(() => {
+                expect(screen.getByText('- PARTIDA LLENA')).toBeInTheDocument();
+            });
         });
 
-        test('no muestra badge de partida llena cuando no se alcanza el máximo', () => {
-            const propsNotFull = {
-                ...defaultProps,
-                MaxPlayers: 4,
-                Players: ['Jugador1']
-            };
+        test('no muestra badge de partida llena cuando no se alcanza el máximo', async () => {
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
             
-            render(<Lobby {...propsNotFull} />);
+            render(<Lobby {...ownerProps} />);
             
-            expect(screen.queryByText('- PARTIDA LLENA')).not.toBeInTheDocument();
-        });
-    });
-
-    describe('Botón de inicio (para creador)', () => {
-        test('muestra el botón de inicio cuando el usuario actual es el creador', () => {
-            const creatorProps = {
-                ...defaultProps,
-                CurrentUser: 'Creador'
-            };
-            
-            render(<Lobby {...creatorProps} />);
-            
-            expect(screen.getByTestId('start-game-button')).toBeInTheDocument();
-        });
-
-        test('no muestra el botón de inicio cuando el usuario actual no es el creador', () => {
-            render(<Lobby {...defaultProps} />);
-            
-            expect(screen.queryByTestId('start-game-button')).not.toBeInTheDocument();
-        });
-
-        test('habilita el botón cuando se alcanza el mínimo de jugadores', () => {
-            const creatorPropsMinPlayers = {
-                ...defaultProps,
-                CurrentUser: 'Creador', // El usuario actual es el creador
-                MinPlayers: 2, // Mínimo 2 jugadores
-                // Con Creador y UsuarioActual ya son 2 jugadores (cumple el mínimo)
-            };
-            
-            render(<Lobby {...creatorPropsMinPlayers} />);
-            
-            // Debug: verificar cuántos jugadores hay
-            expect(screen.getByText(/Jugadores en espera \(1\)/)).toBeInTheDocument(); // Solo 1 porque Creador = CurrentUser
-            
-            const button = screen.getByTestId('start-game-button');
-            expect(button).toBeDisabled(); // Está deshabilitado porque solo hay 1 jugador, no 2
-        });
-
-        test('habilita el botón cuando hay suficientes jugadores diferentes', () => {
-            const creatorPropsWithEnoughPlayers = {
-                ...defaultProps,
-                CurrentUser: 'Creador', // El usuario actual es el creador
-                MatchCreator: 'Creador',
-                MinPlayers: 2, // Mínimo 2 jugadores
-                Players: ['UsuarioActual'] // Agregamos un jugador adicional
-            };
-            
-            render(<Lobby {...creatorPropsWithEnoughPlayers} />);
-            
-            // Ahora hay 2 jugadores: Creador y UsuarioActual
-            expect(screen.getByText(/Jugadores en espera \(2\)/)).toBeInTheDocument();
-            
-            const button = screen.getByTestId('start-game-button');
-            expect(button).not.toBeDisabled(); // Ahora SÍ debe estar habilitado
-        });
-
-        test('deshabilita el botón cuando no se alcanza el mínimo de jugadores', () => {
-            const creatorPropsInsufficientPlayers = {
-                ...defaultProps,
-                CurrentUser: 'Creador',
-                MinPlayers: 4
-            };
-            
-            render(<Lobby {...creatorPropsInsufficientPlayers} />);
-            
-            const button = screen.getByTestId('start-game-button');
-            expect(button).toBeDisabled();
+            await waitFor(() => {
+                expect(screen.queryByText('- PARTIDA LLENA')).not.toBeInTheDocument();
+            });
         });
     });
 
-    describe('Casos edge', () => {
-        test('maneja correctamente cuando Players es undefined', () => {
-            const propsWithoutPlayers = {
-                ...defaultProps,
-                Players: undefined
-            };
+    describe('Botón de inicio (para owner)', () => {
+        test('muestra el botón de inicio cuando el usuario es el owner', async () => {
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
             
-            render(<Lobby {...propsWithoutPlayers} />);
+            render(<Lobby {...ownerProps} />);
             
-            expect(screen.getByText(/Jugadores en espera \(2\)/)).toBeInTheDocument();
-            expect(screen.getByText('Creador')).toBeInTheDocument();
-            expect(screen.getByText('UsuarioActual')).toBeInTheDocument();
+            await waitFor(() => {
+                expect(screen.getByTestId('start-game-button')).toBeInTheDocument();
+            });
         });
 
-        test('maneja correctamente cuando el creador y usuario actual son la misma persona', () => {
-            const propsSameUser = {
-                ...defaultProps,
-                CurrentUser: 'Creador',
-                MatchCreator: 'Creador'
-            };
+        test('no muestra el botón de inicio cuando el usuario no es el owner', async () => {
+            const playerProps = { id: 1, playerId: 3, playerName: 'Player_test_1' };
             
-            render(<Lobby {...propsSameUser} />);
+            render(<Lobby {...playerProps} />);
             
-            expect(screen.getByText(/Jugadores en espera \(1\)/)).toBeInTheDocument();
-            expect(screen.getByText('(Creador)')).toBeInTheDocument();
-            expect(screen.getByText('(Tú)')).toBeInTheDocument();
+            await waitFor(() => {
+                expect(screen.queryByTestId('start-game-button')).not.toBeInTheDocument();
+            });
         });
 
-        test('renderiza mensaje cuando no hay jugadores (caso imposible por la lógica)', () => {
-            // Este caso es prácticamente imposible debido a ensureCreatorAndCurrentUserInPlayers
-            // pero lo incluimos para completitud del test
-            const propsEmpty = {
-                ...defaultProps,
-                MatchCreator: '',
-                CurrentUser: '',
-                Players: []
+        test('habilita el botón cuando se alcanza el mínimo de jugadores', async () => {
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            
+            render(<Lobby {...ownerProps} />);
+            
+            await waitFor(() => {
+                
+                expect(screen.getByText(/Jugadores en espera \(2\)/)).toBeInTheDocument();
+                
+                const button = screen.getByTestId('start-game-button');
+                expect(button).not.toBeDisabled();
+            });
+        });
+
+        test('deshabilita el botón cuando no se alcanza el mínimo de jugadores', async () => {
+            const mockGameDataInsufficientPlayers = {
+                ...mockGameData,
+                minPlayers: 4, 
+                players: [
+                    { playerId: 5, playerName: 'Owner_test_2' },
+                    { playerId: 3, playerName: 'Player_test_1' }
+                ] 
             };
             
-            render(<Lobby {...propsEmpty} />);
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve(mockGameDataInsufficientPlayers)
+            });
+
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
             
-            // El mensaje "No hay jugadores" aparecerá solo si la lógica falla
-            if (screen.queryByText('No hay jugadores en la partida')) {
+            render(<Lobby {...ownerProps} />);
+            
+            await waitFor(() => {
+                const button = screen.getByTestId('start-game-button');
+                expect(button).toBeDisabled();
+            });
+        });
+    });
+
+    describe('Casos edge y manejo de errores', () => {
+        test('maneja error en el fetch correctamente', async () => {
+            fetch.mockRejectedValueOnce(new Error('Network error'));
+            
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            
+            render(<Lobby {...ownerProps} />);
+            
+            
+            expect(screen.getByText('Cargando información del juego...')).toBeInTheDocument();
+        });
+
+        test('maneja respuesta HTTP no exitosa', async () => {
+            fetch.mockResolvedValueOnce({
+                ok: false,
+                status: 404
+            });
+            
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            
+            render(<Lobby {...ownerProps} />);
+            
+            
+            expect(screen.getByText('Cargando información del juego...')).toBeInTheDocument();
+        });
+
+        test('maneja correctamente cuando el owner y player actual son la misma persona', async () => {
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            
+            render(<Lobby {...ownerProps} />);
+            
+            await waitFor(() => {
+                expect(screen.getByText('Owner_test_2')).toBeInTheDocument();
+                expect(screen.getByText('(Creador)')).toBeInTheDocument();
+                expect(screen.getByText('(Tú)')).toBeInTheDocument();
+                
+                expect(screen.getByTestId('start-game-button')).toBeInTheDocument();
+            });
+        });
+
+        test('renderiza mensaje cuando no hay jugadores en una partida vacía', async () => {
+            const mockEmptyGameData = {
+                ...mockGameData,
+                players: []
+            };
+            
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve(mockEmptyGameData)
+            });
+
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            
+            render(<Lobby {...ownerProps} />);
+            
+            await waitFor(() => {
                 expect(screen.getByText('No hay jugadores en la partida')).toBeInTheDocument();
-            }
+            });
+        });
+
+        test('verifica que el WebSocket se inicializa correctamente', async () => {
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            
+            render(<Lobby {...ownerProps} />);
+            
+            
+            await waitFor(() => {
+                expect(global.WebSocket).toHaveBeenCalledWith('ws://localhost:8000/ws/1');
+            });
         });
     });
 });
