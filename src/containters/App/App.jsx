@@ -1,5 +1,10 @@
+import TitleScreen from "../../components/TitleScreen/TitleScreen";
 function App() {
-  return <div></div>;
+  return (
+    <div>
+      <TitleScreen />
+    </div>
+  );
 }
 
 export default App;
