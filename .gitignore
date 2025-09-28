@@ -164,6 +164,3 @@ cython_debug/
 response
 
 src/contacts.db
-
-# VS Code settings
-.vscode/
