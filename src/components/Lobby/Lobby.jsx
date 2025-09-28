@@ -183,6 +183,8 @@ function Lobby(props){
                 {isOwner && (
                     <StartGameButton 
                         disabled={!hasMinimumPlayers}
+                        gameId={props.id}
+                        actualPlayerId={props.playerId}
                     />
                 )}
             </div>

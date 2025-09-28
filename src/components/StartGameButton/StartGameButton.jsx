@@ -1,12 +1,40 @@
 import "./StartGameButton.css"
 
-function StartGameButton({ disabled, onClick }){
+function StartGameButton({ disabled, gameId, actualPlayerId }){
+    
+    const handleStartGame = async () => {
+        if (disabled) return;
+        
+        try {
+            const response = await fetch(`http://localhost:8000/games/${gameId}/start`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    gameId: parseInt(gameId),
+                    actualPlayerId: parseInt(actualPlayerId)
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error HTTP: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Game started successfully:', data);
+            
+        } catch (error) {
+            console.error('Error starting game:', error);
+        }
+    };
+
     return(
         <div>
             <button 
                 className={`StartGameButton ${disabled ? 'disabled' : ''}`}
                 disabled={disabled}
-                onClick={onClick}
+                onClick={handleStartGame}
             >
                 Start Game
             </button>
