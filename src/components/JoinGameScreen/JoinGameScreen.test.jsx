@@ -90,8 +90,8 @@ it('should call the API with correct data when form is valid', async () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(
-        { name: 'Esta locuraaa...', 
-        birthday: '2022-12-18' })
+        { playerName: 'Esta locuraaa...', 
+        birthDate: '2022-12-18' })
     })
   )
 })

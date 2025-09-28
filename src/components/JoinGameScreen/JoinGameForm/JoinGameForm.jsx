@@ -1,7 +1,7 @@
 import "./JoinGameForm.css";
 import { useState } from "react";
 
-const gameID = "2" 
+const gameID = "1" 
 //utilizo el ID 2 a modo de ejemplo pero acá debería obtener el ID de la partida en base a la URL en la que estoy
 
 export default function JoinGameForm() {
@@ -17,8 +17,8 @@ export default function JoinGameForm() {
 
     if (Object.keys(errors).length === 0) {
       const requestData = {
-          name: settings.PlayerName,
-          birthday: String(settings.PlayerBirthday)
+        playerName: settings.PlayerName,
+        birthDate: String(settings.PlayerBirthday)
         }
 
       async function postData() {
@@ -37,6 +37,9 @@ export default function JoinGameForm() {
         
           console.log(response.status, response.statusText);
 
+          roomId = response.body.gameId
+          yourPlayerId = response.body.actualPlayerId
+
           //IMPORTANTE: 
           // Si todo sale bien, hay que redirigir al lobby de la partida con ese ID. 
           // Tal vez la respuesta puede contener el ID de la partida y podemos compararlo con el ID que teníamos, deberían ser iguales
@@ -50,7 +53,7 @@ export default function JoinGameForm() {
       postData();
 
     }
-  }
+  } 
 
 
   const validate = (values) => {
