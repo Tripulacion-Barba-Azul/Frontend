@@ -55,3 +55,18 @@ function App() {
 }
 
 export default App;
+
+// BORRAR LO DE ARRIBA PARA MERGEAR, DEJAR LO DE ABAJO DESCOMENTADO
+//
+// import { useState } from "react";
+// import TitleScreen from "../../components/TitleScreen/TitleScreen";
+
+// function App() {
+//   return (
+//     <div>
+//       <TitleScreen />
+//     </div>
+//   );
+// }
+
+// export default App;

@@ -2,56 +2,69 @@
 
 /* Main container */
 .player-badge {
-  @apply flex flex-col items-center gap-1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
 
 /* Name box */
 .player-name-box {
-  @apply font-medium leading-none text-slate-800;
-  @apply px-3 py-1 rounded-lg;
-
-  background-color: var(--name-bg, #ffffff);
-  border: 1px solid rgb(0, 0, 0);
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.06), 0 1px 1px -1px rgb(0 0 0 / 0.08);
+  font-weight: 500;
+  line-height: 1;
+  font-size: 14px;
+  padding: 6px 10px;
+  border-radius: 10px;
 }
 
 /* Text on top of avatar */
 .player-name {
-  @apply px-2 py-0.5 rounded-md text-white font-medium leading-none;
-  background-color: rgb(0 0 0 / 0.5);
+  padding: 2px 6px;
+  border-radius: 6px;
+  color: #fff;
+  font-weight: 500;
+  line-height: 1;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 /* Avatar circle */
 .avatar-circle {
-  @apply rounded-full overflow-hidden ring-2 shadow bg-slate-300 grid place-items-center;
-
-  /* To position the turn indicator */
   position: relative;
+  overflow: hidden;
+  border-radius: 9999px;
+  background-color: #cbd5e1;
+  display: grid;
+  place-items: center;
 
-  --tw-ring-color: rgb(51 65 85 / 0.7);
+  /* Ring rendered via box-shadow */
+  --tw-ring-color: rgba(51, 65, 85, 0.7); /* default ring color */
   --ring-width: 5px;
   box-shadow: 0 0 0 var(--ring-width) var(--tw-ring-color),
-    /* Configurable ring */ 0 10px 15px -3px rgb(0 0 0 / 0.1),
-    /* Soft shadow (tailwind shadow) */ 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
 }
 
 /* Sizes for the avatar circle */
 .badge-small {
-  @apply w-35 h-35 text-lg;
+  width: 112px;
+  aspect-ratio: 1 / 1;
 }
 .badge-big {
-  @apply w-50 h-50 text-lg;
+  width: 160px;
+  aspect-ratio: 1 / 1;
 }
 
 /* Image of avatar */
 .avatar-img {
-  @apply w-full h-full object-cover;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: auto;
 }
 
 /* Placeholder (shown when no src) */
 .avatar-placeholder {
-  @apply select-none;
-  color: rgb(51 65 85 / 0.8);
+  user-select: none;
+  color: rgba(51, 65, 85, 0.8);
 }
 
 /* Turn indicator */
@@ -61,23 +74,23 @@
   height: 14px;
   border-radius: 9999px;
 
-  /* Position */
+  /* Spacing from circle: fixed px */
   display: block;
   margin-top: 6px;
 
-  /* Default visuals */
-  background: #334155;
+  /* Defaults */
+  background: #334155; /* slate-700 */
   box-shadow: 0 0 0 2px #ffffff;
   opacity: 0.6;
 
-  /* Smooth transitions */
+  /* Smooth, deterministic transitions */
   transition: background-color 160ms ease, box-shadow 160ms ease,
     opacity 160ms ease;
 }
 
 /* "Player's turn" indicator */
 .turn-indicator.on {
-  background: #22c55e;
+  background: #22c55e; /* green-500 */
   box-shadow: 0 0 0 2px #ffffff, 0 0 8px 2px rgba(34, 197, 94, 0.55);
   opacity: 1;
 }
