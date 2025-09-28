@@ -1,14 +1,15 @@
-import CreateGameButton from '../../components/TitleScreen/CreateGameButton/CreateGameButton'
-import JoinGameButton from '../../components/TitleScreen/JoinGameButton/JoinGameButton'
+import CreateGameButton from "./CreateGameScreen/CreateGameButton/CreateGameButton";
+import JoinGameButton from "./CreateGameScreen/JoinGameButton/JoinGameButton";
 import "./TitleScreen.css";
 
 export default function TitleScreen() {
-
   return (
     <div className="TitleScreen">
-      <h1>Aghata Christie's <br /> Death on the Cards </h1>
+      <h1>
+        Aghata Christie's <br /> Death on the Cards{" "}
+      </h1>
       <CreateGameButton />
       <JoinGameButton />
     </div>
-  )
+  );
 }
