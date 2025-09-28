@@ -1,7 +1,7 @@
 export const CARD_SRC = {
   7: "/Cards/07-detective_poirot.png",
   8: "/Cards/08-detective_marple.png",
-  9: "/Cards/09-detective_satterhwaite.png",
+  9: "/Cards/09-detective_satterthwaite.png",
   10: "/Cards/10-detective_pyne.png",
   11: "/Cards/11-detective_brent.png",
   12: "/Cards/12-detective_tommyberesford.png",

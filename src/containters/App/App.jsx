@@ -1,9 +1,10 @@
 import TitleScreen from "../../components/TitleScreen/TitleScreen";
+import ExamplePageOwnCards from "../../components/Sync/OwnCards/ExamplePageOwnCards.jsx";
 
 function App() {
   return (
     <div>
-      <TitleScreen />
+      <ExamplePageOwnCards />
     </div>
   );
 }
