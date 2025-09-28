@@ -1,12 +1,5 @@
-import CreateGameScreen from '../../components/CreateGameScreen/CreateGameScreen';
-
 function App() {
-
-  return (
-    <div>
-      <CreateGameScreen />
-    </div>
-  )
+  return <div></div>;
 }
 
-export default App
+export default App;
