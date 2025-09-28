@@ -20,7 +20,7 @@ describe("OwnCards.jsx (static, non-interactive)", () => {
     const overlay = screen.getByLabelText("cards-row");
     // Container exists and is absolute overlay (pointer-events disabled)
     expect(overlay).toBeInTheDocument();
-    expect(overlay).toHaveClass("absolute", "inset-0", "pointer-events-none");
+    expect(overlay).toHaveClass("owncards-overlay");
   });
 
   it("renders no images when cardIds is empty", () => {
