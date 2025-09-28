@@ -1,28 +1,11 @@
-import DiscardPile from '../../components/DiscardPile/DiscardPile';
+import TitleScreen from "../../components/TitleScreen/TitleScreen";
 
 function App() {
-
   return (
     <div>
-            <br />
-            <br />
-            <br />
-      <DiscardPile number="3" img_id="7" />
-            <br />
-            <br />
-            <br />
-      <DiscardPile number="15" img_id="8"/>
-            <br />
-            <br />
-            <br />
-      <DiscardPile number="50" img_id="24"/>
-            <br />
-            <br />
-            <br />
-      <DiscardPile number="0" img_id="7"/>
-
+      <TitleScreen />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
