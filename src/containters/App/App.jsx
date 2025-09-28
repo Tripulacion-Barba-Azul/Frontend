@@ -1,12 +1,12 @@
-import JoinGameScreen from '../../components/JoinGameScreen/JoinGameScreen';
+import TitleScreen from "../../components/TitleScreen/TitleScreen";
 
 function App() {
-
   return (
     <div>
-      <JoinGameScreen />
+      <TitleScreen />
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
+
