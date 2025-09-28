@@ -1,0 +1,123 @@
+body.active-viewmycards {
+    overflow-y: hidden;
+}
+
+.btn-viewmycards {
+    position: relative;
+    padding: 0;
+    display: block;
+    margin: 100px auto 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    width: 25px;
+    height: 25px;
+    overflow: visible;
+}
+
+
+.btn-viewmycards img {
+    max-width: 50px;
+    display: block;
+    position: relative;
+    z-index: 2;
+}
+
+.btn-viewmycards {
+    position: relative;
+    padding: 0;
+    display: block;
+    margin: 100px auto 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    width: 50px;
+    height: 50px;
+    overflow: visible;
+}
+
+.btn-viewmycards img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    position: relative;
+    z-index: 2;
+}
+
+
+.viewmycards, .overlay {
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    position: fixed;
+    z-index: 10;
+    display: flex;           
+    justify-content: center; 
+    align-items: center;     
+}
+
+.overlay {
+    background: rgba(49,49,49,0.8);
+    z-index: 10;
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr); 
+    gap: 1rem;
+    justify-items: center;   
+    margin: 1rem 0;
+    padding: 20px;
+    max-width: 100%;
+    overflow-x: auto;        
+  }
+  
+  .card {
+    width: 100%;
+    max-width: 300px;
+    aspect-ratio: 2/3; 
+    z-index: 20;
+
+}
+
+.card img {
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    object-fit: cover; 
+}
+
+.close-viewmycards {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 5px 7px;
+    width: 40px;
+    height: 40px;
+    z-index: 20;
+    background-color: red;
+    border-color: black
+}
+
+.no-cards-message {
+    display: flex;              
+    flex-direction: column;     
+    justify-content: center;    
+    align-items: center;        
+    
+    font-size: 2rem;
+    font-weight: bold;
+    color: #f4e1a3;
+    line-height: 1.2;
+  
+    position: absolute;         
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 15;
+  }
