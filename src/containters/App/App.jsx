@@ -1,5 +1,5 @@
 import { useState } from "react";
-import Board from "../Board/Board.jsx";
+import Board from "../../components/Board/Board";
 
 function App() {
   const players = [
