@@ -70,17 +70,30 @@ function Lobby(props){
     };
 
     // Configurar el manejador de mensajes del WebSocket cuando esté disponible
-     useEffect(() => {
+    useEffect(() => {
         if (props.ws) {
             props.ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
                     console.log('Mensaje recibido del WebSocket:', data);
-
+                    
                     if (data.event === 'player_joined') {
-                        console.log('Jugador se unió:', data.player);
+                        console.log('Jugador se unió:', data.player, 'ID:', data.player_id);
                         
-                        fetchMatches();
+                        // Actualizar la lista de jugadores con el nuevo player
+                        setPlayers(prev => {
+                            const playerExists = prev.find(p => p.playerName === data.player);
+                            if (!playerExists) {
+                                const newPlayer = {
+                                    playerId: data.player_id || Math.random(), // Usar ID del WebSocket si está disponible
+                                    playerName: data.player
+                                };
+                                const newPlayers = [...prev, newPlayer];
+                                console.log('Nueva lista de jugadores:', newPlayers);
+                                return newPlayers;
+                            }
+                            return prev;
+                        });
                     }
                 } catch (error) {
                     console.log('Mensaje del servidor (no JSON):', event.data);
@@ -88,6 +101,10 @@ function Lobby(props){
             };
         }
     }, [props.ws]);
+
+    useEffect(() => {
+        fetchMatches();
+    }, [props.id]);
 
     if (!currentGame) {
         return <div className='Lobby'>Cargando información del juego...</div>;
