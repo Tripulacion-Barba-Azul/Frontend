@@ -2,7 +2,7 @@ import './Lobby.css';
 import { useState, useEffect } from 'react';
 import StartGameButton from '../StartGameButton/StartGameButton';
 
-// Props esperados: { id, playerId, playerName? }
+// Props esperados: { id, playerId }
 function Lobby(props){
     
     const wsEndpoint = `ws://localhost:8000/ws/${props.id}`;
@@ -78,7 +78,7 @@ function Lobby(props){
             ws.close();
         }
 
-        const websocket = new WebSocket(wsEndpoint); //con esto el owner ya esta metido en el ws
+        const websocket = new WebSocket(wsEndpoint); 
         
         websocket.onopen = () => {
             console.log('WebSocket conectado');
@@ -185,6 +185,7 @@ function Lobby(props){
                         disabled={!hasMinimumPlayers}
                         gameId={props.id}
                         actualPlayerId={props.playerId}
+                        onStartGame={props.onStartGame}
                     />
                 )}
             </div>

@@ -1,10 +1,13 @@
 import "./CreateGameForm.css";
 import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 
 export default function CreateGameForm() {
 
   const [settings, setSettings] = useState({GameName: "", MinPlayers: "", MaxPlayers: "", PlayerName: "", PlayerBirthday: ""});
   const [formErrors, setFormErrors] = useState({})
+
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -36,21 +39,21 @@ export default function CreateGameForm() {
           });
 
           if (!response.ok) {
-          throw new Error(`Error HTTP: ${response.status} ${response.statusText}`);
-        }
-
+            navigate(`/`);
+        } else {
           console.log(response.status, response.statusText);
 
-          const gameID = response.body.gameID;
-          const yourID = response.body.ownerId;
+          const data = await response.json()
 
-          //IMPORTANTE: en "response.body" (o en otro lado qsy) debería contener el ID de la partida.
-          //en caso de 200 OK, se debería redirigir al usuario al lobby de esa partida.
-          //(con la función navigate)
-          // Si hay un error, (no debería) probablemente hay que redirigir al usuario a la title screen
+          const fetchedId = data.gameId
+          const fetchedPlayerId = data.ownerId
+
+            navigate(`/game/${fetchedId}?playerId=${fetchedPlayerId}`);
+          }
 
           } catch (error) {
           console.error('Error en la solicitud:', error);
+          navigate(`/`);
           }
       }
 

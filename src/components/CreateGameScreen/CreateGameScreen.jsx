@@ -1,5 +1,5 @@
 import "./CreateGameScreen.css";
-import SimpleForm from "../CreateGameForm/CreateGameForm";
+import SimpleForm from "./CreateGameForm/CreateGameForm";
 
 export default function CreateGameScreen() {
   return (

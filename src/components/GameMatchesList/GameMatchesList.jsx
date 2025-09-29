@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Users, User, Clock, Play, RefreshCw } from 'lucide-react';
 import './GameMatchesList.css';
+import { useNavigate } from "react-router-dom";
 
 const apiGamesList = 'http://localhost:8000/games';
 
@@ -8,6 +9,8 @@ const GameMatchesList = () => {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const navigate = useNavigate();
 
   const fetchMatches = async (isRefresh = false) => {
     try {
@@ -90,7 +93,7 @@ const GameMatchesList = () => {
 
   // Handle joing match
   const handleJoinMatch = (matchId) => {
-    console.log(`Intentando unirse a la partida ${matchId}`);
+    navigate(`/join/${matchId}`);
   };
 
   // loading spinner

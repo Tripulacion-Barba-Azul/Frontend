@@ -1,6 +1,6 @@
 import "./StartGameButton.css"
 
-function StartGameButton({ disabled, gameId, actualPlayerId }){
+function StartGameButton({ disabled, gameId, actualPlayerId, onStartGame}){
     
     const handleStartGame = async () => {
         if (disabled) return;
@@ -23,6 +23,9 @@ function StartGameButton({ disabled, gameId, actualPlayerId }){
 
             const data = await response.json();
             console.log('Game started successfully:', data);
+            if (onStartGame) {
+                onStartGame();
+              }
             
         } catch (error) {
             console.error('Error starting game:', error);
