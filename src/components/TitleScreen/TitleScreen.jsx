@@ -1,5 +1,5 @@
-import CreateGameButton from "./CreateGameScreen/CreateGameButton/CreateGameButton";
-import JoinGameButton from "./CreateGameScreen/JoinGameButton/JoinGameButton";
+import CreateGameButton from "./CreateGameButton/CreateGameButton";
+import JoinGameButton from "./JoinGameButton/JoinGameButton";
 import "./TitleScreen.css";
 
 export default function TitleScreen() {

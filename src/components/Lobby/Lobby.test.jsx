@@ -4,6 +4,9 @@ import { vi } from 'vitest';
 import '@testing-library/jest-dom';
 import Lobby from './Lobby';
 
+// El componente Lobby ahora recibe ws e isConnected como props
+// en lugar de crear el WebSocket internamente
+
 
 vi.mock('../StartGameButton/StartGameButton', () => ({
     default: function MockStartGameButton({ disabled, gameId, actualPlayerId }) {
@@ -47,13 +50,6 @@ vi.mock('../StartGameButton/StartGameButton', () => ({
 }));
 
 
-global.WebSocket = vi.fn().mockImplementation(() => ({
-    close: vi.fn(),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-}));
-
-
 global.fetch = vi.fn();
 
 describe('Lobby Component', () => {
@@ -69,17 +65,30 @@ describe('Lobby Component', () => {
         ]
     };
 
+    // Mock WebSocket
+    const mockWs = {
+        onmessage: null,
+        close: vi.fn(),
+        send: vi.fn()
+    };
+
+    const defaultProps = {
+        ws: mockWs,
+        isConnected: true
+    };
+
     beforeEach(() => {
         vi.clearAllMocks();
         fetch.mockResolvedValue({
             ok: true,
             json: () => Promise.resolve(mockGameData)
         });
+        mockWs.onmessage = null;
     });
 
     describe('Renderizado básico', () => {
         test('renderiza correctamente como owner', async () => {
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
             
             render(<Lobby {...ownerProps} />);
             
@@ -93,7 +102,7 @@ describe('Lobby Component', () => {
         });
 
         test('renderiza correctamente como player', async () => {
-            const playerProps = { id: 1, playerId: 3, playerName: 'Player_test_1' };
+            const playerProps = { id: 1, playerId: 3, playerName: 'Player_test_1', ...defaultProps };
             
             render(<Lobby {...playerProps} />);
             
@@ -106,14 +115,14 @@ describe('Lobby Component', () => {
         });
 
         test('muestra mensaje de carga inicial', () => {
-            render(<Lobby id={1} playerId={5} />);
+            render(<Lobby id={1} playerId={5} {...defaultProps} />);
             
             expect(screen.getByText('Cargando información del juego...')).toBeInTheDocument();
         });
 
         test('diferencia correctamente entre owner y player por la presencia del botón Start Game', async () => {
             
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
             const { unmount } = render(<Lobby {...ownerProps} />);
             
             await waitFor(() => {
@@ -124,7 +133,7 @@ describe('Lobby Component', () => {
             unmount();
 
             
-            const playerProps = { id: 1, playerId: 3, playerName: 'Player_test_1' };
+            const playerProps = { id: 1, playerId: 3, playerName: 'Player_test_1', ...defaultProps };
             render(<Lobby {...playerProps} />);
             
             await waitFor(() => {
@@ -135,7 +144,7 @@ describe('Lobby Component', () => {
 
     describe('Lógica de jugadores', () => {
         test('muestra todos los jugadores correctamente', async () => {
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
             
             render(<Lobby {...ownerProps} />);
             
@@ -147,7 +156,7 @@ describe('Lobby Component', () => {
         });
 
         test('muestra badges correctos para owner', async () => {
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
             
             render(<Lobby {...ownerProps} />);
             
@@ -158,7 +167,7 @@ describe('Lobby Component', () => {
         });
 
         test('muestra badge correcto para player normal', async () => {
-            const playerProps = { id: 1, playerId: 3, playerName: 'Player_test_1' };
+            const playerProps = { id: 1, playerId: 3, playerName: 'Player_test_1', ...defaultProps };
             
             render(<Lobby {...playerProps} />);
             
@@ -169,7 +178,7 @@ describe('Lobby Component', () => {
         });
 
         test('maneja correctamente cuando el jugador no está en la partida', async () => {
-            const invalidPlayerProps = { id: 1, playerId: 999, playerName: 'InvalidPlayer' };
+            const invalidPlayerProps = { id: 1, playerId: 999, playerName: 'InvalidPlayer', ...defaultProps };
             
             render(<Lobby {...invalidPlayerProps} />);
             
@@ -194,7 +203,7 @@ describe('Lobby Component', () => {
                 json: () => Promise.resolve(mockGameDataWithMorePlayers)
             });
 
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
             
             render(<Lobby {...ownerProps} />);
             
@@ -220,7 +229,7 @@ describe('Lobby Component', () => {
                 json: () => Promise.resolve(mockGameDataFull)
             });
 
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
             
             render(<Lobby {...ownerProps} />);
             
@@ -230,7 +239,7 @@ describe('Lobby Component', () => {
         });
 
         test('no muestra badge de partida llena cuando no se alcanza el máximo', async () => {
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
             
             render(<Lobby {...ownerProps} />);
             
@@ -242,7 +251,7 @@ describe('Lobby Component', () => {
 
     describe('Botón de inicio (para owner)', () => {
         test('muestra el botón de inicio cuando el usuario es el owner', async () => {
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
             
             render(<Lobby {...ownerProps} />);
             
@@ -252,7 +261,7 @@ describe('Lobby Component', () => {
         });
 
         test('no muestra el botón de inicio cuando el usuario no es el owner', async () => {
-            const playerProps = { id: 1, playerId: 3, playerName: 'Player_test_1' };
+            const playerProps = { id: 1, playerId: 3, playerName: 'Player_test_1', ...defaultProps };
             
             render(<Lobby {...playerProps} />);
             
@@ -262,7 +271,7 @@ describe('Lobby Component', () => {
         });
 
         test('habilita el botón cuando se alcanza el mínimo de jugadores', async () => {
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
             
             render(<Lobby {...ownerProps} />);
             
@@ -290,7 +299,7 @@ describe('Lobby Component', () => {
                 json: () => Promise.resolve(mockGameDataInsufficientPlayers)
             });
 
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
             
             render(<Lobby {...ownerProps} />);
             
@@ -305,7 +314,7 @@ describe('Lobby Component', () => {
         test('maneja error en el fetch correctamente', async () => {
             fetch.mockRejectedValueOnce(new Error('Network error'));
             
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
             
             render(<Lobby {...ownerProps} />);
             
@@ -319,7 +328,7 @@ describe('Lobby Component', () => {
                 status: 404
             });
             
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
             
             render(<Lobby {...ownerProps} />);
             
@@ -328,7 +337,7 @@ describe('Lobby Component', () => {
         });
 
         test('maneja correctamente cuando el owner y player actual son la misma persona', async () => {
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
             
             render(<Lobby {...ownerProps} />);
             
@@ -352,7 +361,7 @@ describe('Lobby Component', () => {
                 json: () => Promise.resolve(mockEmptyGameData)
             });
 
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
             
             render(<Lobby {...ownerProps} />);
             
@@ -361,14 +370,33 @@ describe('Lobby Component', () => {
             });
         });
 
-        test('verifica que el WebSocket se inicializa correctamente', async () => {
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+        test('verifica que el WebSocket onmessage se configura correctamente', async () => {
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
             
             render(<Lobby {...ownerProps} />);
             
+            await waitFor(() => {
+                expect(mockWs.onmessage).toBeDefined();
+            });
+        });
+
+        test('muestra estado de conexión correctamente', async () => {
+            const connectedProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps, isConnected: true };
+            
+            render(<Lobby {...connectedProps} />);
             
             await waitFor(() => {
-                expect(global.WebSocket).toHaveBeenCalledWith('ws://localhost:8000/ws/1');
+                expect(screen.getByText('Connected')).toBeInTheDocument();
+            });
+        });
+
+        test('no muestra estado de conexión cuando está desconectado', async () => {
+            const disconnectedProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps, isConnected: false };
+            
+            render(<Lobby {...disconnectedProps} />);
+            
+            await waitFor(() => {
+                expect(screen.queryByText('Connected')).not.toBeInTheDocument();
             });
         });
     });
@@ -390,7 +418,7 @@ describe('Lobby Component', () => {
                 json: () => Promise.resolve(mockStartGameResponse)
             });
 
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
             
             render(<Lobby {...ownerProps} />);
             
@@ -429,7 +457,7 @@ describe('Lobby Component', () => {
                 json: () => Promise.resolve(mockGameData)
             }).mockRejectedValueOnce(new Error('Network error'));
 
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
             
             render(<Lobby {...ownerProps} />);
             
@@ -460,7 +488,7 @@ describe('Lobby Component', () => {
                 json: () => Promise.resolve(mockGameDataInsufficientPlayers)
             });
 
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
             
             render(<Lobby {...ownerProps} />);
             
@@ -488,7 +516,7 @@ describe('Lobby Component', () => {
                 status: 404
             });
 
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2' };
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
             
             render(<Lobby {...ownerProps} />);
             
@@ -505,6 +533,83 @@ describe('Lobby Component', () => {
                 expect(consoleSpy).toHaveBeenCalledWith('Error starting game:', expect.any(Error));
             });
 
+            consoleSpy.mockRestore();
+        });
+    });
+
+    describe('Funcionalidad WebSocket', () => {
+        test('maneja eventos de player_joined correctamente', async () => {
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
+            
+            render(<Lobby {...ownerProps} />);
+            
+            await waitFor(() => {
+                expect(mockWs.onmessage).toBeDefined();
+            });
+
+            // Simular mensaje de WebSocket
+            const mockEvent = {
+                data: JSON.stringify({
+                    event: 'player_joined',
+                    player: 'NuevoJugador',
+                    player_id: 10
+                })
+            };
+
+            // Ejecutar el handler
+            mockWs.onmessage(mockEvent);
+
+            await waitFor(() => {
+                expect(screen.getByText('NuevoJugador')).toBeInTheDocument();
+                expect(screen.getByText(/Jugadores en espera \(3\)/)).toBeInTheDocument();
+            });
+        });
+
+        test('ignora mensajes duplicados de player_joined', async () => {
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
+            
+            render(<Lobby {...ownerProps} />);
+            
+            await waitFor(() => {
+                expect(mockWs.onmessage).toBeDefined();
+            });
+
+            // Simular mensaje de WebSocket con jugador existente
+            const mockEvent = {
+                data: JSON.stringify({
+                    event: 'player_joined',
+                    player: 'Owner_test_2', // Jugador que ya existe
+                    player_id: 5
+                })
+            };
+
+            // Ejecutar el handler
+            mockWs.onmessage(mockEvent);
+
+            await waitFor(() => {
+                // Debería seguir teniendo solo 2 jugadores
+                expect(screen.getByText(/Jugadores en espera \(2\)/)).toBeInTheDocument();
+            });
+        });
+
+        test('maneja mensajes no JSON correctamente', async () => {
+            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+            
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
+            
+            render(<Lobby {...ownerProps} />);
+            
+            await waitFor(() => {
+                expect(mockWs.onmessage).toBeDefined();
+            });
+
+            // Simular mensaje no JSON
+            const mockEvent = { data: 'mensaje simple no json' };
+            
+            mockWs.onmessage(mockEvent);
+
+            expect(consoleSpy).toHaveBeenCalledWith('Mensaje del servidor (no JSON):', 'mensaje simple no json');
+            
             consoleSpy.mockRestore();
         });
     });

@@ -1,11 +1,16 @@
 import { render, screen } from '@testing-library/react'
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import '@testing-library/jest-dom'
 import JoinGameScreen from './JoinGameScreen'
 import userEvent from '@testing-library/user-event'
 
 describe('JoinGameScreen', () => {
   it('should render the game creation form', () => {
-    render(<JoinGameScreen />)
+    render(
+      <MemoryRouter>
+        <JoinGameScreen />
+      </MemoryRouter>
+    );
     
     expect(screen.getByLabelText(/your name/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/your birthday/i)).toBeInTheDocument()
@@ -17,7 +22,11 @@ describe('JoinGameScreen', () => {
     const user = userEvent.setup()
     const mockFetch = vi.fn()
     global.fetch = mockFetch
-    render(<JoinGameScreen />)
+    render(
+      <MemoryRouter>
+        <JoinGameScreen />
+      </MemoryRouter>
+    );
     
     const submitButton = screen.getByRole('button', { name: /join/i })
     await user.click(submitButton)
@@ -32,7 +41,11 @@ describe('JoinGameScreen', () => {
     const user = userEvent.setup()
     const mockFetch = vi.fn()
     global.fetch = mockFetch
-    render(<JoinGameScreen />)
+    render(
+      <MemoryRouter>
+        <JoinGameScreen />
+      </MemoryRouter>
+    );
     
     await user.type(screen.getByLabelText(/your name/i), 'Supercalifragilisticoespiraleidoso')
     await user.type(screen.getByLabelText(/your birthday/i), '1969-04-20')
@@ -50,7 +63,11 @@ describe('JoinGameScreen', () => {
     const user = userEvent.setup()
     const mockFetch = vi.fn()
     global.fetch = mockFetch
-    render(<JoinGameScreen />)
+    render(
+      <MemoryRouter>
+        <JoinGameScreen />
+      </MemoryRouter>
+    );
     
     const tomorrow = new Date()
     tomorrow.setDate(tomorrow.getDate() + 1)
@@ -75,7 +92,13 @@ it('should call the API with correct data when form is valid', async () => {
   )
   global.fetch = mockFetch
 
-  render(<JoinGameScreen />)
+  render(
+    <MemoryRouter initialEntries={["/join/3"]}>
+      <Routes>
+        <Route path="/join/:gameId" element={<JoinGameScreen />} />
+      </Routes>
+    </MemoryRouter>
+  );
 
   await user.type(screen.getByLabelText(/your name/i), 'Esta locuraaa...')
   await user.type(screen.getByLabelText(/your birthday/i), '2022-12-18')
@@ -85,13 +108,13 @@ it('should call the API with correct data when form is valid', async () => {
 
   expect(mockFetch).toHaveBeenCalledTimes(1)
   expect(mockFetch).toHaveBeenCalledWith(
-    expect.stringMatching(/http:\/\/localhost:8000\/games\/\d+\/player/),
+    expect.stringMatching(/http:\/\/localhost:8000\/games\/\d+\/join/),
     expect.objectContaining({
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(
         { playerName: 'Esta locuraaa...', 
-        birthDate: '2022-12-18' })
+          birthDate: '2022-12-18' })
     })
   )
 })
@@ -104,7 +127,11 @@ it('should handle API error response', async () => {
   global.fetch = mockFetch
   console.error = vi.fn() // silenciar error esperado en consola
 
-  render(<JoinGameScreen />)
+  render(
+    <MemoryRouter>
+      <JoinGameScreen />
+    </MemoryRouter>
+  );
 
   await user.type(screen.getByLabelText(/your name/i), 'Robotito')
   await user.type(screen.getByLabelText(/your birthday/i), '1990-01-01')

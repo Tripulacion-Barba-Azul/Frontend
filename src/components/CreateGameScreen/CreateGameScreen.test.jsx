@@ -1,11 +1,16 @@
 import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from "react-router-dom";
 import '@testing-library/jest-dom'
 import CreateGameScreen from './CreateGameScreen'
 import userEvent from '@testing-library/user-event'
 
 describe('CreateGameScreen', () => {
   it('should render the game creation form', () => {
-    render(<CreateGameScreen />)
+    render(
+      <MemoryRouter>
+        <CreateGameScreen />
+      </MemoryRouter>
+    );
     
     expect(screen.getByLabelText(/game name/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/minimum players/i)).toBeInTheDocument()
@@ -20,7 +25,11 @@ describe('CreateGameScreen', () => {
     const user = userEvent.setup()
     const mockFetch = vi.fn()
     global.fetch = mockFetch
-    render(<CreateGameScreen />)
+    render(
+      <MemoryRouter>
+        <CreateGameScreen />
+      </MemoryRouter>
+    );
     
     const submitButton = screen.getByRole('button', { name: /create/i })
     await user.click(submitButton)
@@ -38,8 +47,11 @@ describe('CreateGameScreen', () => {
     const user = userEvent.setup()
     const mockFetch = vi.fn()
     global.fetch = mockFetch
-    render(<CreateGameScreen />)
-    
+    render(
+      <MemoryRouter>
+        <CreateGameScreen />
+      </MemoryRouter>
+    );    
     await user.type(screen.getByLabelText(/game name/i), 'ingenieria del software 2025 es la mejor materia wow')
     await user.type(screen.getByLabelText(/minimum players/i), '2')
     await user.type(screen.getByLabelText(/maximum players/i), '2') 
@@ -60,8 +72,11 @@ describe('CreateGameScreen', () => {
     const user = userEvent.setup()
     const mockFetch = vi.fn()
     global.fetch = mockFetch
-    render(<CreateGameScreen />)
-    
+    render(
+      <MemoryRouter>
+        <CreateGameScreen />
+      </MemoryRouter>
+    );    
     await user.type(screen.getByLabelText(/game name/i), 'Partidarda')
     await user.type(screen.getByLabelText(/minimum players/i), '4')
     await user.type(screen.getByLabelText(/maximum players/i), '2') 
@@ -82,8 +97,11 @@ describe('CreateGameScreen', () => {
     const user = userEvent.setup()
     const mockFetch = vi.fn()
     global.fetch = mockFetch
-    render(<CreateGameScreen />)
-    
+    render(
+      <MemoryRouter>
+        <CreateGameScreen />
+      </MemoryRouter>
+    );    
     await user.type(screen.getByLabelText(/game name/i), 'Partidarda')
     await user.type(screen.getByLabelText(/minimum players/i), '1')
     await user.type(screen.getByLabelText(/maximum players/i), '3') 
@@ -103,8 +121,11 @@ describe('CreateGameScreen', () => {
     const user = userEvent.setup()
     const mockFetch = vi.fn()
     global.fetch = mockFetch
-    render(<CreateGameScreen />)
-    
+    render(
+      <MemoryRouter>
+        <CreateGameScreen />
+      </MemoryRouter>
+    );    
     await user.type(screen.getByLabelText(/game name/i), 'Partidarda')
     await user.type(screen.getByLabelText(/minimum players/i), '4')
     await user.type(screen.getByLabelText(/maximum players/i), '10') 
@@ -124,8 +145,11 @@ describe('CreateGameScreen', () => {
     const user = userEvent.setup()
     const mockFetch = vi.fn()
     global.fetch = mockFetch
-    render(<CreateGameScreen />)
-    
+    render(
+      <MemoryRouter>
+        <CreateGameScreen />
+      </MemoryRouter>
+    );    
     const tomorrow = new Date()
     tomorrow.setDate(tomorrow.getDate() + 1)
     const futureDate = tomorrow.toISOString().split('T')[0]
@@ -152,8 +176,11 @@ it('should call the API with correct data when form is valid', async () => {
   )
   global.fetch = mockFetch
 
-  render(<CreateGameScreen />)
-
+  render(
+    <MemoryRouter>
+      <CreateGameScreen />
+    </MemoryRouter>
+  );
   await user.type(screen.getByLabelText(/game name/i), 'Test Game')
   await user.type(screen.getByLabelText(/minimum players/i), '2')
   await user.type(screen.getByLabelText(/maximum players/i), '4') 
@@ -185,8 +212,11 @@ it('should handle API error response', async () => {
   global.fetch = mockFetch
   console.error = vi.fn() // silenciar error esperado en consola
 
-  render(<CreateGameScreen />)
-
+  render(
+    <MemoryRouter>
+      <CreateGameScreen />
+    </MemoryRouter>
+  );
   await user.type(screen.getByLabelText(/game name/i), 'Test Game')
   await user.type(screen.getByLabelText(/minimum players/i), '2')
   await user.type(screen.getByLabelText(/maximum players/i), '4') 
