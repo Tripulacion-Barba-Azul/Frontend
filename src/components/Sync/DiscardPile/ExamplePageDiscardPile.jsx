@@ -1,7 +1,8 @@
+// src/components/Sync/DiscardPile/ExamplePageDiscardPile.jsx
 import { useEffect, useMemo, useState } from "react";
 import SyncOrchestrator from "../SyncOrchestrator.jsx";
 
-// Nombres EXACTOS que usa tu mapping (NAME_TO_ID / cardMapping)
+// Nombres válidos (los que tengas mapeados en tu app)
 const CARD_NAMES = [
   "detective_poirot",
   "detective_marple",
@@ -26,56 +27,58 @@ const CARD_NAMES = [
   "devious_fauxpas",
 ];
 
-// Crea un mazo de ejemplo: algunas en deck, otras en discard; exactamente UNA top
-function makeInitialServerCards() {
-  const cards = CARD_NAMES.map((name, idx) => ({
-    cardName: name,
-    cardID: 1000 + idx, // id cualquiera
-    cardOwnerID: null, // no importa para discard
+// Crea un mazo base de "size" cartas, con IDs únicos y todo en el mazo
+function makeBaseDeck(size = 60) {
+  const deck = [];
+  for (let i = 0; i < size; i++) {
+    const cardName = CARD_NAMES[i % CARD_NAMES.length];
+    deck.push({
+      cardName,
+      cardID: 2000 + i + 1,
+      cardOwnerID: null,
+      isInDeck: true,
+      isInDiscard: false,
+      isInDiscardTop: false,
+    });
+  }
+  return deck;
+}
+
+// Dado un mazo base, devuelve un snapshot con exactamente "count" cartas en descarte.
+// Si count > 0, pone EXACTAMENTE una como top.
+function snapshotWithDiscardCount(base, count) {
+  const deck = base.map((c) => ({
+    ...c,
     isInDeck: true,
     isInDiscard: false,
     isInDiscardTop: false,
   }));
 
-  // Mueve 8 cartas al descarte
-  const discardIdxs = [2, 5, 7, 10, 12, 14, 17, 19].filter(
-    (i) => i < cards.length
-  );
-  discardIdxs.forEach((i) => {
-    cards[i].isInDeck = false;
-    cards[i].isInDiscard = true;
-  });
+  const max = Math.min(count, deck.length);
+  if (max === 0) return deck;
 
-  // Marca UNA sola como top (primera del descarte)
-  if (discardIdxs.length === 0) {
-    // Fallback por si la lista cambia: garantiza al menos una en discard/top
-    cards[0].isInDeck = false;
-    cards[0].isInDiscard = true;
-    cards[0].isInDiscardTop = true;
-  } else {
-    cards[discardIdxs[0]].isInDiscardTop = true;
+  // Elegir 'max' índices distintos aleatorios
+  const idxs = [...deck.keys()];
+  for (let i = idxs.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [idxs[i], idxs[j]] = [idxs[j], idxs[i]];
   }
+  const chosen = idxs.slice(0, max);
 
-  return cards;
-}
-
-// Garantiza el invariante: exactamente UNA top y está en discard (no en deck)
-function setTopAt(cards, index) {
-  return cards.map((c, i) => {
-    if (i === index) {
-      return {
-        ...c,
-        isInDeck: false,
-        isInDiscard: true,
-        isInDiscardTop: true,
-      };
-    }
-    return { ...c, isInDiscardTop: false };
+  chosen.forEach((i) => {
+    deck[i].isInDeck = false;
+    deck[i].isInDiscard = true;
   });
+
+  // Elegir una de las descartadas como top
+  const topIndex = chosen[Math.floor(Math.random() * chosen.length)];
+  deck[topIndex].isInDiscardTop = true;
+
+  return deck;
 }
 
 export default function ExamplePageDiscardPile() {
-  // Players mínimos para que el orquestador pinte el tablero (no nos enfocamos en turnos acá)
+  // Jugadores mínimos (no testeamos turnos acá, solo para que renderice el tablero)
   const serverPlayers = useMemo(
     () => [
       {
@@ -102,77 +105,36 @@ export default function ExamplePageDiscardPile() {
         role: "detective",
         turn: false,
       },
-      {
-        name: "P4",
-        avatar: "default1",
-        order: 4,
-        actualPlayer: false,
-        role: "detective",
-        turn: false,
-      },
-      {
-        name: "P5",
-        avatar: "default1",
-        order: 5,
-        actualPlayer: false,
-        role: "detective",
-        turn: false,
-      },
-      {
-        name: "P6",
-        avatar: "default1",
-        order: 6,
-        actualPlayer: false,
-        role: "detective",
-        turn: false,
-      },
     ],
     []
   );
 
-  // Estado de cartas que “emula” lo que te enviaría el backend por WS
+  // Mazo base grande para disparar todos los estados visuales
+  const baseDeck = useMemo(() => makeBaseDeck(60), []);
+
+  // Secuencia de tamaños objetivo para cubrir:
+  // <5, >10 && <20, >25 y >=31 (full), además de algunos intermedios
+  const TARGET_SIZES = useMemo(() => [3, 15, 26, 34, 0, 12, 5, 31], []);
+
   const [serverCards, setServerCards] = useState(() =>
-    makeInitialServerCards()
+    snapshotWithDiscardCount(baseDeck, TARGET_SIZES[0])
   );
+  const [idx, setIdx] = useState(0);
 
-  // Cada 2.5s rota la carta top dentro del descarte, manteniendo SIEMPRE una sola top
   useEffect(() => {
-    const ROTATE_MS = 2500;
+    const id = setInterval(() => {
+      const nextIdx = (idx + 1) % TARGET_SIZES.length;
+      const nextCount = TARGET_SIZES[nextIdx];
+      const nextSnapshot = snapshotWithDiscardCount(baseDeck, nextCount);
+      setServerCards(nextSnapshot);
+      setIdx(nextIdx);
+      // Si querés ver qué está pasando:
+      // const top = nextSnapshot.find(c => c.isInDiscardTop);
+      // console.log(`discard=${nextCount}`, top?.cardName);
+    }, 2000); // ~2s entre cambios
+    return () => clearInterval(id);
+  }, [idx, TARGET_SIZES, baseDeck]);
 
-    const timer = setInterval(() => {
-      setServerCards((prev) => {
-        const discardIdxs = prev
-          .map((c, i) => (c.isInDiscard ? i : -1))
-          .filter((i) => i >= 0);
-
-        // Si por algún motivo quedaron 0 en discard, forzamos una y la marcamos top
-        if (discardIdxs.length === 0) {
-          const fallback = [...prev];
-          fallback[0] = {
-            ...fallback[0],
-            isInDeck: false,
-            isInDiscard: true,
-            isInDiscardTop: true,
-          };
-          return fallback.map((c, i) =>
-            i === 0 ? fallback[0] : { ...c, isInDiscardTop: false }
-          );
-        }
-
-        // Localiza el top actual y avanza al siguiente dentro del descarte
-        const currentTopIdx = prev.findIndex((c) => c.isInDiscardTop);
-        const list = discardIdxs;
-        const posInList = Math.max(0, list.indexOf(currentTopIdx));
-        const nextIdx = list[(posInList + 1) % list.length];
-
-        return setTopAt(prev, nextIdx);
-      });
-    }, ROTATE_MS);
-
-    return () => clearInterval(timer);
-  }, []);
-
-  // Id de jugador actual (no afecta al discard; lo pasamos por el orquestador)
   const currentPlayerId = 42;
 
   return (

@@ -1,6 +1,7 @@
-import TurnSync from "./Turn/TurnSync.jsx";
+import TurnSync from "./Board/TurnSync.jsx";
 import OwnCardsSync from "./OwnCards/OwnCardsSync.jsx";
 import DiscardPileSync from "./DiscardPile/DiscardPileSync.jsx";
+import RegularDeckSync from "./RegularDeck/RegularDeckSync.jsx";
 
 export default function SyncOrchestrator({
   serverPlayers = [],
@@ -9,15 +10,18 @@ export default function SyncOrchestrator({
 }) {
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      {/* Board + badges (turn sync) */}
+      {/* Board + player badges (turn sync) */}
       <TurnSync serverPlayers={serverPlayers} />
 
-      {/* OwnCards */}
+      {/* Foreground layer for table widgets */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* Discard pile  */}
+        {/* Regular deck (center). Tweak position in RegularDeckSync if needed */}
+        <RegularDeckSync serverCards={serverCards} />
+
+        {/* Discard pile (assumes ya la tenés integrada) */}
         <DiscardPileSync serverCards={serverCards} />
 
-        {/* Turn */}
+        {/* Current player's hand (bottom) */}
         <OwnCardsSync
           serverCards={serverCards}
           currentPlayerId={currentPlayerId}
