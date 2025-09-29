@@ -11,6 +11,7 @@ const imageMap = {
 
 export default function ViewSecrets({ secrets }) {
   const [ViewSecrets, setViewSecrets] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const toggleViewSecrets = () => {
     setViewSecrets(!ViewSecrets);
@@ -30,7 +31,7 @@ export default function ViewSecrets({ secrets }) {
         <div className="my-light-dots">
           {secrets.map((secret) => (
             <div
-              key={secret.class}
+              key={secret.secretID}
               className={`my-light-dot ${
                 secret.revealed ? "revealed" : "hidden"
               }`}
@@ -48,9 +49,9 @@ export default function ViewSecrets({ secrets }) {
         <div className="my-viewsecrets">
           <div onClick={toggleViewSecrets} className="overlay"></div>
           <div className="my-secrets-grid">
-          {hasSecrets ? (
+            {hasSecrets ? (
               secrets.map((secret) => (
-                <div key={secret.class} className="my-secret-card">
+                <div key={secret.secretID} className="my-secret-card">
                   {secret.revealed ? (
                     <img
                       src={imageMap[secret.class]}

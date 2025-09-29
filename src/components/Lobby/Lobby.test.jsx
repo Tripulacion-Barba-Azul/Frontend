@@ -9,20 +9,16 @@ import Lobby from './Lobby';
 
 
 vi.mock('../StartGameButton/StartGameButton', () => ({
-    default: function MockStartGameButton({ disabled, gameId, actualPlayerId }) {
+    default: function MockStartGameButton({ disabled, gameId, actualPlayerId, onStartGame }) {
         const handleStartGame = async () => {
             if (disabled) return;
             
             try {
-                const response = await fetch(`http://localhost:8000/games/${gameId}/start`, {
+                const response = await fetch(`http://localhost:8000/games/${gameId}/join?ownerId=${actualPlayerId}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        gameId: parseInt(gameId),
-                        actualPlayerId: parseInt(actualPlayerId)
-                    })
+                    }
                 });
 
                 if (!response.ok) {
@@ -31,6 +27,9 @@ vi.mock('../StartGameButton/StartGameButton', () => ({
 
                 const data = await response.json();
                 console.log('Game started successfully:', data);
+                if (onStartGame) {
+                    onStartGame();
+                }
                 
             } catch (error) {
                 console.error('Error starting game:', error);
@@ -433,16 +432,12 @@ describe('Lobby Component', () => {
             // Verificar que se hizo la request correcta
             await waitFor(() => {
                 expect(fetch).toHaveBeenCalledWith(
-                    'http://localhost:8000/games/1/start',
+                    'http://localhost:8000/games/1/join?ownerId=5',
                     {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            gameId: 1,
-                            actualPlayerId: 5
-                        })
+                        }
                     }
                 );
             });
@@ -547,6 +542,21 @@ describe('Lobby Component', () => {
                 expect(mockWs.onmessage).toBeDefined();
             });
 
+            // Mock para la segunda llamada a fetch después del evento WebSocket
+            const mockGameDataWithNewPlayer = {
+                ...mockGameData,
+                players: [
+                    { playerId: 5, playerName: 'Owner_test_2' },
+                    { playerId: 3, playerName: 'Player_test_1' },
+                    { playerId: 10, playerName: 'NuevoJugador' }
+                ]
+            };
+            
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve(mockGameDataWithNewPlayer)
+            });
+
             // Simular mensaje de WebSocket
             const mockEvent = {
                 data: JSON.stringify({
@@ -572,6 +582,13 @@ describe('Lobby Component', () => {
             
             await waitFor(() => {
                 expect(mockWs.onmessage).toBeDefined();
+            });
+
+            // Mock para la segunda llamada a fetch después del evento WebSocket
+            // Devolvemos los mismos datos (sin cambios, simulando que el jugador ya existía)
+            fetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve(mockGameData)
             });
 
             // Simular mensaje de WebSocket con jugador existente
