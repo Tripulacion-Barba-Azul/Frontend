@@ -2,7 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import ViewMyCards from "../../ViewMyCards/ViewMyCards.jsx";
 import { computeHandIds } from "../OwnCards/OwnCardsLogic.js";
 
-export default function OwnCardsSync({ serverCards = [], currentPlayerId }) {
+export default function OwnCardsSync({
+  serverCards = [],
+  currentPlayerId,
+  anchorClass = "",
+}) {
   // Recompute hand ids from latest snapshot
   const nextIds = useMemo(
     () => computeHandIds(serverCards, currentPlayerId),
@@ -24,5 +28,9 @@ export default function OwnCardsSync({ serverCards = [], currentPlayerId }) {
     if (changed) setCardIds(nextIds);
   }, [changed, nextIds]);
 
-  return <ViewMyCards cards={cardIds} />;
+  return (
+    <div className={anchorClass}>
+      <ViewMyCards cards={cardIds} />
+    </div>
+  );
 }

@@ -1,8 +1,15 @@
+// ExamplePageOwnCardsV2.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
-import SyncOrchestrator from "../SyncOrchestrator.jsx";
+import OwnCardsSync from "./OwnCardsSync.jsx"; // ajustá la ruta según tu árbol
+import {
+  NAME_TO_ID,
+  HAND_MAX,
+  CARD_ID_MIN,
+  CARD_ID_MAX,
+} from "./OwnCardsSyncConstants.js";
 
-// Use names that exist in your NAME_TO_ID mapping
-const DEMO_CARD_NAMES = [
+// Nombres canónicos (coinciden con NAME_TO_ID)
+const CARD_NAMES = [
   "detective_poirot",
   "detective_marple",
   "detective_satterhwaite",
@@ -26,150 +33,125 @@ const DEMO_CARD_NAMES = [
   "devious_fauxpas",
 ];
 
-export default function ExamplePageOwnCards() {
-  const currentPlayerId = 42;
+const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const sampleOne = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-  // Players just to draw the board; can be static
-  const serverPlayers = useMemo(
-    () => [
-      {
-        name: "Wolovick",
-        order: 1,
-        actualPlayer: false,
-        role: "detective",
-        turn: false,
-      },
-      {
-        name: "Demetrio",
-        order: 2,
-        actualPlayer: false,
-        role: "accomplice",
-        turn: false,
-      },
-      {
-        name: "Robotito",
-        order: 3,
-        actualPlayer: false,
-        role: "detective",
-        turn: false,
-      },
-      {
-        name: "Parce",
-        order: 4,
-        actualPlayer: false,
-        role: "detective",
-        turn: false,
-      },
-      {
-        name: "Gunter",
-        order: 5,
-        actualPlayer: true,
-        role: "murderer",
-        turn: true,
-      },
-      {
-        name: "Penazzi",
-        order: 6,
-        actualPlayer: false,
-        role: "detective",
-        turn: false,
-      },
-    ],
-    []
-  );
+export default function ExamplePageOwnCardsV2() {
+  const CURRENT_PLAYER_ID = 1;
+  const otherPlayers = useMemo(() => [2, 3, 4], []);
 
-  // Build initial deck: first 3 in hand, the rest in deck
-  const [serverCards, setServerCards] = useState(() =>
-    DEMO_CARD_NAMES.slice(0, 20).map((name, i) => ({
-      cardName: name,
-      cardID: 1000 + i,
-      cardOwnerID: i < 3 ? currentPlayerId : null,
-      isInDeck: i >= 3,
-      isInDiscard: false,
-    }))
-  );
+  // Generador de cartas completas
+  const uidRef = useRef(1);
+  const makeCard = (ownerId = null, inDeck = true, inDiscard = false) => {
+    const cardName = sampleOne(CARD_NAMES);
+    const spriteId = NAME_TO_ID[cardName];
+    return {
+      cardID: `C-${uidRef.current++}`,
+      cardOwnerID: ownerId, // null si está en mazo
+      cardName,
+      spriteId: Number.isInteger(spriteId) ? spriteId : CARD_ID_MIN,
+      cardType: "regular",
+      faceUp: false,
+      isInDeck: inDeck,
+      isInDiscard: inDiscard,
+    };
+  };
 
-  // Toggle add/remove each tick
-  const addPhaseRef = useRef(true);
+  // Mazo base + reparto inicial al local
+  const [serverCards, setServerCards] = useState(() => {
+    const base = Array.from({ length: 40 }, () => makeCard(null, true, false));
+    // Reparto inicial 3–5 al local
+    let next = base.map((c) => ({ ...c }));
+    const count = randInt(3, Math.min(5, HAND_MAX));
+    for (let i = 0; i < count; i++) {
+      const di = next.findIndex((c) => c.isInDeck && !c.isInDiscard);
+      if (di !== -1) {
+        next[di] = {
+          ...next[di],
+          isInDeck: false,
+          isInDiscard: false,
+          cardOwnerID: CURRENT_PLAYER_ID,
+          faceUp: false,
+        };
+      }
+    }
+    return next;
+  });
 
+  // Tick: cada 3.5s dibuja/descarta/transfiere una carta del local
   useEffect(() => {
-    const intervalMs = 2000; // one change every 2 seconds
-    const interval = setInterval(() => {
+    const MS = 3500;
+    const id = setInterval(() => {
       setServerCards((prev) => {
-        // --- work on a fresh copy (immutability) ---
         const next = prev.map((c) => ({ ...c }));
+        const deckIdx = () =>
+          next.findIndex((c) => c.isInDeck && !c.isInDiscard);
+        const handIdx = next
+          .map((c, i) => ({ c, i }))
+          .filter(
+            ({ c }) =>
+              c.cardOwnerID === CURRENT_PLAYER_ID &&
+              !c.isInDeck &&
+              !c.isInDiscard
+          )
+          .map(({ i }) => i);
+        const size = handIdx.length;
 
-        // Helpers (operate on 'next')
-        const countInHand = () =>
-          next.filter(
-            (c) =>
-              c.cardOwnerID === currentPlayerId && !c.isInDeck && !c.isInDiscard
-          ).length;
+        const action =
+          size <= 0
+            ? "draw"
+            : size >= HAND_MAX
+            ? sampleOne(["discard", "give"])
+            : sampleOne(["draw", "discard", "give"]);
 
-        const drawOneFromDeck = () => {
-          // Find ONE deck card and move to hand
-          const idx = next.findIndex((c) => c.isInDeck && !c.isInDiscard);
-          if (idx !== -1) {
-            next[idx].isInDeck = false;
-            next[idx].cardOwnerID = currentPlayerId;
-            return true; // success
+        if (action === "draw") {
+          const di = deckIdx();
+          if (di !== -1 && size < HAND_MAX) {
+            next[di] = {
+              ...next[di],
+              isInDeck: false,
+              isInDiscard: false,
+              cardOwnerID: CURRENT_PLAYER_ID,
+              faceUp: false,
+            };
           }
-          return false; // no card to draw
-        };
+        } else if (action === "discard" && handIdx.length > 0) {
+          const idx = sampleOne(handIdx);
+          next[idx] = { ...next[idx], isInDiscard: true, faceUp: true };
+        } else if (action === "give" && handIdx.length > 0) {
+          const idx = sampleOne(handIdx);
+          const to = sampleOne(otherPlayers);
+          next[idx] = {
+            ...next[idx],
+            cardOwnerID: to,
+            isInDeck: false,
+            isInDiscard: false,
+            faceUp: false,
+          };
+        }
 
-        const discardOneFromHand = () => {
-          // Find ONE in-hand card and move to discard
-          const idx = next.findIndex(
-            (c) =>
-              c.cardOwnerID === currentPlayerId && !c.isInDeck && !c.isInDiscard
-          );
-          if (idx !== -1) {
-            next[idx].isInDiscard = true;
-            return true; // success
-          }
-          return false; // no card to discard
-        };
-
-        // Decide operation (exactly ONE per tick)
-        const inHand = countInHand();
-        let didChange = false;
-
-        if (addPhaseRef.current) {
-          // Add one if hand not full
-          if (inHand < 6) {
-            didChange = drawOneFromDeck();
-          }
-          // If cannot add (deck empty or hand is already full), try removing one
-          if (!didChange && inHand > 0) {
-            didChange = discardOneFromHand();
-          }
-        } else {
-          // Remove one if hand has something
-          if (inHand > 0) {
-            didChange = discardOneFromHand();
-          }
-          // If cannot remove (hand empty), try adding one
-          if (!didChange && inHand < 6) {
-            didChange = drawOneFromDeck();
+        // Seguridad: spriteId válido si se coló algún nombre extraño
+        for (let i = 0; i < next.length; i++) {
+          const s = next[i].spriteId;
+          if (!Number.isInteger(s) || s < CARD_ID_MIN || s > CARD_ID_MAX) {
+            const fallback = NAME_TO_ID[next[i].cardName];
+            next[i].spriteId = Number.isInteger(fallback)
+              ? fallback
+              : CARD_ID_MIN;
           }
         }
 
-        // Flip phase only if something actually changed
-        if (didChange) addPhaseRef.current = !addPhaseRef.current;
-
         return next;
       });
-    }, intervalMs);
-
-    return () => clearInterval(interval);
-  }, [currentPlayerId]);
+    }, MS);
+    return () => clearInterval(id);
+  }, [otherPlayers]);
 
   return (
-    <div className="relative w-full h-screen">
-      <SyncOrchestrator
-        serverPlayers={serverPlayers}
+    <div className="relative w-full h-screen overflow-hidden bg-black/70">
+      <OwnCardsSync
         serverCards={serverCards}
-        currentPlayerId={currentPlayerId}
+        currentPlayerId={CURRENT_PLAYER_ID}
       />
     </div>
   );

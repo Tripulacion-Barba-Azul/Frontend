@@ -2,7 +2,11 @@ import React, { useMemo } from "react";
 import ViewMySecrets from "../../ViewMySecrets/ViewMySecrets.jsx";
 import { computeSecretsState } from "./ViewMySecretsLogic.js";
 
-export default function ViewMySecretsSync({ allSecrets = [], playerId }) {
+export default function ViewMySecretsSync({
+  allSecrets = [],
+  playerId,
+  anchorClass = "",
+}) {
   // Derive mapped secrets only when inputs change
   const secrets = useMemo(
     () => computeSecretsState(allSecrets, playerId),
@@ -10,7 +14,7 @@ export default function ViewMySecretsSync({ allSecrets = [], playerId }) {
   );
 
   return (
-    <div className="absolute inset-0">
+    <div className={anchorClass}>
       <ViewMySecrets secrets={secrets} />
     </div>
   );

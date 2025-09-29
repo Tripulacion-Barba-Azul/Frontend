@@ -30,14 +30,16 @@ export default function SyncOrchestrator({
           serverCards={serverCards}
           currentPlayerId={currentPlayerId}
         />
-        <ViewMySecretsSync
-          allSecrets={serverSecrets}
-          playerId={currentPlayerId}
-        />
-
         <ViewMyCardsSync
           serverCards={serverCards}
           currentPlayerId={currentPlayerId}
+          anchorClass="fixed left-110 bottom-45 z-50 pointer-events-auto"
+        />
+
+        <ViewMySecretsSync
+          allSecrets={serverSecrets}
+          playerId={currentPlayerId}
+          anchorClass="fixed right-416 bottom-27 z-50 pointer-events-auto"
         />
       </div>
     </div>

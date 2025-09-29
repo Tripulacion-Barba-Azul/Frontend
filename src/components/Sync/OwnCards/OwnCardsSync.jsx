@@ -1,6 +1,8 @@
+// OwnCardsSync.jsx
 import { useEffect, useMemo, useState } from "react";
-import ViewMyCards from "../../ViewMyCards/ViewMyCards.jsx";
-import { computeHandIds } from "../OwnCards/OwnCardsLogic.js";
+// ⬇ ajustá esta ruta si tu OwnCards.jsx vive en otra carpeta
+import OwnCards from "../../OwnCards/OwnCards.jsx";
+import { computeHandIds } from "./OwnCardsLogic.js";
 
 export default function OwnCardsSync({ serverCards = [], currentPlayerId }) {
   // Recompute hand ids from latest snapshot
@@ -24,5 +26,5 @@ export default function OwnCardsSync({ serverCards = [], currentPlayerId }) {
     if (changed) setCardIds(nextIds);
   }, [changed, nextIds]);
 
-  return <ViewMyCards cards={cardIds} />;
+  return <OwnCards cardIds={cardIds} />;
 }
