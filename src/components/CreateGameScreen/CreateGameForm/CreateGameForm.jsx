@@ -39,6 +39,7 @@ export default function CreateGameForm() {
           });
 
           if (!response.ok) {
+            console.error('Error en la solicitud:', error);
             navigate(`/`);
         } else {
           console.log(response.status, response.statusText);

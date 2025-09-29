@@ -34,6 +34,7 @@ export default function JoinGameForm() {
           });
 
           if (!response.ok) {
+            console.error('Error en la solicitud:', error);
             navigate(`/join`);
         } else {
           console.log(response.status, response.statusText);
@@ -87,7 +88,7 @@ export default function JoinGameForm() {
     <div className="container">
       <form onSubmit={handleSubmit}>
     
-        <label htmlFor="yourName"> Your Name</label>
+        <label htmlFor="yourName">Your Name</label>
         <br />
         <input 
           id="yourName"
@@ -98,7 +99,7 @@ export default function JoinGameForm() {
         <p className="error">{formErrors.PlayerName}</p>
         <br />
         
-        <label htmlFor="yourBirthday"> Your Birthday</label>
+        <label htmlFor="yourBirthday">Your Birthday</label>
         <br />
         <input 
           id="yourBirthday"

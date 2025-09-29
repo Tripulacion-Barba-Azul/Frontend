@@ -93,6 +93,7 @@ const GameMatchesList = () => {
 
   // Handle joing match
   const handleJoinMatch = (matchId) => {
+    console.log(`Intentando unirse a la partida ${matchId}`);
     navigate(`/join/${matchId}`);
   };
 

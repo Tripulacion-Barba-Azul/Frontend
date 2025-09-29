@@ -2,15 +2,11 @@ import './Lobby.css';
 import { useState, useEffect } from 'react';
 import StartGameButton from '../StartGameButton/StartGameButton';
 
-// Props esperados: { id, playerId }
+// Props esperados: { id, playerId, ws, isConnected }
 function Lobby(props){
     
-    const wsEndpoint = `ws://localhost:8000/ws/${props.id}`;
-
     const [currentGame, setCurrentGame] = useState(null);
     const [players, setPlayers] = useState([]);
-    const [ws, setWs] = useState(null);
-    const [isConnected, setIsConnected] = useState(false);
     const [isOwner, setIsOwner] = useState(false);
     const [playerNotInGame, setPlayerNotInGame] = useState(false);
     
@@ -73,70 +69,41 @@ function Lobby(props){
         }
     };
 
-    const connectWebSocket = () => {
-        if (ws) {
-            ws.close();
-        }
-
-        const websocket = new WebSocket(wsEndpoint); 
-        
-        websocket.onopen = () => {
-            console.log('WebSocket conectado');
-            setIsConnected(true);
-        };
-
-        websocket.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                console.log('Mensaje recibido del WebSocket:', data);
-                
-                if (data.event === 'player_joined') {
-                    console.log('Jugador se unió:', data.player, 'ID:', data.player_id);
+    // Configurar el manejador de mensajes del WebSocket cuando esté disponible
+    useEffect(() => {
+        if (props.ws) {
+            props.ws.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('Mensaje recibido del WebSocket:', data);
                     
-                    // Actualizar la lista de jugadores con el nuevo player
-                    setPlayers(prev => {
-                        const playerExists = prev.find(p => p.playerName === data.player);
-                        if (!playerExists) {
-                            const newPlayer = {
-                                playerId: data.player_id || Math.random(), // Usar ID del WebSocket si está disponible
-                                playerName: data.player
-                            };
-                            const newPlayers = [...prev, newPlayer];
-                            console.log('Nueva lista de jugadores:', newPlayers);
-                            return newPlayers;
-                        }
-                        return prev;
-                    });
+                    if (data.event === 'player_joined') {
+                        console.log('Jugador se unió:', data.player, 'ID:', data.player_id);
+                        
+                        // Actualizar la lista de jugadores con el nuevo player
+                        setPlayers(prev => {
+                            const playerExists = prev.find(p => p.playerName === data.player);
+                            if (!playerExists) {
+                                const newPlayer = {
+                                    playerId: data.player_id || Math.random(), // Usar ID del WebSocket si está disponible
+                                    playerName: data.player
+                                };
+                                const newPlayers = [...prev, newPlayer];
+                                console.log('Nueva lista de jugadores:', newPlayers);
+                                return newPlayers;
+                            }
+                            return prev;
+                        });
+                    }
+                } catch (error) {
+                    console.log('Mensaje del servidor (no JSON):', event.data);
                 }
-            } catch (error) {
-                console.log('Mensaje del servidor (no JSON):', event.data);
-            }
-        };
-
-        websocket.onclose = () => {
-            console.log('WebSocket desconectado');
-            setIsConnected(false);
-        };
-
-        websocket.onerror = (error) => {
-            console.error('Error en WebSocket:', error);
-            setIsConnected(false);
-        };
-
-        setWs(websocket);
-    };
+            };
+        }
+    }, [props.ws]);
 
     useEffect(() => {
         fetchMatches();
-        if (props.id) {
-            connectWebSocket();
-        }
-
-        return () => {
-            if (ws) {
-                ws.close();
-            }
-        };
     }, [props.id]);
 
     if (!currentGame) {
@@ -157,7 +124,7 @@ function Lobby(props){
 
     return(
         <div className='Lobby'>
-            <h2>Partida: {currentGame.name} {isConnected && <span style={{color: 'green'}}>Connected</span>}</h2>
+            <h2>Partida: {currentGame.name} {props.isConnected && <span style={{color: 'green'}}>Connected</span>}</h2>
             <h2>Creador de la partida: {currentGame.creator}</h2>
             <h2>Min: {currentGame.minPlayers}, Max: {currentGame.maxPlayers}</h2>
 
