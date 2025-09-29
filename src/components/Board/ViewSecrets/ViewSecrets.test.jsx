@@ -10,7 +10,7 @@ const mockSecrets = [
   { class: "regular", revealed: false },
 ];
 
-const mockNoSecrets = [ ];
+const mockNoSecrets = [];
 
 describe("ViewSecrets", () => {
   it("renders the correct number of dots", () => {
@@ -78,5 +78,4 @@ describe("ViewSecrets", () => {
     await user.click(screen.getByRole("button"));
     expect(screen.getByText(/Out of secrets/i)).toBeInTheDocument();
   });
-
 });

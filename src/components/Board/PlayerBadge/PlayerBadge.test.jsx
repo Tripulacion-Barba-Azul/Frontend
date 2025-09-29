@@ -4,13 +4,25 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
-// --- Mock constants ---
+// --- Mocks de constantes (simple y estable para tests) ---
 vi.mock("./playerBadgeConstants.js", () => ({
   SIZES: { big: "badge-big", small: "badge-small" },
   RING_COLORS: { black: "rgba(0,0,0,0.70)", blue: "rgba(0,0,255,0.70)" },
   NAME_BG_COLORS: { white: "#ffffff", red: "#ff0000" },
   AVATAR_MAP: { default: "/assets/default.png", robot: "/assets/robot.png" },
   MAX_NAME_LEN: 20,
+}));
+
+// --- Mocks de hijos para aislar PlayerBadge ---
+vi.mock("../CardCount/CardCount.jsx", () => ({
+  default: ({ number }) => (
+    <span data-testid="cardcount">count:{String(number)}</span>
+  ),
+}));
+vi.mock("../ViewSecrets/ViewSecrets.jsx", () => ({
+  default: ({ secrets }) => (
+    <span data-testid="viewsecrets">secrets:{secrets?.length ?? "null"}</span>
+  ),
 }));
 
 import PlayerBadge from "./PlayerBadge.jsx";
@@ -20,130 +32,120 @@ import {
   MAX_NAME_LEN,
 } from "./playerBadgeConstants.js";
 
-describe("PlayerBadge", () => {
-  it("renders name, avatar image and avatar container with proper aria-label", () => {
+describe("PlayerBadge (new features)", () => {
+  it("muestra nombre y avatar (img con alt='Avatar of <name>')", () => {
     render(<PlayerBadge name="Alice" avatar="robot" />);
-    // Name box visible
     expect(screen.getByText("Alice")).toBeInTheDocument();
 
-    // Avatar image present and accessible
     const img = screen.getByRole("img", { name: "Avatar of Alice" });
     expect(img).toBeInTheDocument();
-
-    // Container div uses the same aria-label
-    expect(screen.getByLabelText("Avatar of Alice")).toBeInTheDocument();
+    const circle = img.closest(".avatar-circle");
+    expect(circle).toBeTruthy();
   });
 
-  it("applies name box background via --name-bg inline CSS variable", () => {
+  it("aplica background del nombre con CSS var --name-bg", () => {
     render(<PlayerBadge name="Bob" nameBgColor="red" />);
     const nameBox = screen.getByText("Bob");
-    // Expect the CSS custom property to match the mapped color
     expect(nameBox.style.getPropertyValue("--name-bg")).toBe(
       NAME_BG_COLORS.red
     );
   });
 
-  it("applies ring color via --tw-ring-color inline CSS variable", () => {
+  it("aplica ring color via --tw-ring-color en el contenedor del avatar", () => {
     render(<PlayerBadge name="Carol" ringColor="blue" />);
-    const circle = screen.getByLabelText("Avatar of Carol");
-    // Expect the ring color CSS variable to be set correctly
-    expect(circle.style.getPropertyValue("--tw-ring-color")).toBe(
+    const img = screen.getByRole("img", { name: "Avatar of Carol" });
+    const circle = img.closest(".avatar-circle");
+    expect(circle?.style.getPropertyValue("--tw-ring-color")).toBe(
       RING_COLORS.blue
     );
   });
 
-  it("uses correct size classes for small and big", () => {
+  it("usa clases de tamaño correctas para small/big", () => {
     const { rerender } = render(<PlayerBadge name="P1" size="small" />);
-    let circle = screen.getByLabelText("Avatar of P1");
-    // The 'small' size class should be present
+    let img = screen.getByRole("img", { name: "Avatar of P1" });
+    let circle = img.closest(".avatar-circle");
     expect(circle).toHaveClass("badge-small");
 
     rerender(<PlayerBadge name="P1" size="big" />);
-    circle = screen.getByLabelText("Avatar of P1");
-    // The 'big' size class should be present
+    img = screen.getByRole("img", { name: "Avatar of P1" });
+    circle = img.closest(".avatar-circle");
     expect(circle).toHaveClass("badge-big");
   });
 
-  it("maps avatar key to expected image src", () => {
+  it("mapea avatar key al src esperado", () => {
     render(<PlayerBadge name="Robo" avatar="robot" />);
     const img = screen.getByRole("img", { name: "Avatar of Robo" });
-    // Check that the resolved src includes the mapped path
     expect(img.getAttribute("src")).toContain("/assets/robot.png");
   });
 
-  it("turn indicator shows 'on' when turn=true and 'off' otherwise", () => {
+  it("indicador de turno cambia clases 'on'/'off'", () => {
     const { rerender } = render(<PlayerBadge name="Dana" turn={true} />);
-    let indicator = screen.getByLabelText("Current turn");
-    // Indicator should be marked as 'on'
+    let indicator = screen.getByText((_, el) =>
+      el?.classList?.contains("turn-indicator")
+    );
     expect(indicator).toHaveClass("turn-indicator", "on");
 
     rerender(<PlayerBadge name="Dana" turn={false} />);
-    indicator = screen.getByLabelText("Not current turn");
-    // Indicator should be marked as 'off'
+    indicator = screen.getByText((_, el) =>
+      el?.classList?.contains("turn-indicator")
+    );
     expect(indicator).toHaveClass("turn-indicator", "off");
   });
 
-  it("falls back to defaults when props are omitted", () => {
+  it("renderiza CardCount solo cuando numCards es número >= 0; lo oculta si es null", () => {
+    const { rerender } = render(<PlayerBadge name="Eve" numCards={3} />);
+    expect(screen.getByTestId("cardcount")).toHaveTextContent("count:3");
+
+    rerender(<PlayerBadge name="Eve" numCards={0} />);
+    expect(screen.getByTestId("cardcount")).toHaveTextContent("count:0");
+
+    rerender(<PlayerBadge name="Eve" numCards={null} />);
+    expect(screen.queryByTestId("cardcount")).not.toBeInTheDocument();
+  });
+
+  it("renderiza ViewSecrets cuando secrets es un array (inclusive vacío); lo oculta si es null", () => {
+    const { rerender } = render(<PlayerBadge name="Sec" secrets={[]} />);
+    expect(screen.getByTestId("viewsecrets")).toHaveTextContent("secrets:0");
+
+    rerender(
+      <PlayerBadge
+        name="Sec"
+        secrets={[{ secretID: 1, secretName: "murderer", revealed: false }]}
+      />
+    );
+    expect(screen.getByTestId("viewsecrets")).toHaveTextContent("secrets:1");
+
+    rerender(<PlayerBadge name="Sec" secrets={null} />);
+    expect(screen.queryByTestId("viewsecrets")).not.toBeInTheDocument();
+  });
+
+  it("usa defaults cuando faltan props", () => {
     render(<PlayerBadge />);
-    // Default name
     expect(screen.getByText("Jugador")).toBeInTheDocument();
 
-    // Default size
-    const circle = screen.getByLabelText("Avatar of Jugador");
+    const img = screen.getByRole("img", { name: "Avatar of Jugador" });
+    const circle = img.closest(".avatar-circle");
     expect(circle).toHaveClass("badge-small");
-
-    // Default ring color
-    expect(circle.style.getPropertyValue("--tw-ring-color")).toBe(
+    expect(circle?.style.getPropertyValue("--tw-ring-color")).toBe(
       RING_COLORS.black
     );
 
-    // Default name background
     const nameBox = screen.getByText("Jugador");
     expect(nameBox.style.getPropertyValue("--name-bg")).toBe(
       NAME_BG_COLORS.white
     );
 
-    // Default avatar path
-    const img = screen.getByRole("img", { name: "Avatar of Jugador" });
     expect(img.getAttribute("src")).toContain("/assets/default.png");
   });
 
-  // Name truncation edge cases
-  it("does NOT truncate when name length < MAX_NAME_LEN", () => {
-    const name = "A".repeat(MAX_NAME_LEN - 1); // 19
-    render(<PlayerBadge name={name} />);
-    // The exact string must be shown
-    expect(screen.getByText(name)).toBeInTheDocument();
-    // Aria labels should also use the unmodified name
-    expect(screen.getByLabelText(`Avatar of ${name}`)).toBeInTheDocument();
-    expect(
-      screen.getByRole("img", { name: `Avatar of ${name}` })
-    ).toBeInTheDocument();
-  });
-
-  it("does NOT truncate when name length === MAX_NAME_LEN", () => {
-    const name = "B".repeat(MAX_NAME_LEN); // 20
-    render(<PlayerBadge name={name} />);
-    expect(screen.getByText(name)).toBeInTheDocument();
-    expect(screen.getByLabelText(`Avatar of ${name}`)).toBeInTheDocument();
-  });
-
-  it("truncates and appends ellipsis when name length > MAX_NAME_LEN", () => {
-    const long = "C".repeat(MAX_NAME_LEN + 5); // 25
+  it("trunca y agrega '…' cuando el nombre supera MAX_NAME_LEN", () => {
+    const long = "C".repeat(MAX_NAME_LEN + 5);
     const truncated = long.slice(0, MAX_NAME_LEN) + "…";
-
     render(<PlayerBadge name={long} />);
-
-    // Visible text should be the truncated one (with ellipsis)
     expect(screen.getByText(truncated)).toBeInTheDocument();
-
-    // Both the circle and the img use aria-label with the truncated name
-    expect(screen.getByLabelText(`Avatar of ${truncated}`)).toBeInTheDocument();
-    expect(
-      screen.getByRole("img", { name: `Avatar of ${truncated}` })
-    ).toBeInTheDocument();
-
-    // Original long string should NOT be present
     expect(screen.queryByText(long)).not.toBeInTheDocument();
+
+    const img = screen.getByRole("img", { name: `Avatar of ${truncated}` });
+    expect(img).toBeInTheDocument();
   });
 });

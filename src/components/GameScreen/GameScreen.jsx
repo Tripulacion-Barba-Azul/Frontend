@@ -2,6 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import Lobby from "../Lobby/Lobby";
 import SyncOrchestrator from "../Sync/SyncOrchestrator";
+import {
+  buildUiPlayers,
+  buildCardsState,
+  buildSecretsState,
+} from "./GameScreenLogic";
 
 export default function GameScreen() {
   const { gameId } = useParams();
@@ -68,23 +73,23 @@ export default function GameScreen() {
           case "game_started":
             console.log("🚀 Partida empezó");
             setStarted(true);
-
-            if (Array.isArray(data.players)) {
-              setPlayers(data.players);
-            }
-            if (Array.isArray(data.cards)) {
-              setCards(data.cards);
-            }
-            if (Array.isArray(data.secrets)) {
-              setSecrets(data.secrets);
-            }
             if (typeof data.playerTurnId === "number") {
               setTurn(data.playerTurnId);
             }
+            if (Array.isArray(data.players)) {
+              setPlayers(buildUiPlayers(data.players, playerTurnId, playerId));
+            }
+            if (Array.isArray(buildCardsState(remainingOnDeck, data.cards))) {
+              setCards(data.cards);
+            }
+            if (Array.isArray(data.secrets)) {
+              setSecrets(buildSecretsState(data.secrets));
+            }
+
             if (typeof data.numberOfRemainingCards === "number") {
               setRemainingOnDeck(data.remainingOnDeck);
             }
-            
+
             break;
 
           // Add more cases here
@@ -100,11 +105,11 @@ export default function GameScreen() {
   return (
     <>
       {started ? (
-        <SyncOrchestrator   
-        serverPlayers={players}
-        serverCards={cards}
-        serverSecrets={secrets}
-        currentPlayerId={parseInt(playerId)}
+        <SyncOrchestrator
+          serverPlayers={players}
+          serverCards={cards}
+          serverSecrets={secrets}
+          currentPlayerId={parseInt(playerId)}
         />
       ) : (
         <Lobby
