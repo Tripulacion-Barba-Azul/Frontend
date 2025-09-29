@@ -14,6 +14,9 @@ export function computeHandIds(allCards, currentPlayerId) {
 
     const id = NAME_TO_ID[c.cardName];
     if (id != null) hand.push(id);
+    else {
+      throw new Error("Invalid card name");
+    }
   }
 
   return hand;

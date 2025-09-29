@@ -3,6 +3,8 @@ import BoardSync from "./Board/BoardSync.jsx";
 import RegularDeckSync from "./RegularDeck/RegularDeckSync.jsx";
 import DiscardPileSync from "./DiscardPile/DiscardPileSync.jsx";
 import OwnCardsSync from "./OwnCards/OwnCardsSync.jsx";
+import ViewMySecretsSync from "./ViewMySecrets/ViewMySecretsSync.jsx";
+import ViewMyCardsSync from "./ViewMyCards/ViewMyCardsSync.jsx";
 
 export default function SyncOrchestrator({
   serverPlayers,
@@ -25,6 +27,15 @@ export default function SyncOrchestrator({
         <RegularDeckSync serverCards={serverCards} />
         <DiscardPileSync serverCards={serverCards} />
         <OwnCardsSync
+          serverCards={serverCards}
+          currentPlayerId={currentPlayerId}
+        />
+        <ViewMySecretsSync
+          allSecrets={serverSecrets}
+          playerId={currentPlayerId}
+        />
+
+        <ViewMyCardsSync
           serverCards={serverCards}
           currentPlayerId={currentPlayerId}
         />

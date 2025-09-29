@@ -1,13 +1,15 @@
 import "./JoinGameForm.css";
 import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 
-const gameID = "1" 
-//utilizo el ID 2 a modo de ejemplo pero acá debería obtener el ID de la partida en base a la URL en la que estoy
 
 export default function JoinGameForm() {
 
   const [settings, setSettings] = useState({PlayerName: "", PlayerBirthday: ""});
   const [formErrors, setFormErrors] = useState({})
+
+  const { gameId } = useParams();
+  const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -23,7 +25,7 @@ export default function JoinGameForm() {
 
       async function postData() {
         try {
-          const response = await fetch(`http://localhost:8000/games/${gameID}/player`, {
+          const response = await fetch(`http://localhost:8000/games/${gameId}/join`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json', 
@@ -32,21 +34,26 @@ export default function JoinGameForm() {
           });
 
           if (!response.ok) {
-          throw new Error(`Error HTTP: ${response.status} ${response.statusText}`);
-        }
-        
+            console.error('Error en la solicitud:', error);
+            navigate(`/join`);
+        } else {
           console.log(response.status, response.statusText);
 
-          roomId = response.body.gameId
-          yourPlayerId = response.body.actualPlayerId
+          const data = await response.json()
 
-          //IMPORTANTE: 
-          // Si todo sale bien, hay que redirigir al lobby de la partida con ese ID. 
-          // Tal vez la respuesta puede contener el ID de la partida y podemos compararlo con el ID que teníamos, deberían ser iguales
-          // Si hay algún error, (puede haber tranquilamente) se debe redirigir al usuario a la lista de partidas
+          const fetchedId = data.gameId
+          const fetchedPlayerId = data.actualPlayerId
+
+          if (fetchedId != gameId) {
+            navigate(`/join`);
+          } else {
+            navigate(`/game/${fetchedId}?playerId=${fetchedPlayerId}`);
+          }
+        }
 
           } catch (error) {
           console.error('Error en la solicitud:', error);
+          navigate(`/join`);
           }
       }
 
@@ -81,7 +88,7 @@ export default function JoinGameForm() {
     <div className="container">
       <form onSubmit={handleSubmit}>
     
-        <label htmlFor="yourName"> Your Name</label>
+        <label htmlFor="yourName">Your Name</label>
         <br />
         <input 
           id="yourName"
@@ -92,7 +99,7 @@ export default function JoinGameForm() {
         <p className="error">{formErrors.PlayerName}</p>
         <br />
         
-        <label htmlFor="yourBirthday"> Your Birthday</label>
+        <label htmlFor="yourBirthday">Your Birthday</label>
         <br />
         <input 
           id="yourBirthday"

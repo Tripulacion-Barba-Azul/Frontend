@@ -1,4 +1,5 @@
 import React from 'react';
+import { MemoryRouter } from "react-router-dom";
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import * as matchers from '@testing-library/jest-dom/matchers';
@@ -72,8 +73,12 @@ describe('GameMatchesList', () => {
       // Mock fetch to return a pending promise
       mockFetch.mockReturnValue(new Promise(() => {}));
 
-      render(<GameMatchesList />);
-      
+      render(
+        <MemoryRouter>
+          <GameMatchesList />
+        </MemoryRouter>
+      );
+
       expect(screen.getByText('Cargando partidas...')).toBeInTheDocument();
       expect(document.querySelector('.loading-spinner')).toBeInTheDocument();
     });
@@ -84,7 +89,11 @@ describe('GameMatchesList', () => {
         json: async () => mockBackendData
       });
 
-      render(<GameMatchesList />);
+      render(
+        <MemoryRouter>
+          <GameMatchesList />
+        </MemoryRouter>
+      );
 
       await waitFor(() => {
         expect(screen.getByText('Partidas Disponibles')).toBeInTheDocument();
@@ -102,7 +111,11 @@ describe('GameMatchesList', () => {
         json: async () => []
       });
 
-      render(<GameMatchesList />);
+      render(
+        <MemoryRouter>
+          <GameMatchesList />
+        </MemoryRouter>
+      );
 
       await waitFor(() => {
         expect(screen.getByText('No hay partidas disponibles')).toBeInTheDocument();
@@ -114,8 +127,12 @@ describe('GameMatchesList', () => {
     it('handles fetch error gracefully', async () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
-      render(<GameMatchesList />);
-
+      render(
+        <MemoryRouter>
+          <GameMatchesList />
+        </MemoryRouter>
+      );
+      
       await waitFor(() => {
         expect(screen.getByText('No hay partidas disponibles')).toBeInTheDocument();
       });
@@ -129,8 +146,12 @@ describe('GameMatchesList', () => {
         json: async () => mockBackendData
       });
 
-      render(<GameMatchesList />);
-
+      render(
+        <MemoryRouter>
+          <GameMatchesList />
+        </MemoryRouter>
+      );
+      
       await waitFor(() => {
         expect(screen.getByText('Partidas Disponibles')).toBeInTheDocument();
       });
@@ -168,8 +189,12 @@ describe('GameMatchesList', () => {
         json: async () => mockBackendData
       });
 
-      render(<GameMatchesList />);
-
+      render(
+        <MemoryRouter>
+          <GameMatchesList />
+        </MemoryRouter>
+      );
+      
       await waitFor(() => {
         expect(screen.getByText('Partidas Disponibles')).toBeInTheDocument();
       });
@@ -205,8 +230,12 @@ describe('GameMatchesList', () => {
         json: async () => mockBackendData
       });
 
-      render(<GameMatchesList />);
-
+      render(
+        <MemoryRouter>
+          <GameMatchesList />
+        </MemoryRouter>
+      );
+      
       await waitFor(() => {
         expect(screen.getByText('Actualizar')).toBeInTheDocument();
       });
@@ -257,8 +286,12 @@ describe('GameMatchesList', () => {
         json: async () => mockBackendData
       });
 
-      render(<GameMatchesList />);
-
+      render(
+        <MemoryRouter>
+          <GameMatchesList />
+        </MemoryRouter>
+      );
+      
       await waitFor(() => {
         expect(screen.getByText('Actualizar')).toBeInTheDocument();
       });
@@ -287,8 +320,12 @@ describe('GameMatchesList', () => {
         json: async () => mockBackendData
       });
 
-      render(<GameMatchesList />);
-
+      render(
+        <MemoryRouter>
+          <GameMatchesList />
+        </MemoryRouter>
+      );
+      
       await waitFor(() => {
         expect(screen.getByText('Partidas Disponibles')).toBeInTheDocument();
       });
@@ -322,8 +359,12 @@ describe('GameMatchesList', () => {
         json: async () => mockBackendData
       });
 
-      render(<GameMatchesList />);
-
+      render(
+        <MemoryRouter>
+          <GameMatchesList />
+        </MemoryRouter>
+      );
+      
       await waitFor(() => {
         expect(screen.getByText('Partidas Disponibles')).toBeInTheDocument();
       });
@@ -344,8 +385,12 @@ describe('GameMatchesList', () => {
         json: async () => []
       });
 
-      render(<GameMatchesList />);
-
+      render(
+        <MemoryRouter>
+          <GameMatchesList />
+        </MemoryRouter>
+      );
+      
       expect(mockFetch).toHaveBeenCalledWith('http://localhost:8000/games', {
         method: 'GET',
         headers: {
@@ -360,8 +405,12 @@ describe('GameMatchesList', () => {
         status: 404
       });
 
-      render(<GameMatchesList />);
-
+      render(
+        <MemoryRouter>
+          <GameMatchesList />
+        </MemoryRouter>
+      );
+      
       await waitFor(() => {
         expect(screen.getByText('No hay partidas disponibles')).toBeInTheDocument();
       });

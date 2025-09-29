@@ -25,8 +25,7 @@ const CARD_NAMES = [
   "detective_tuppenceberesford",
   "detective_quin",
   "detective_oliver",
-  "gato",
-  "perro",
+  "instant_notsofast",
 ];
 
 export default function ExamplePageBoard() {
