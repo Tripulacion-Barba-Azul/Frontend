@@ -27,7 +27,6 @@ vi.mock('../StartGameButton/StartGameButton', () => ({
 
                 const data = await response.json();
                 console.log('Game started successfully:', data);
-                
                 if (onStartGame) {
                     onStartGame();
                 }
