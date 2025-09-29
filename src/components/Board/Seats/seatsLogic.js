@@ -93,10 +93,12 @@ export function buildSeatedPlayersFromOrders(players) {
       ringColor: RING_COLORS[idx % RING_COLORS.length],
       nameBgColor: resolveNameBg(p.role), // <<< "red" for accomplice/murderer iff actualPlayer is hidden team; else "white"
       turn: p.turn,
+      numCards: p.numCards,
+      secrets: p.secrets,
       style: seat.style,
       meta: {
         order: p.order,
-        actualPlayer: !!p.actualPlayer,
+        actualPlayer: p.actualPlayer,
         role: p.role ?? null,
       },
     };
