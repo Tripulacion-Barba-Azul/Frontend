@@ -29,7 +29,7 @@ export default function OwnCardsSync({
   }, [changed, nextIds]);
 
   return (
-    <div className={anchorClass}>
+    <div className={anchorClass} data-testid="owncardssync-container">
       <ViewMyCards cards={cardIds} />
     </div>
   );
