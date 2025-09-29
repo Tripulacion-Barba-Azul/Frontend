@@ -6,15 +6,11 @@ function StartGameButton({ disabled, gameId, actualPlayerId, onStartGame}){
         if (disabled) return;
         
         try {
-            const response = await fetch(`http://localhost:8000/games/${gameId}/start`, {
+            const response = await fetch(`http://localhost:8000/games/${gameId}/join?ownerId=${actualPlayerId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    gameId: parseInt(gameId),
-                    actualPlayerId: parseInt(actualPlayerId)
-                })
+                }
             });
 
             if (!response.ok) {
@@ -23,6 +19,7 @@ function StartGameButton({ disabled, gameId, actualPlayerId, onStartGame}){
 
             const data = await response.json();
             console.log('Game started successfully:', data);
+            
             if (onStartGame) {
                 onStartGame();
               }
