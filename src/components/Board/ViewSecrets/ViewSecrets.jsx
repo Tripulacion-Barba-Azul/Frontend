@@ -30,10 +30,12 @@ export default function ViewSecrets({ secrets }) {
         <div className="light-dots">
           {secrets.map((secret) => (
             <div
-              key={secret.class}
+              key={secret.secretID}
               className={`light-dot ${secret.revealed ? "revealed" : "hidden"}`}
               title={
-                secret.revealed ? `Secret ${secret.class}` : `Secret hidden`
+                secret.revealed
+                  ? `Secret ${secret.secretName}`
+                  : `Secret hidden`
               }
             />
           ))}
@@ -46,13 +48,13 @@ export default function ViewSecrets({ secrets }) {
         <div className="viewsecrets">
           <div onClick={toggleViewSecrets} className="overlay"></div>
           <div className="secrets-grid">
-          {hasSecrets ? (
+            {hasSecrets ? (
               secrets.map((secret) => (
-                <div key={secret.class} className="secret-card">
+                <div key={secret.secretID} className="secret-card">
                   {secret.revealed ? (
                     <img
-                      src={imageMap[secret.class]}
-                      alt={`Secret ${secret.class}`}
+                      src={imageMap[secret.secretName]}
+                      alt={`Secret ${secret.secretName}`}
                     />
                   ) : (
                     <img src={imageMap["secretFront"]} alt={`Secret hidden`} />

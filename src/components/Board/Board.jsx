@@ -1,27 +1,6 @@
 import PlayerBadge from "./PlayerBadge/PlayerBadge.jsx";
 import { buildSeatedPlayersFromOrders } from "./Seats/seatsLogic.js";
 
-/**
- * Board
- * Top-level table view. Renders the background board and overlays positioned PlayerBadge
- * components according to computed seating.
- *
- * Props:
- * - players {Array<{
- *     name: string,
- *     avatar: string,            // key in AVATAR_MAP
- *     order: number,             // seating order (1..N)
- *     actualPlayer: boolean,     // local user flag
- *     role: string,              // "detective" | "murderer" | "accomplice" | ...
- *     turn?: boolean
- *   }>}
- *
- * Behavior:
- * - Calls `buildSeatedPlayersFromOrders(players)` to derive an ordered seating array.
- * - Paints a full-screen background board.
- * - For each seated entry, places an absolutely-positioned <PlayerBadge/> at its seat style.
- */
-
 export default function Board({ players }) {
   // Build seated data
   const seated = buildSeatedPlayersFromOrders(players);
@@ -58,6 +37,10 @@ export default function Board({ players }) {
                 ringColor={p.ringColor}
                 nameBgColor={p.nameBgColor}
                 turn={p.turn}
+                numCards={
+                  p.meta?.actualPlayer ? null : p.numCards ?? p.numCards ?? 0
+                }
+                secrets={p.meta?.actualPlayer ? null : p.secrets ?? []}
               />
             </div>
           ))}

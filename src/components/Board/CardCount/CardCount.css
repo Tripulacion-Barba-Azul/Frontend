@@ -11,7 +11,7 @@
 
 .number-overlay {
   position: absolute;
-  top: 6%;
+  top: -2%;
   left: 31%;
   transform: translateX(-50%);
 

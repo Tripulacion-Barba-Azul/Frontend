@@ -3,12 +3,12 @@ export const SEAT_POSITIONS = {
   // bottom center
   p1: {
     id: "p1",
-    style: { bottom: "00%", top: "75%", right: "63%", left: "00%" },
+    style: { bottom: "00%", top: "73%", right: "63%", left: "00%" },
   },
   // mid right
   p2: {
     id: "p2",
-    style: { bottom: "00%", top: "40%", right: "00%", left: "90%" },
+    style: { bottom: "00%", top: "36%", right: "00%", left: "85%" },
   },
   // top right
   p3: {
@@ -28,7 +28,7 @@ export const SEAT_POSITIONS = {
   // mid left
   p6: {
     id: "p6",
-    style: { bottom: "00%", top: "40%", right: "90%", left: "00%" },
+    style: { bottom: "00%", top: "36%", right: "85%", left: "00%" },
   },
 };
 

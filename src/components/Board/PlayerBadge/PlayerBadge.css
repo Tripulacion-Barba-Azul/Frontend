@@ -85,3 +85,18 @@
   background: #334155;
   opacity: 0.6;
 }
+
+/* Overlay del contador sobre el avatar */
+.badge-cardcount {
+  position: relative;
+  right: -10px;
+  bottom: -10px;
+  pointer-events: none;
+}
+.badge-secrets-fixed {
+  position: relative;
+  left: 105px;
+  bottom: 250px;
+  pointer-events: auto;
+  z-index: 2;
+}

@@ -1,27 +1,29 @@
-import TurnSync from "./Board/TurnSync.jsx";
-import OwnCardsSync from "./OwnCards/OwnCardsSync.jsx";
-import DiscardPileSync from "./DiscardPile/DiscardPileSync.jsx";
+import React from "react";
+import BoardSync from "./Board/BoardSync.jsx";
 import RegularDeckSync from "./RegularDeck/RegularDeckSync.jsx";
+import DiscardPileSync from "./DiscardPile/DiscardPileSync.jsx";
+import OwnCardsSync from "./OwnCards/OwnCardsSync.jsx";
 
 export default function SyncOrchestrator({
-  serverPlayers = [],
-  serverCards = [],
+  serverPlayers,
+  serverCards,
+  serverSecrets,
   currentPlayerId,
 }) {
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      {/* Board + player badges (turn sync) */}
-      <TurnSync serverPlayers={serverPlayers} />
+      {/* Capa Board (turnos + jugadores) */}
+      <BoardSync
+        serverPlayers={serverPlayers}
+        serverCards={serverCards}
+        serverSecrets={serverSecrets}
+        currentPlayerId={currentPlayerId}
+      />
 
-      {/* Foreground layer for table widgets */}
+      {/* Capa mazo + descarte + mano propia (como antes) */}
       <div className="absolute inset-0 pointer-events-none">
-        {/* Regular deck (center). Tweak position in RegularDeckSync if needed */}
         <RegularDeckSync serverCards={serverCards} />
-
-        {/* Discard pile (assumes ya la tenés integrada) */}
         <DiscardPileSync serverCards={serverCards} />
-
-        {/* Current player's hand (bottom) */}
         <OwnCardsSync
           serverCards={serverCards}
           currentPlayerId={currentPlayerId}
