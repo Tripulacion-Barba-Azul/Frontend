@@ -13,7 +13,7 @@ export function computeHandIds(allCards, currentPlayerId) {
     if (c.isInDeck || c.isInDiscard) continue;
 
     const id = NAME_TO_ID[c.cardName];
-    hand.push(id);
+    if (id != null) hand.push(id);
   }
 
   return hand;
