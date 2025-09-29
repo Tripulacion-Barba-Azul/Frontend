@@ -1,17 +1,21 @@
-import TitleScreen from "../../components/TitleScreen/TitleScreen";
-import ExamplePageRegularDeck from "../../components/Sync/RegularDeck/ExamplePageRegularDeck";
-import ExampleOwnCards from "../../components/Sync/OwnCards/ExamplePageOwnCards";
-import ExamplePageBoard from "../../components/Sync/Board/ExamplePageBoard";
-import ExampleDiscardPile from "../../components/Sync/DiscardPile/ExamplePageDiscardPile";
-import ExamplePageViewMyCards from "../../components/Sync/ViewMyCards/ExamplePageViewMyCards";
-import ExamplePageOrchestrator from "../../components/Sync/ExamplePageOrchestrator";
-import Board from "../../components/Board/Board";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import TitleScreen from "../../components/TitleScreen/TitleScreen"
+import CreateGameScreen from "../../components/CreateGameScreen/CreateGameScreen"
+import JoinGameScreen from "../../components/JoinGameScreen/JoinGameScreen"
+import GameMatchesList from "../../components/GameMatchesList/GameMatchesList"
+import GameScreen from "../../components/GameScreen/GameScreen";
 
 function App() {
   return (
-    <div>
-      <ExamplePageOrchestrator />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<TitleScreen />}/>
+        <Route path="/create" element={<CreateGameScreen />}/>
+        <Route path="/join" element={<GameMatchesList />} />
+        <Route path="/join/:gameId" element={<JoinGameScreen />} />
+        <Route path="/game/:gameId" element={<GameScreen />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
