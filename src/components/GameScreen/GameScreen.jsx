@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import Lobby from "../Lobby/Lobby";
+import SyncOrchestrator from "../Sync/SyncOrchestrator";
 
 export default function GameScreen() {
   const { gameId } = useParams();
@@ -8,95 +9,103 @@ export default function GameScreen() {
   const playerId = searchParams.get("playerId");
 
   const [started, setStarted] = useState(false);
-  const [ws, setWs] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
 
   const [cards, setCards] = useState([]);
   const [secrets, setSecrets] = useState([]);
   const [players, setPlayers] = useState([]);
+  const [playerTurnId, setTurn] = useState(null);
+  const [remainingOnDeck, setRemainingOnDeck] = useState(null);
 
+  const wsRef = useRef(null);
   const wsEndpoint = `ws://localhost:8000/ws/${gameId}`;
 
-  const connectWebSocket = () => {
-    if (ws) {
-      ws.close();
+  // Connect / reconnect when gameId changes
+  useEffect(() => {
+    if (!gameId) return;
+
+    if (wsRef.current) {
+      wsRef.current.close();
     }
 
     const websocket = new WebSocket(wsEndpoint);
 
     websocket.onopen = () => {
-      console.log("WebSocket conectado");
+      console.log("✅ WebSocket conectado");
       setIsConnected(true);
     };
 
     websocket.onclose = () => {
-      console.log("WebSocket desconectado");
+      console.log("❌ WebSocket desconectado");
       setIsConnected(false);
     };
 
     websocket.onerror = (error) => {
-      console.error("Error en WebSocket:", error);
+      console.error("⚠️ Error en WebSocket:", error);
       setIsConnected(false);
     };
 
-    setWs(websocket);
-  };
-
-  useEffect(() => {
-    if (gameId) {
-      connectWebSocket();
-    }
+    wsRef.current = websocket;
 
     return () => {
-      if (ws) {
-        ws.close();
+      if (wsRef.current) {
+        wsRef.current.close();
       }
     };
   }, [gameId]);
 
+  // Handle incoming messages
   useEffect(() => {
-    if (ws) {
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          console.log("Mensaje recibido del WebSocket:", data);
+    const websocket = wsRef.current;
+    if (!websocket) return;
 
-          switch (data.event) {
-            case "game_started":
-              console.log("partida empezó");
+    websocket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log("📩 Mensaje recibido:", data);
 
-              setStarted(true);
+        switch (data.event) {
+          case "game_started":
+            console.log("🚀 Partida empezó");
+            setStarted(true);
 
-              if (Array.isArray(data.players)) {
-                setPlayers(data.players);
-              }
+            if (Array.isArray(data.players)) {
+              setPlayers(data.players);
+            }
+            if (Array.isArray(data.cards)) {
+              setCards(data.cards);
+            }
+            if (Array.isArray(data.secrets)) {
+              setSecrets(data.secrets);
+            }
+            if (typeof data.playerTurnId === "number") {
+              setTurn(data.playerTurnId);
+            }
+            if (typeof data.numberOfRemainingCards === "number") {
+              setRemainingOnDeck(data.remainingOnDeck);
+            }
+            
+            break;
 
-              if (Array.isArray(data.cards)) {
-                setCards(data.cards);
-              }
-
-              if (Array.isArray(data.secrets)) {
-                setSecrets(data.secrets);
-              }
-
-              break;
-
-            //acá se agregan casos nuevos
-
-            default:
-              console.log("Evento no manejado:", data.event);
-          }
-        } catch (err) {
-          console.warn("Mensaje del servidor (no JSON):", event.data);
+          // Add more cases here
+          default:
+            console.log("Evento no manejado:", data.event);
         }
-      };
-    }
-  }, ws);
+      } catch (err) {
+        console.warn("Mensaje (no JSON):", event.data);
+      }
+    };
+  }, [wsRef.current]);
 
   return (
     <>
       {started ? (
-        <h1> In Game Page </h1>
+        <SyncOrchestrator   
+        serverPlayers={players}
+        serverCards={cards}
+        serverSecrets={secrets}
+        currentPlayerId={parseInt(playerId)}
+        />
       ) : (
         <Lobby
           id={parseInt(gameId)}

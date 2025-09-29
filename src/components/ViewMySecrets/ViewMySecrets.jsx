@@ -11,6 +11,7 @@ const imageMap = {
 
 export default function ViewSecrets({ secrets }) {
   const [ViewSecrets, setViewSecrets] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const toggleViewSecrets = () => {
     setViewSecrets(!ViewSecrets);
