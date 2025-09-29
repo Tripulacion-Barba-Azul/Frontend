@@ -3,12 +3,13 @@ import ExamplePageRegularDeck from "../../components/Sync/RegularDeck/ExamplePag
 import ExampleOwnCards from "../../components/Sync/OwnCards/ExamplePageOwnCards";
 import ExamplePageBoard from "../../components/Sync/Board/ExamplePageBoard";
 import ExampleDiscardPile from "../../components/Sync/DiscardPile/ExamplePageDiscardPile";
+import ExamplePageViewMyCards from "../../components/Sync/ViewMyCards/ExamplePageViewMyCards";
 import Board from "../../components/Board/Board";
 
 function App() {
   return (
     <div>
-      <ExamplePageBoard />
+      <ExamplePageViewMyCards />
     </div>
   );
 }
