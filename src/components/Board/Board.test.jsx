@@ -46,9 +46,9 @@ describe("Board.jsx", () => {
     vi.clearAllMocks();
   });
 
-  it("renders an element with an inline background-image", () => {
+  it("renders an element with an inline background-image with valid players", () => {
     buildSeatedPlayersFromOrders.mockReturnValueOnce([]);
-    render(<Board players={[]} />);
+    render(<Board players={[{ name: "Player1" }, { name: "Player2" }]} />);
 
     // Busca el DIV que tiene background-image en su style inline
     const bgDiv = document.querySelector('[style*="background-image"]');
@@ -59,11 +59,37 @@ describe("Board.jsx", () => {
     expect(bgDiv.style.backgroundImage).toMatch(/backgroundBoard\.png/i);
   });
 
-  it("renders zero badges when no seated players are returned", () => {
-    buildSeatedPlayersFromOrders.mockReturnValueOnce([]);
+  it("renders background when players array is empty (early validation)", () => {
     render(<Board players={[]} />);
 
-    // No PlayerBadge produced
+    // Should render background even with no players due to early validation
+    const bgDiv = document.querySelector('[style*="background-image"]');
+    expect(bgDiv).toBeInTheDocument();
+    expect(bgDiv.style.backgroundImage).toContain("url(");
+    expect(bgDiv.style.backgroundImage).toMatch(/backgroundBoard\.png/i);
+    
+    // Should not render any badges due to early validation
+    expect(screen.queryAllByTestId("badge")).toHaveLength(0);
+  });
+
+  it("renders background when players array has only 1 player (early validation)", () => {
+    render(<Board players={[{ name: "Player1" }]} />);
+
+    // Should render background with only 1 player due to early validation
+    const bgDiv = document.querySelector('[style*="background-image"]');
+    expect(bgDiv).toBeInTheDocument();
+    expect(bgDiv.style.backgroundImage).toContain("url(");
+    expect(bgDiv.style.backgroundImage).toMatch(/backgroundBoard\.png/i);
+    
+    // Should not render any badges due to early validation
+    expect(screen.queryAllByTestId("badge")).toHaveLength(0);
+  });
+
+  it("renders zero badges when no seated players are returned with valid player count", () => {
+    buildSeatedPlayersFromOrders.mockReturnValueOnce([]);
+    render(<Board players={[{ name: "Player1" }, { name: "Player2" }]} />);
+
+    // No PlayerBadge produced when buildSeatedPlayersFromOrders returns empty
     expect(screen.queryAllByTestId("badge")).toHaveLength(0);
   });
 
@@ -91,7 +117,7 @@ describe("Board.jsx", () => {
       }),
     ]);
 
-    render(<Board players={[{ name: "dummy" }]} />);
+    render(<Board players={[{ name: "Player1" }, { name: "Player2" }]} />);
 
     const badges = screen.getAllByTestId("badge");
     expect(badges).toHaveLength(2);
@@ -159,13 +185,22 @@ describe("Board.jsx", () => {
     expect(l1.parentElement).toHaveStyle({ bottom: "25%", left: "5%" });
   });
 
-  it("keeps the overlay container for badges (absolute, inset, z-index)", () => {
+  it("keeps the overlay container for badges (absolute, inset, z-index) with valid players", () => {
     buildSeatedPlayersFromOrders.mockReturnValueOnce([]);
-    render(<Board players={[]} />);
+    render(<Board players={[{ name: "Player1" }, { name: "Player2" }]} />);
 
     const overlay = document.querySelector(
       ".absolute.inset-0.z-10.pointer-events-none"
     );
     expect(overlay).toBeInTheDocument();
+  });
+
+  it("does not render overlay container when players array is invalid (early validation)", () => {
+    render(<Board players={[]} />);
+
+    const overlay = document.querySelector(
+      ".absolute.inset-0.z-10.pointer-events-none"
+    );
+    expect(overlay).not.toBeInTheDocument();
   });
 });
