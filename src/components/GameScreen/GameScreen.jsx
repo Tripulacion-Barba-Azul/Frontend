@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import Lobby from "../Lobby/Lobby";
@@ -22,6 +21,15 @@ export default function GameScreen() {
   const [players, setPlayers] = useState([]);
   const [playerTurnId, setTurn] = useState(null);
   const [remainingOnDeck, setRemainingOnDeck] = useState(null);
+  
+    const [refreshLobby, setRefreshLobby] = useState(0);
+
+  // Callback para cuando un jugador se une en el lobby
+  const handlePlayerJoined = () => {
+    // Triggear actualización del lobby
+    setRefreshLobby(prev => prev + 1);
+    console.log('🎯 Player joined event handled in GameScreen');
+  };
 
   const wsRef = useRef(null);
   const wsEndpoint = `ws://localhost:8000/ws/${gameId}`;
@@ -63,44 +71,72 @@ export default function GameScreen() {
   // Handle incoming messages
   useEffect(() => {
     const websocket = wsRef.current;
-    if (!websocket) return;
+if (!websocket) return;
 
-    websocket.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        console.log("📩 Mensaje recibido:", data);
+websocket.onmessage = (event) => {
+  // log crudo
+  console.log("📨 RAW WS message:", event.data);
 
-        switch (data.event) {
-          case "game_started":
-            console.log("🚀 Partida empezó");
-            setStarted(true);
-            if (typeof data.playerTurnId === "number") {
-              setTurn(data.playerTurnId);
-            }
-            if (Array.isArray(data.players)) {
-              setPlayers(buildUiPlayers(data.players, playerTurnId, playerId));
-            }
-            if (Array.isArray(buildCardsState(remainingOnDeck, data.cards))) {
-              setCards(data.cards);
-            }
-            if (Array.isArray(data.secrets)) {
-              setSecrets(buildSecretsState(data.secrets));
-            }
+  try {
+    const data = JSON.parse(event.data);
+    console.log("📩 Parsed message:", data);
 
-            if (typeof data.numberOfRemainingCards === "number") {
-              setRemainingOnDeck(data.remainingOnDeck);
-            }
+    switch (data.event) {
+      case "game_started":
+        console.log("🚀 Partida empezó");
+        console.log("👉 Secrets recibidos:", data.secrets);
+        console.log("👉 Cards recibidas:", data.cards);
+        console.log("👉 Players recibidos:", data.players);
+        console.log("👉 playerTurn recibidos:", data.playerTurnId);
 
-            break;
+        setStarted(true);
 
-          // Add more cases here
-          default:
-            console.log("Evento no manejado:", data.event);
+        if (typeof data.playerTurnId === "number") {
+          setTurn(data.playerTurnId);
         }
-      } catch (err) {
-        console.warn("Mensaje (no JSON):", event.data);
-      }
-    };
+
+        if (Array.isArray(data.players)) {
+          console.log("🛠️ Players construidos:", data.players);
+          const builtPlayers = buildUiPlayers(data.players, data.playerTurnId, Number(playerId));
+          setPlayers(builtPlayers);
+          console.log("🛠️ Players construidos after:", players);
+        }
+
+        if (Array.isArray(buildCardsState(remainingOnDeck, data.cards))) {
+          console.log("🃏 Cards construidas:", data.cards);
+          const builtCards = buildCardsState(remainingOnDeck, data.cards);
+          console.log("🃏 Cards construidas after:", builtCards);
+          setCards(data.cards);
+
+        }
+
+        if (Array.isArray(data.secrets)) {
+          console.log("🕵️‍♂️ Secrets construidos:", data.secrets);
+          const builtSecrets = buildSecretsState(data.secrets);
+          console.log("🕵️‍♂️ Secrets construidos after:", builtSecrets);
+          setSecrets(builtSecrets);
+        }
+
+        if (typeof data.numberOfRemainingCards === "number") {
+          console.log("📦 Remaining deck:", data.remainingOnDeck);
+          setRemainingOnDeck(data.remainingOnDeck);
+          console.log("📦 Remaining deck after:", remainingOnDeck);
+        }
+
+        break;
+
+      case "player_joined":
+        console.log("👤 Jugador se unió:", data.player);
+        handlePlayerJoined();
+        break;
+
+      default:
+        console.log("❓ Evento no manejado:", data.event);
+    }
+  } catch (err) {
+    console.warn("⚠️ Mensaje (no JSON):", event.data);
+  }
+};
   }, [wsRef.current]);
 
   return (
@@ -117,8 +153,9 @@ export default function GameScreen() {
           id={parseInt(gameId)}
           playerId={parseInt(playerId)}
           onStartGame={() => setStarted(true)}
-          ws={wsRef}
+          ws={wsRef.current}
           isConnected={isConnected}
+          refreshTrigger={refreshLobby}
         />
       )}
     </>

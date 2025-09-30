@@ -28,6 +28,11 @@ export function buildUiPlayers({
   playerId,
   rng = Math.random,
 }) {
+
+  console.log("🚨 buildUiPlayers called with:");
+  console.log("players:", players);
+  console.log("playerTurnId:", playerTurnId);
+  console.log("playerId:", playerId);  
   if (!Array.isArray(players)) return [];
 
   // 1) Split: current-turn first, remainder keeps original direction

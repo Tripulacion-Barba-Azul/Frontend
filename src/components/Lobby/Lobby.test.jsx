@@ -14,7 +14,7 @@ vi.mock('../StartGameButton/StartGameButton', () => ({
             if (disabled) return;
             
             try {
-                const response = await fetch(`http://localhost:8000/games/${gameId}/join?ownerId=${actualPlayerId}`, {
+                const response = await fetch(`http://localhost:8000/games/${gameId}/start?owner_id=${actualPlayerId}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -73,7 +73,8 @@ describe('Lobby Component', () => {
 
     const defaultProps = {
         ws: mockWs,
-        isConnected: true
+        isConnected: true,
+        refreshTrigger: 0
     };
 
     beforeEach(() => {
@@ -369,13 +370,13 @@ describe('Lobby Component', () => {
             });
         });
 
-        test('verifica que el WebSocket onmessage se configura correctamente', async () => {
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
+        test('verifica que recibe correctamente el refreshTrigger prop', async () => {
+            const propsWithTrigger = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps, refreshTrigger: 1 };
             
-            render(<Lobby {...ownerProps} />);
+            render(<Lobby {...propsWithTrigger} />);
             
             await waitFor(() => {
-                expect(mockWs.onmessage).toBeDefined();
+                expect(screen.getByText('Partida: Partida Test')).toBeInTheDocument();
             });
         });
 
@@ -432,7 +433,7 @@ describe('Lobby Component', () => {
             // Verificar que se hizo la request correcta
             await waitFor(() => {
                 expect(fetch).toHaveBeenCalledWith(
-                    'http://localhost:8000/games/1/join?ownerId=5',
+                    'http://localhost:8000/games/1/start?owner_id=5',
                     {
                         method: 'POST',
                         headers: {
@@ -532,17 +533,9 @@ describe('Lobby Component', () => {
         });
     });
 
-    describe('Funcionalidad WebSocket', () => {
-        test('maneja eventos de player_joined correctamente', async () => {
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
-            
-            render(<Lobby {...ownerProps} />);
-            
-            await waitFor(() => {
-                expect(mockWs.onmessage).toBeDefined();
-            });
-
-            // Mock para la segunda llamada a fetch después del evento WebSocket
+    describe('Funcionalidad refreshTrigger', () => {
+        test('actualiza la lista cuando cambia refreshTrigger', async () => {
+            // Mock para la segunda llamada a fetch después del trigger
             const mockGameDataWithNewPlayer = {
                 ...mockGameData,
                 players: [
@@ -552,22 +545,21 @@ describe('Lobby Component', () => {
                 ]
             };
             
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps, refreshTrigger: 0 };
+            const { rerender } = render(<Lobby {...ownerProps} />);
+            
+            await waitFor(() => {
+                expect(screen.getByText(/Jugadores en espera \(2\)/)).toBeInTheDocument();
+            });
+
+            // Mock para la nueva llamada
             fetch.mockResolvedValueOnce({
                 ok: true,
                 json: () => Promise.resolve(mockGameDataWithNewPlayer)
             });
 
-            // Simular mensaje de WebSocket
-            const mockEvent = {
-                data: JSON.stringify({
-                    event: 'player_joined',
-                    player: 'NuevoJugador',
-                    player_id: 10
-                })
-            };
-
-            // Ejecutar el handler
-            mockWs.onmessage(mockEvent);
+            // Simular cambio en refreshTrigger (como si hubiera llegado player_joined)
+            rerender(<Lobby {...ownerProps} refreshTrigger={1} />);
 
             await waitFor(() => {
                 expect(screen.getByText('NuevoJugador')).toBeInTheDocument();
@@ -575,59 +567,42 @@ describe('Lobby Component', () => {
             });
         });
 
-        test('ignora mensajes duplicados de player_joined', async () => {
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
+        test('no ejecuta fetchMatches cuando refreshTrigger es 0', async () => {
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps, refreshTrigger: 0 };
             
             render(<Lobby {...ownerProps} />);
             
             await waitFor(() => {
-                expect(mockWs.onmessage).toBeDefined();
+                expect(screen.getByText('Partida: Partida Test')).toBeInTheDocument();
             });
 
-            // Mock para la segunda llamada a fetch después del evento WebSocket
-            // Devolvemos los mismos datos (sin cambios, simulando que el jugador ya existía)
-            fetch.mockResolvedValueOnce({
+            // Solo debería haber llamado fetch una vez (para la carga inicial)
+            expect(fetch).toHaveBeenCalledTimes(1);
+        });
+
+        test('ejecuta fetchMatches múltiples veces cuando refreshTrigger cambia', async () => {
+            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps, refreshTrigger: 0 };
+            const { rerender } = render(<Lobby {...ownerProps} />);
+            
+            await waitFor(() => {
+                expect(screen.getByText('Partida: Partida Test')).toBeInTheDocument();
+            });
+
+            // Mock para llamadas adicionales
+            fetch.mockResolvedValue({
                 ok: true,
                 json: () => Promise.resolve(mockGameData)
             });
 
-            // Simular mensaje de WebSocket con jugador existente
-            const mockEvent = {
-                data: JSON.stringify({
-                    event: 'player_joined',
-                    player: 'Owner_test_2', // Jugador que ya existe
-                    player_id: 5
-                })
-            };
-
-            // Ejecutar el handler
-            mockWs.onmessage(mockEvent);
+            // Cambiar refreshTrigger varias veces
+            rerender(<Lobby {...ownerProps} refreshTrigger={1} />);
+            rerender(<Lobby {...ownerProps} refreshTrigger={2} />);
+            rerender(<Lobby {...ownerProps} refreshTrigger={3} />);
 
             await waitFor(() => {
-                // Debería seguir teniendo solo 2 jugadores
-                expect(screen.getByText(/Jugadores en espera \(2\)/)).toBeInTheDocument();
+                // Debería haber llamado fetch 4 veces (1 inicial + 3 por refreshTrigger)
+                expect(fetch).toHaveBeenCalledTimes(4);
             });
-        });
-
-        test('maneja mensajes no JSON correctamente', async () => {
-            const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-            
-            const ownerProps = { id: 1, playerId: 5, playerName: 'Owner_test_2', ...defaultProps };
-            
-            render(<Lobby {...ownerProps} />);
-            
-            await waitFor(() => {
-                expect(mockWs.onmessage).toBeDefined();
-            });
-
-            // Simular mensaje no JSON
-            const mockEvent = { data: 'mensaje simple no json' };
-            
-            mockWs.onmessage(mockEvent);
-
-            expect(consoleSpy).toHaveBeenCalledWith('Mensaje del servidor (no JSON):', 'mensaje simple no json');
-            
-            consoleSpy.mockRestore();
         });
     });
 });

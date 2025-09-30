@@ -2,7 +2,7 @@ import './Lobby.css';
 import { useState, useEffect } from 'react';
 import StartGameButton from '../StartGameButton/StartGameButton';
 
-// Props esperados: { id, playerId, ws, isConnected }
+// Props esperados: { id, playerId, ws, isConnected, refreshTrigger }
 function Lobby(props){
     
     const [currentGame, setCurrentGame] = useState(null);
@@ -69,27 +69,17 @@ function Lobby(props){
         }
     };
 
-    // Configurar el manejador de mensajes del WebSocket cuando esté disponible
+    // Actualizar cuando se recibe un trigger de refresh (por ejemplo, player_joined)
     useEffect(() => {
-        if (props.ws) {
-            props.ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    console.log('Mensaje recibido del WebSocket:', data);
-
-                    if (data.event === 'player_joined') {
-                        console.log('Jugador se unió:', data.player);
-                        
-                        fetchMatches();
-                    }
-                } catch (error) {
-                    console.log('Mensaje del servidor (no JSON):', event.data);
-                }
-            };
+        if (props.refreshTrigger > 0) {
+            console.log('🔄 Actualizando lista de jugadores debido a player_joined');
+            fetchMatches();
         }
-    }, [props.ws]);
+    }, [props.refreshTrigger]);
 
+    // Cargar datos iniciales cuando cambia el ID del juego
     useEffect(() => {
+        console.log('📋 Cargando datos iniciales del lobby');
         fetchMatches();
     }, [props.id]);
 
