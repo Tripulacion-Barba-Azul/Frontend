@@ -1,0 +1,376 @@
+/* Principal Container */
+.matches-container {
+  min-height: 100vh;
+  background: #000000;
+  padding: 1.5rem;
+}
+
+.matches-wrapper {
+  max-width: 1152px;
+  margin: 0 auto;
+}
+
+/* Load state */
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #000000;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+  border-radius: 50%;
+  height: 3rem;
+  width: 3rem;
+  border: 2px solid transparent;
+  border-bottom: 2px solid #f4e1a3;
+}
+
+.loading-text {
+  margin-left: 0.75rem;
+  color: #f4e1a3;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Header */
+.matches-header {
+  margin-bottom: 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.matches-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: #f4e1a3;
+  margin-bottom: 0.5rem;
+}
+
+/* Refresh button */
+.refresh-button {
+  background-color: rgb(163, 34, 34);
+  color: #f4e1a3;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  font-family: 'Metropolis', sans-serif;
+}
+
+.refresh-button:hover:not(:disabled) {
+  background-color: rgb(140, 25, 25);
+  box-shadow: 0 4px 12px rgba(244, 225, 163, 0.3);
+  transform: translateY(-1px);
+}
+
+.refresh-button:disabled {
+  background-color: #4a4a4a;
+  color: #8b7355;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.refresh-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.refresh-icon.spinning {
+  animation: spin 1s linear infinite;
+}
+
+/* Games grid */
+.matches-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .matches-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .matches-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Games card */
+.match-card {
+  background-color: #000000;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 15px -3px rgba(244, 225, 163, 0.3), 0 4px 6px -2px rgba(244, 225, 163, 0.2);
+  border: 2px solid #f4e1a3;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.match-card:hover {
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.match-content {
+  padding: 1.5rem;
+}
+
+/* Card header */
+.match-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  gap: 0.75rem;
+}
+
+.match-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f4e1a3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.match-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 2px solid;
+  flex-shrink: 0;
+}
+
+.status-green {
+  background-color: #dcfce7;
+  border-color: #bbf7d0;
+  color: #166534;
+}
+
+.status-yellow {
+  background-color: #fef3c7;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+.status-red {
+  background-color: #fee2e2;
+  border-color: #fecaca;
+  color: #991b1b;
+}
+
+/* Creator info */
+.match-creator {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  color: #f4e1a3;
+}
+
+.creator-icon {
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.5rem;
+}
+
+.creator-text {
+  font-size: 0.875rem;
+}
+
+/* Players info */
+.match-players-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.players-count {
+  display: flex;
+  align-items: center;
+  color: #f4e1a3;
+}
+
+.players-icon {
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.5rem;
+}
+
+.players-text {
+  font-size: 0.875rem;
+}
+
+.players-min {
+  font-size: 0.75rem;
+  color: #d4c087;
+}
+
+/* Progress bar */
+.progress-section {
+  margin-bottom: 1rem;
+}
+
+.progress-bar {
+  width: 100%;
+  background-color: #8b7355;
+  border-radius: 9999px;
+  height: 0.5rem;
+}
+
+.progress-fill {
+  height: 0.5rem;
+  border-radius: 9999px;
+  transition: all 0.5s ease;
+}
+
+.progress-green {
+  background-color: #10b981;
+}
+
+.progress-yellow {
+  background-color: #f59e0b;
+}
+
+.progress-red {
+  background-color: #ef4444;
+}
+
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #d4c087;
+  margin-top: 0.25rem;
+}
+
+/* Join button */
+.join-button {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+}
+
+.join-button-enabled {
+  background-color: rgb(163, 34, 34);
+  color: #f4e1a3;
+}
+
+.join-button-enabled:hover {
+  background-color: rgb(140, 25, 25);
+  box-shadow: 0 10px 25px -5px rgba(244, 225, 163, 0.3), 0 4px 6px -2px rgba(244, 225, 163, 0.2);
+  transform: translateY(-1px);
+}
+
+.join-button-disabled {
+  background-color: #4a4a4a;
+  color: #8b7355;
+  cursor: not-allowed;
+}
+
+.button-icon {
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.5rem;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 3rem 0;
+}
+
+.empty-icon {
+  font-size: 3.75rem;
+  margin-bottom: 1rem;
+  color: #d4c087;
+}
+
+.empty-title {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #f4e1a3;
+  margin-bottom: 0.5rem;
+}
+
+/* Leyend */
+.legend-container {
+  margin-top: 2rem;
+  background-color: #000000;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(244, 225, 163, 0.3), 0 2px 4px -1px rgba(244, 225, 163, 0.2);
+  border: 1px solid #f4e1a3;
+  padding: 1rem;
+}
+
+.legend-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #f4e1a3;
+  margin-bottom: 0.75rem;
+}
+
+.legend-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  font-size: 0.875rem;
+}
+
+@media (min-width: 768px) {
+  .legend-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  color: #f4e1a3;
+}
+
+.legend-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  margin-right: 0.5rem;
+}
+
+.legend-dot-green {
+  background-color: #10b981;
+}
+
+.legend-dot-yellow {
+  background-color: #f59e0b;
+}
+
+.legend-dot-red {
+  background-color: #ef4444;
+}

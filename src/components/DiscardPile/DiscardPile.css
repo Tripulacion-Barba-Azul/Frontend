@@ -1,0 +1,25 @@
+.DiscardPile-container {
+  position: absolute;
+  bottom: 39.6%;
+  left: 62.6%;
+  transform-origin: bottom center;
+  display: inline-block;
+}
+
+.DiscardPile-image {
+  width: 200px;
+  height: auto;
+  display: block;
+}
+
+.DiscardPile-topcard {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: auto;
+  border-radius: 6px;
+  box-shadow: 0 4px 4px rgba(0, 0, 0, 0.5);
+  z-index: 2;
+}

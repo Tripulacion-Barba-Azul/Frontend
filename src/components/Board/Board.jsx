@@ -1,0 +1,51 @@
+import PlayerBadge from "./PlayerBadge/PlayerBadge.jsx";
+import { buildSeatedPlayersFromOrders } from "./Seats/seatsLogic.js";
+
+export default function Board({ players }) {
+  // Build seated data
+  const seated = buildSeatedPlayersFromOrders(players);
+
+  // Anchor box (full board plane)
+  const anchorStyle = { bottom: "0%", top: "0%", right: "0%", left: "0%" };
+
+  return (
+    <div className="relative w-full h-screen overflow-hidden">
+      {/* Background */}
+      <div
+        style={{
+          backgroundImage: `url("Board/backgroundBoard.png")`,
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "bottom",
+          backgroundSize: "cover",
+        }}
+        className="w-full h-screen bg-black"
+      ></div>
+
+      {/* Foreground: badges */}
+      <div className="absolute inset-0 z-10 pointer-events-none">
+        <div className="absolute pointer-events-none" style={anchorStyle}>
+          {seated.map((p) => (
+            <div
+              key={p.id}
+              className="absolute pointer-events-auto"
+              style={p.style}
+            >
+              <PlayerBadge
+                name={p.name}
+                avatar={p.avatar}
+                size={p.size}
+                ringColor={p.ringColor}
+                nameBgColor={p.nameBgColor}
+                turn={p.turn}
+                numCards={
+                  p.meta?.actualPlayer ? null : p.numCards ?? p.numCards ?? 0
+                }
+                secrets={p.meta?.actualPlayer ? null : p.secrets ?? []}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
