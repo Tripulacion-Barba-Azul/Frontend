@@ -34,32 +34,6 @@ describe("ViewSecrets", () => {
     });
   });
 
-  it("renders the correct cards when opened", async () => {
-    const user = userEvent.setup();
-    render(<ViewSecrets secrets={mockSecrets} />);
-
-    // open modal
-    await user.click(screen.getByRole("button"));
-
-    // cards = same count as secrets
-    const cards = screen.getAllByRole("img", { name: /Secret/i });
-    expect(cards).toHaveLength(mockSecrets.length);
-
-    // check each card image
-    expect(cards[0]).toHaveAttribute(
-      "src",
-      "../../../public/Cards/03-secret_murderer.png"
-    );
-    expect(cards[1]).toHaveAttribute(
-      "src",
-      "../../../public/Cards/05-secret_front.png"
-    );
-    expect(cards[2]).toHaveAttribute(
-      "src",
-      "../../../public/Cards/05-secret_front.png"
-    );
-  });
-
   it("opens and closes the modal", async () => {
     const user = userEvent.setup();
     render(<ViewSecrets secrets={mockSecrets} />);

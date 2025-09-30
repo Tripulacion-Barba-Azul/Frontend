@@ -117,7 +117,7 @@ export default function GameScreen() {
           id={parseInt(gameId)}
           playerId={parseInt(playerId)}
           onStartGame={() => setStarted(true)}
-          ws={ws}
+          ws={wsRef}
           isConnected={isConnected}
         />
       )}
