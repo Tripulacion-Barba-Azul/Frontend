@@ -38,20 +38,17 @@ export function buildBoardPlayers({
   const cardCounts = groupCountsByOwner(serverCards);
   const secretsByOwner = groupSecretsByOwner(serverSecrets);
 
+  // Los serverPlayers ya vienen procesados por buildUiPlayers con la estructura correcta
   const playersForBoard = serverPlayers.map((sp) => {
-    const pid = sp.playerID;
-    const order = sp.orderNumber;
-    const isActual = pid === currentPlayerId;
-
     return {
-      name: sp.playerName,
-      avatar: sp.avatar,
-      order,
-      actualPlayer: isActual,
+      name: sp.name,
+      avatar: sp.avatar || "default",
+      order: sp.order, // Esta ya viene de buildUiPlayers
+      actualPlayer: sp.actualPlayer,
       role: sp.role,
-      turn: sp.isTurn,
-      numCards: isActual ? null : cardCounts.get(pid) ?? 0,
-      secrets: isActual ? null : secretsByOwner.get(pid) ?? [],
+      turn: sp.turn,
+      numCards: sp.actualPlayer ? null : cardCounts.get(currentPlayerId) ?? 0,
+      secrets: sp.actualPlayer ? null : secretsByOwner.get(currentPlayerId) ?? [],
     };
   });
 

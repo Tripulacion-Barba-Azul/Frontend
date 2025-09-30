@@ -29,14 +29,17 @@ export function buildUiPlayers({
   rng = Math.random,
 }) {
 
-  console.log("🚨 buildUiPlayers called with:");
-  console.log("players:", players);
-  console.log("playerTurnId:", playerTurnId);
-  console.log("playerId:", playerId);  
-  if (!Array.isArray(players)) return [];
+  if (!Array.isArray(players)) {
+    return [];
+  }
+  
+  if (players.length === 0) {
+    return [];
+  }
 
   // 1) Split: current-turn first, remainder keeps original direction
   const turnIdx = players.findIndex((p) => p.id === playerTurnId);
+  
   // If not found, just treat as if the first player had the turn
   const normalized =
     turnIdx >= 0

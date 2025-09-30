@@ -2,6 +2,25 @@ import PlayerBadge from "./PlayerBadge/PlayerBadge.jsx";
 import { buildSeatedPlayersFromOrders } from "./Seats/seatsLogic.js";
 
 export default function Board({ players }) {
+  // Early validation to prevent errors
+  if (!Array.isArray(players) || players.length < 2) {
+    return (
+      <div className="relative w-full h-screen overflow-hidden">
+        <div
+          style={{
+            backgroundImage: `url("/Board/backgroundBoard.png")`,
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "bottom",
+            backgroundSize: "cover",
+          }}
+          className="w-full h-screen bg-black"
+        ></div>
+      </div>
+    );
+  }
+
+
+
   // Build seated data
   const seated = buildSeatedPlayersFromOrders(players);
 
@@ -13,7 +32,7 @@ export default function Board({ players }) {
       {/* Background */}
       <div
         style={{
-          backgroundImage: `url("Board/backgroundBoard.png")`,
+          backgroundImage: `url("/Board/backgroundBoard.png")`,
           backgroundRepeat: "no-repeat",
           backgroundPosition: "bottom",
           backgroundSize: "cover",
