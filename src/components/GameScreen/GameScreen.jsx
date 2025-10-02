@@ -22,7 +22,13 @@ export default function GameScreen() {
   const [playerTurnId, setTurn] = useState(null);
   const [remainingOnDeck, setRemainingOnDeck] = useState(null);
   
-    const [refreshLobby, setRefreshLobby] = useState(0);
+  // Estados para verificar si tenemos datos válidos
+  const [validPlayers, setValidPlayers] = useState([]);
+  const [validCards, setValidCards] = useState([]);
+  const [validSecrets, setValidSecrets] = useState([]);
+  const [gameDataReady, setGameDataReady] = useState(false);
+  
+  const [refreshLobby, setRefreshLobby] = useState(0);
 
   // Callback para cuando un jugador se une en el lobby
   const handlePlayerJoined = () => {
@@ -96,18 +102,28 @@ websocket.onmessage = (event) => {
         }
 
         if (Array.isArray(data.players)) {
-          console.log("🛠️ Players construidos:", data.players);
-          const builtPlayers = buildUiPlayers(data.players, data.playerTurnId, Number(playerId));
+          console.log("🛠️ Players recibidos:", data.players);
+          
+          const builtPlayers = buildUiPlayers({
+            players: data.players,
+            playerTurnId: data.playerTurnId,
+            playerId: Number(playerId)
+          });
+          
+          console.log("🛠️ Players construidos:", builtPlayers);
           setPlayers(builtPlayers);
-          console.log("🛠️ Players construidos after:", players);
+          setValidPlayers(builtPlayers);
         }
 
-        if (Array.isArray(buildCardsState(remainingOnDeck, data.cards))) {
-          console.log("🃏 Cards construidas:", data.cards);
-          const builtCards = buildCardsState(remainingOnDeck, data.cards);
-          console.log("🃏 Cards construidas after:", builtCards);
-          setCards(data.cards);
-
+        if (Array.isArray(data.cards)) {
+          console.log("🃏 Cards recibidas:", data.cards);
+          const builtCards = buildCardsState({
+            remainingOnDeck: data.remainingOnDeck,
+            cards: data.cards
+          });
+          console.log("🃏 Cards construidas:", builtCards);
+          setCards(builtCards);
+          setValidCards(builtCards);
         }
 
         if (Array.isArray(data.secrets)) {
@@ -115,12 +131,12 @@ websocket.onmessage = (event) => {
           const builtSecrets = buildSecretsState(data.secrets);
           console.log("🕵️‍♂️ Secrets construidos after:", builtSecrets);
           setSecrets(builtSecrets);
+          setValidSecrets(builtSecrets);
         }
 
-        if (typeof data.numberOfRemainingCards === "number") {
+        if (typeof data.remainingOnDeck === "number") {
           console.log("📦 Remaining deck:", data.remainingOnDeck);
           setRemainingOnDeck(data.remainingOnDeck);
-          console.log("📦 Remaining deck after:", remainingOnDeck);
         }
 
         break;
@@ -139,13 +155,29 @@ websocket.onmessage = (event) => {
 };
   }, [wsRef.current]);
 
+  // Effect para verificar cuando todos los datos están listos
+  useEffect(() => {
+    if (started && validPlayers.length >= 2 && validCards.length > 0 && validSecrets.length > 0) {
+      console.log("🎯 Game data is ready, setting gameDataReady to true");
+      console.log("🎯 validPlayers:", validPlayers.length);
+      console.log("🎯 validCards:", validCards.length); 
+      console.log("🎯 validSecrets:", validSecrets.length);
+      setGameDataReady(true);
+    } else {
+      setGameDataReady(false);
+    }
+  }, [started, validPlayers, validCards, validSecrets]);
+
+  // Verificar que tenemos todos los datos necesarios antes de renderizar el juego
+  const hasValidGameData = gameDataReady;
+
   return (
     <>
-      {started ? (
+      {hasValidGameData ? (
         <SyncOrchestrator
-          serverPlayers={players}
-          serverCards={cards}
-          serverSecrets={secrets}
+          serverPlayers={validPlayers}
+          serverCards={validCards}
+          serverSecrets={validSecrets}
           currentPlayerId={parseInt(playerId)}
         />
       ) : (
