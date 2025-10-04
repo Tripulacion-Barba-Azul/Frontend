@@ -1,0 +1,38 @@
+.AvatarRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.chooseBtn {
+  line-height: 2;
+  padding: 6px 10px;
+}
+
+.AvatarPreview {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid #000000;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25) inset;
+  background: rgba(0, 0, 0, 0.15);
+
+  margin-left: auto;
+}
+
+.AvatarPreview img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.section {
+  border: 1px solid rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+  padding: 14px 16px;
+  background: rgba(0, 0, 0, 0.08);
+  margin: 14px 0 18px;
+}
