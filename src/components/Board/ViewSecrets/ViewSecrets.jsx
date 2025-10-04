@@ -10,86 +10,69 @@ const imageMap = {
   shhIcon: "/Icons/shhIcon.png",
 };
 
-export default function ViewSecrets({ secrets = [] }) {
-  const [modalOpen, setModalOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+export default function ViewSecrets({ secrets }) {
+  const [ViewSecrets, setViewSecrets] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const toggleViewSecrets = () => {
+    setViewSecrets(!ViewSecrets);
+  };
 
-  useEffect(() => {
-    if (modalOpen) document.body.classList.add("active-viewsecrets");
-    else document.body.classList.remove("active-viewsecrets");
-    return () => document.body.classList.remove("active-viewsecrets");
-  }, [modalOpen]);
+  const hasSecrets = secrets && secrets.length > 0;
 
-  const toggleModal = () => setModalOpen((v) => !v);
-
-  // modal content to port into body
-  const modalContent = (
-    <div className="viewsecrets" role="dialog" aria-modal="true">
-      <div className="overlay" onClick={toggleModal} />
-      <div className="secrets-grid">
-        {secrets && secrets.length > 0 ? (
-          secrets.map((secret) => (
-            <div key={secret.secretID} className="secret-card">
-              <img
-                src={
-                  secret.revealed
-                    ? imageMap[secret.secretName]
-                    : imageMap.secretFront
-                }
-                alt={
-                  secret.revealed
-                    ? `Secret ${secret.secretName}`
-                    : "Secret hidden"
-                }
-              />
-            </div>
-          ))
-        ) : (
-          <div className="no-secrets-message">Out of secrets!</div>
-        )}
-      </div>
-
-      <button
-        className="close-viewsecrets"
-        onClick={toggleModal}
-        aria-label="Close"
-      >
-        X
-      </button>
-    </div>
-  );
+  if (ViewSecrets) {
+    document.body.classList.add("active-viewsecrets");
+  } else {
+    document.body.classList.remove("active-viewsecrets");
+  }
 
   return (
     <>
-      <button
-        onClick={toggleModal}
-        className="btn-viewsecrets"
-        type="button"
-        aria-haspopup="dialog"
-        aria-expanded={modalOpen}
-      >
-        <div className="light-dots" aria-hidden="true">
+      <button onClick={toggleViewSecrets} className="btn-viewsecrets">
+        <div className="light-dots">
           {secrets.map((secret) => (
             <div
-              key={secret.secretID}
-              className={`light-dot ${secret.revealed ? "revealed" : "hidden"}`}
+              key={secret.class}
+              className={`light-dot ${secret.revealed ? "revealed" : "unrevealed"}`}
               title={
-                secret.revealed
-                  ? `Secret ${secret.secretName}`
-                  : "Secret hidden"
+                secret.revealed ? `Secret ${secret.class}` : `Secret hidden`
               }
             />
           ))}
         </div>
-        <img src={imageMap.shhIcon} alt="secrets" />
+
+        <img src={imageMap["shhIcon"]} alt="shhIcon" />
       </button>
 
-      {/* mount modal into body to avoid stacking/clip issues */}
-      {mounted && modalOpen && createPortal(modalContent, document.body)}
+      {ViewSecrets &&
+        createPortal(
+          <div className="viewsecrets">
+            <div onClick={toggleViewSecrets} className="overlay"></div>
+            <div className="secrets-grid">
+              {hasSecrets ? (
+                secrets.map((secret) => (
+                  <div key={secret.class} className="secret-card">
+                    {secret.revealed ? (
+                      <img
+                        src={imageMap[secret.class]}
+                        alt={`Secret ${secret.class}`}
+                      />
+                    ) : (
+                      <img src={imageMap["secretFront"]} alt={`Secret hidden`} />
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="no-secrets-message">
+                  <p>Out of secrets!</p>
+                </div>
+              )}
+            </div>
+            <button className="close-viewsecrets" onClick={toggleViewSecrets}>
+              X
+            </button>
+          </div>,
+          document.body
+        )}
     </>
   );
 }
