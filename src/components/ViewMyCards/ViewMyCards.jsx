@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import "./ViewMyCards.css";
 
 const zoomviewicon = "/Icons/zoomviewicon.png";
@@ -53,27 +54,29 @@ export default function ViewMyCards({ cards }) {
         <img src={zoomviewicon} alt="zoomviewicon" />
       </button>
 
-      {ViewMyCards && (
-        <div className="viewmycards">
-          <div onClick={toggleViewMyCards} className="overlay"></div>
-          <div className="cards-grid">
-            {hasCards ? (
-              cards.map((card) => (
-                <div key={card} className="card">
-                  <img src={imageMap[Number(card)]} alt={`card ${card}`} />
+      {ViewMyCards &&
+        createPortal(
+          <div className="viewmycards">
+            <div onClick={toggleViewMyCards} className="overlay"></div>
+            <div className="cards-grid">
+              {hasCards ? (
+                cards.map((card) => (
+                  <div key={card} className="card">
+                    <img src={imageMap[Number(card)]} alt={`card ${card}`} />
+                  </div>
+                ))
+              ) : (
+                <div className="no-cards-message">
+                  <p>Out of cards!</p>
                 </div>
-              ))
-            ) : (
-              <div className="no-cards-message">
-                <p>Out of cards!</p>
-              </div>
-            )}
-          </div>
-          <button className="close-viewmycards" onClick={toggleViewMyCards}>
-            X
-          </button>
-        </div>
-      )}
+              )}
+            </div>
+            <button className="close-viewmycards" onClick={toggleViewMyCards}>
+              X
+            </button>
+          </div>,
+          document.body
+        )}
     </>
   );
 }

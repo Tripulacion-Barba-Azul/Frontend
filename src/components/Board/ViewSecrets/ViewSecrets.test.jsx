@@ -29,7 +29,7 @@ describe("ViewSecrets", () => {
       if (secret.revealed) {
         expect(dots[index]).toHaveClass("revealed");
       } else {
-        expect(dots[index]).toHaveClass("hidden");
+        expect(dots[index]).toHaveClass("unrevealed");
       }
     });
   });

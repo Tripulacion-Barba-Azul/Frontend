@@ -29,7 +29,7 @@ describe("ViewMySecrets", () => {
       if (secret.revealed) {
         expect(dots[index]).toHaveClass("revealed");
       } else {
-        expect(dots[index]).toHaveClass("hidden");
+        expect(dots[index]).toHaveClass("unrevealed");
       }
     });
   });
@@ -50,24 +50,24 @@ describe("ViewMySecrets", () => {
     // check each card image
     expect(frontCards[0]).toHaveAttribute(
       "src",
-      "../../../public/Cards/03-secret_murderer.png"
+      "/Cards/03-secret_murderer.png"
     );
     expect(frontCards[1]).toHaveAttribute(
       "src",
-      "../../../public/Cards/04-secret_accomplice.png"
+      "/Cards/04-secret_accomplice.png"
     );
     expect(frontCards[2]).toHaveAttribute(
       "src",
-      "../../../public/Cards/06-secret_back.png"
+      "/Cards/06-secret_back.png"
     );
 
     expect(backCards[0]).toHaveAttribute(
       "src",
-      "../../../public/Cards/05-secret_front.png"
+      "/Cards/05-secret_front.png"
     );
     expect(backCards[1]).toHaveAttribute(
       "src",
-      "../../../public/Cards/05-secret_front.png"
+      "/Cards/05-secret_front.png"
     );
   });
 
