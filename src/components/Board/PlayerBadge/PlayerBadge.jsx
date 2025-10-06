@@ -5,61 +5,68 @@ import {
   RING_COLORS,
   NAME_BG_COLORS,
   AVATAR_MAP,
-  MAX_NAME_LEN,
 } from "./playerBadgeConstants.js";
 import CardCount from "../CardCount/CardCount.jsx";
-import ViewSecrets from "../ViewSecrets/ViewSecrets.jsx"; // ⬅️ usa Secrets
+import ViewSecrets from "../ViewSecrets/ViewSecrets.jsx";
+
+/**
+ * Input:
+ * - Array[{
+ *     name: string //Length [1,20]
+ *     avatar: string,          // key in AVATAR_MAP
+ *     size: string "big"|"small"
+ *     ringColor: string "black"|"blue"|"pink"|"red"|"purple"|"yellow"
+ *     nameBgColor: string "white"|"red"|"orange"
+ *     turn: bool,
+ *     numCards: int,
+ *     secrets: Array:[{secretName: string,
+ *                      revealed: Bool}]
+ *   }>
+ */
 
 export default function PlayerBadge({
   name = "Jugador",
-  avatar = "default",
+  avatar = 1,
   size = "small",
   ringColor = "black",
   nameBgColor = "white",
   turn = false,
-  numCards = 0, // null para ocultar (actualPlayer)
-  secrets = null, // null para ocultar (actualPlayer)
+  numCards = 0, // null to hide for (actualPlayer)
+  secrets = null, // null to hide for (actualPlayer)
 }) {
   const circleSize = SIZES[size] ?? SIZES.small;
   const ringCol = RING_COLORS[ringColor] ?? RING_COLORS.black;
   const nameBgCol = NAME_BG_COLORS[nameBgColor] ?? NAME_BG_COLORS.white;
-  const avatarSrc = AVATAR_MAP[avatar] ?? AVATAR_MAP.default;
-  const nameT =
-    name.length > MAX_NAME_LEN ? name.slice(0, MAX_NAME_LEN) + "…" : name;
-
+  const avatarSrc = AVATAR_MAP[avatar] ?? AVATAR_MAP[1];
   const showCount = typeof numCards === "number" && numCards >= 0;
   const showSecrets = Array.isArray(secrets) && secrets.length >= 0;
 
   return (
     <div className="player-badge">
-      {/* indicador de turno arriba del nombre */}
+      {/* Turn indicator */}
       <span className={`turn-indicator ${turn ? "on" : "off"}`} />
 
-      {/* nombre */}
+      {/* Name */}
       <span className="player-name-box" style={{ ["--name-bg"]: nameBgCol }}>
-        {nameT}
+        {name}
       </span>
 
-      {/* avatar (es el ancla relativa) */}
+      {/* Avatar */}
       <div
         className={`avatar-circle ${circleSize}`}
         style={{ ["--tw-ring-color"]: ringCol }}
       >
-        <img
-          src={avatarSrc}
-          alt={`Avatar of ${nameT}`}
-          className="avatar-img"
-        />
+        <img src={avatarSrc} alt={`Avatar of ${name}`} className="avatar-img" />
       </div>
 
-      {/* card count (se mantiene) */}
+      {/* Card count */}
       {showCount && (
         <div className="badge-cardcount">
           <CardCount number={numCards} />
         </div>
       )}
 
-      {/* secrets con clase hardcodeada */}
+      {/* Secrets */}
       {showSecrets && (
         <div className="badge-secrets-fixed">
           <ViewSecrets secrets={secrets} />

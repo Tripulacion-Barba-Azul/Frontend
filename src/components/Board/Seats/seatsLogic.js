@@ -25,32 +25,17 @@ function makeNameBgResolver(actualPlayerRoleNorm) {
 }
 
 /**
- * buildSeatedPlayersFromOrders
- * Computes the visual seating layout for a table (2–6 players) from a raw players array.
- * Fixes the seating start at the actual player, orders the rest circularly by `order`,
- * and returns render-ready entries with seat id, style, sizes, and colors.
- *
  * Input:
- * - players: Array<{
+ * - players: Array[{
  *     name: string,
  *     avatar: string,          // key in AVATAR_MAP
  *     order: number,           // 1..N ordering within the match
  *     actualPlayer: boolean,   // marks the local user
- *     role: string "detective"|"asesino"|"complice",
- *     turn?: boolean
- *   }>
- *
- * Returns:
- * - Array<{
- *     id: "p1"|"p2"|"p3"|"p4"|"p5"|"p6",
- *     name: string,
- *     avatar: string,
- *     size: "big"|"small",
- *     ringColor: string,       // token from RING_COLORS
- *     nameBgColor: string,     // resolved color token
- *     turn: boolean,
- *     style: React.CSSProperties, // absolute positioning for that seat
- *     meta: { order: number, actualPlayer: boolean, role: string|null }
+ *     role: string "detective"|"murderer"|"accomplice",
+ *     turnStatus: string “waiting”|“playing”|“discarding”|“drawing”
+ *     numCards: Int,
+ *     secrets: Array:[{secretName: string,
+ *                      revealed: Bool}]
  *   }>
  */
 
@@ -87,12 +72,12 @@ export function buildSeatedPlayersFromOrders(players) {
 
     return {
       id: seatId, // seat id (p1..p6)
-      name: p.name,
+      name: p.playerName,
       avatar: p.avatar,
       size: idx === 0 ? "big" : "small", // make actualPlayer larger by convention
       ringColor: RING_COLORS[idx % RING_COLORS.length],
       nameBgColor: resolveNameBg(p.role), // <<< "red" for accomplice/murderer iff actualPlayer is hidden team; else "white"
-      turn: p.turn,
+      turn: p.turnStatus !== "waiting",
       numCards: p.numCards,
       secrets: p.secrets,
       style: seat.style,

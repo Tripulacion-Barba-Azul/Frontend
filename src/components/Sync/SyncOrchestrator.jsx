@@ -1,10 +1,46 @@
 import React from "react";
-import BoardSync from "./Board/BoardSync.jsx";
-import RegularDeckSync from "./RegularDeck/RegularDeckSync.jsx";
-import DiscardPileSync from "./DiscardPile/DiscardPileSync.jsx";
-import OwnCardsSync from "./OwnCards/OwnCardsSync.jsx";
-import ViewMySecretsSync from "./ViewMySecrets/ViewMySecretsSync.jsx";
-import ViewMyCardsSync from "./ViewMyCards/ViewMyCardsSync.jsx";
+import Board from "../Board/Board.jsx";
+import DiscardPile from "../DiscardPile/DiscardPile.jsx";
+import OwnCards from "../OwnCards/OwnCards.jsx";
+import RegularDeck from "../RegularDeck/RegularDeck.jsx";
+import ViewMyCards from "../ViewMyCards/ViewMyCards.jsx";
+import ViewMySecrets from "../ViewMySecrets/ViewMySecrets.jsx";
+
+import {
+  computeBoardPlayers,
+  computeDeckCount,
+  computeDiscardState,
+  computeOwnCards,
+  computeOwnSecrets,
+} from "./SyncOrchestratorLogic.js";
+
+/**
+ * Input:
+ * - serverPlayers: Array[{
+ *     playerName: string,
+ *     playerID: Int,
+ *     orderNumber: number,           // 1..N ordering within the match
+ *     role: string             "detective"|"murderer"|"accomplice",
+ *     turnStatus: string       “waiting”|“playing”|“discarding”|“drawing”
+ *     avatar: string,                // key in AVATAR_MAP
+ *   }>
+ *
+ * - serverCards: Array[{
+ *     cardName: string,
+ *     cardID: Int,
+ *     cardOwnerID: Int,
+ *     isInDeck: Bool,
+ *     isInDiscardPile: Bool,
+ *     isInDiscardTop: Bool,
+ *   }>
+ *
+ * - serverSecrets: Array[{
+ *     secretName: string,
+ *     secretId: Int,
+ *     revealed: Bool,
+ *     secretOwnerID: Int,
+ *   }>
+ */
 
 export default function SyncOrchestrator({
   serverPlayers,
@@ -12,35 +48,73 @@ export default function SyncOrchestrator({
   serverSecrets,
   currentPlayerId,
 }) {
+  // Board
+  const boardPlayers = React.useMemo(() => {
+    return computeBoardPlayers({
+      serverPlayers,
+      serverCards,
+      serverSecrets,
+      currentPlayerId,
+    });
+  }, [serverPlayers, serverCards, serverSecrets, currentPlayerId]);
+
+  // Regular deck
+  const deckCount = React.useMemo(() => {
+    return computeDeckCount(serverCards);
+  }, [serverCards]);
+
+  // Discard pile
+  const { discardCount, discardTop } = React.useMemo(() => {
+    return computeDiscardState(serverCards);
+  }, [serverCards]);
+
+  // Own cards
+  const ownCards = React.useMemo(() => {
+    return computeOwnCards(serverCards, currentPlayerId);
+  }, [serverCards, currentPlayerId]);
+
+  // View my secrets
+  const ownSecrets = React.useMemo(() => {
+    return computeOwnSecrets(serverSecrets, currentPlayerId);
+  }, [serverSecrets, currentPlayerId]);
+
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      {/* Capa Board (turnos + jugadores) */}
-      <BoardSync
-        serverPlayers={serverPlayers}
-        serverCards={serverCards}
-        serverSecrets={serverSecrets}
-        currentPlayerId={currentPlayerId}
-      />
+      {/* Board */}
+      <Board players={boardPlayers} />
 
-      {/* Capa mazo + descarte + mano propia (como antes) */}
       <div className="absolute inset-0 pointer-events-none">
-        <RegularDeckSync serverCards={serverCards} />
-        <DiscardPileSync serverCards={serverCards} />
-        <OwnCardsSync
-          serverCards={serverCards}
-          currentPlayerId={currentPlayerId}
-        />
-        <ViewMyCardsSync
-          serverCards={serverCards}
-          currentPlayerId={currentPlayerId}
-          anchorClass="fixed left-110 bottom-45 z-50 pointer-events-auto"
-        />
+        {/* Regular Deck */}
+        <div
+          className={`absolute pointer-events-noneq`}
+          style={{
+            bottom: "40%",
+            left: "32.2%",
+            transform: "translateX(-50%)",
+          }}
+        >
+          <div className="pointer-events-auto">
+            <RegularDeck number={deckCount} />
+          </div>
+        </div>
 
-        <ViewMySecretsSync
-          allSecrets={serverSecrets}
-          playerId={currentPlayerId}
-          anchorClass="fixed right-416 bottom-27 z-50 pointer-events-auto"
-        />
+        {/* Discard Pile */}
+        <div className="absolute inset-0 pointer-events-none">
+          <DiscardPile number={discardCount} card={discardTop} />
+        </div>
+
+        {/* Own Cards */}
+        <OwnCards cards={ownCards} />
+
+        {/* View My Cards */}
+        <div className="fixed left-110 bottom-45 z-50 pointer-events-auto">
+          <ViewMyCards cards={ownCards} />
+        </div>
+
+        {/* View My Secrets */}
+        <div className="fixed right-416 bottom-27 z-50 pointer-events-auto">
+          <ViewMySecrets secrets={ownSecrets} />
+        </div>
       </div>
     </div>
   );

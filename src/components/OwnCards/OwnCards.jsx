@@ -1,39 +1,34 @@
 import React from "react";
 import "./OwnCards.css";
-import { CARD_SRC } from "./ownCardsConstants.js";
+import { CARDS_MAP } from "../generalMaps.js";
 
-function validateCardIds(cardIds) {
-  if (!Array.isArray(cardIds)) return false;
-  if (cardIds.length > 6) return false;
-  return cardIds.every((id) => Number.isInteger(id) && id >= 7 && id <= 27);
+function validateCards(cards) {
+  const isArray = Array.isArray(cards);
+  const hasValidLength = isArray && cards.length <= 6;
+  const hasRequiredFields =
+    isArray &&
+    cards.every((card) => card?.cardID != null && card?.cardName != null);
+  const hasKnownNames =
+    hasRequiredFields &&
+    cards.every(({ cardName }) => CARDS_MAP[cardName] !== undefined);
+
+  return isArray && hasValidLength && hasRequiredFields && hasKnownNames;
 }
 
-/**
- * Render the player's hand row.
- *
- * Behavior:
- *      + Validates `cardIds` and throws on invalid input.
- *      + Shows cards in a fixed row at the bottom-center of the screen (at the actualPlayer own cards view).
- *
- * Props:
- *     cardIds=[]       - Array of card IDs(ints) (each in [7, 27], max 6 elements).
- *     className=""     - Extra class names for outer styling (reserved).
- */
-
-export default function OwnCards({ cardIds = [], className = "" }) {
-  if (!validateCardIds(cardIds)) {
+export default function OwnCards({ cards = [] }) {
+  if (!validateCards(cards)) {
     throw new Error("Invalid array of cards");
   }
 
   return (
-    <div className={`owncards-overlay ${className}`} aria-label="cards-row">
+    <div className={`owncards-overlay`} aria-label="cards-row">
       <div className="owncards-row">
-        {cardIds.map((id) => {
+        {cards.map((card) => {
           return (
             <img
-              key={id}
-              src={CARD_SRC[id]}
-              alt={`Card ${id}`}
+              key={card.cardID}
+              src={CARDS_MAP[card.cardName]}
+              alt={`Card ${card.cardID}`}
               className="owncards-card"
               width={130}
               height={198}

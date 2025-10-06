@@ -1,92 +1,105 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
-import userEvent from "@testing-library/user-event";
-import { describe, it, expect, vi } from "vitest";
-import ViewMySecrets from "./ViewMySecrets";
+import { describe, it, expect, vi, afterEach } from "vitest";
 
-const mockSecrets = [
-  { class: "murderer", revealed: true },
-  { class: "accomplice", revealed: false },
-  { class: "regular", revealed: false },
+vi.mock("../generalMaps.js", () => ({
+  SECRETS_MAP: {
+    murderer: "/Cards/03-secret_murderer.png",
+    accomplice: "/Cards/04-secret_accomplice.png",
+    secretFront: "/Cards/05-secret_front.png",
+    regular: "/Cards/06-secret_back.png",
+  },
+}));
+
+import ViewSecrets from "./ViewMySecrets.jsx";
+
+afterEach(() => {
+  document.body.classList.remove("my-active-SecretsView");
+});
+
+const SECRETS = [
+  { secretID: "A", secretName: "murderer", revealed: true },
+  { secretID: "B", secretName: "accomplice", revealed: false },
+  { secretID: "C", secretName: "regular", revealed: false },
 ];
 
-const mockNoSecrets = [ ];
-
-describe("ViewMySecrets", () => {
-  it("renders the correct number of dots", () => {
-    render(<ViewMySecrets secrets={mockSecrets} />);
-
-    const dots = screen.getAllByTitle(/Secret/i);
-    expect(dots).toHaveLength(mockSecrets.length);
+describe("ViewMySecrets.jsx (as implemented)", () => {
+  it("renders the trigger button (named by inner img alt)", () => {
+    render(<ViewSecrets secrets={SECRETS} />);
+    const btn = screen.getByRole("button", { name: /shhicon/i });
+    expect(btn).toBeInTheDocument();
   });
 
-  it("applies correct classes to dots based on secret state", () => {
-    render(<ViewMySecrets secrets={mockSecrets} />);
-
+  it("renders one light-dot per secret with correct classes and titles", () => {
+    render(<ViewSecrets secrets={SECRETS} />);
     const dots = screen.getAllByTitle(/Secret/i);
+    expect(dots).toHaveLength(SECRETS.length);
 
-    mockSecrets.forEach((secret, index) => {
-      if (secret.revealed) {
-        expect(dots[index]).toHaveClass("revealed");
-      } else {
-        expect(dots[index]).toHaveClass("unrevealed");
-      }
+    expect(dots[0]).toHaveClass("revealed");
+    expect(dots[0]).toHaveAttribute("title", "Secret murderer");
+    expect(dots[1]).toHaveClass("unrevealed");
+    expect(dots[1]).toHaveAttribute("title", "Secret hidden");
+    expect(dots[2]).toHaveClass("unrevealed");
+    expect(dots[2]).toHaveAttribute("title", "Secret hidden");
+  });
+
+  it("opens the modal and renders expected images for revealed/unrevealed", () => {
+    render(<ViewSecrets secrets={SECRETS} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /shhicon/i }));
+
+    const fronts = screen.getAllByRole("img", { name: /Secret \w+/i });
+    expect(fronts).toHaveLength(SECRETS.length);
+
+    const backs = screen.getAllByRole("img", { name: /Card back/i });
+    expect(backs).toHaveLength(SECRETS.filter((s) => !s.revealed).length);
+
+    expect(fronts[0]).toHaveAttribute("src", "/Cards/03-secret_murderer.png");
+    expect(fronts[1]).toHaveAttribute("src", "/Cards/04-secret_accomplice.png");
+    expect(fronts[2]).toHaveAttribute("src", "/Cards/06-secret_back.png");
+
+    backs.forEach((img) => {
+      expect(img).toHaveAttribute("src", "/Cards/05-secret_front.png");
     });
   });
 
-  it("renders the correct cards when opened", async () => {
-    const user = userEvent.setup();
-    render(<ViewMySecrets secrets={mockSecrets} />);
+  it("closes the modal via the close button 'X'", () => {
+    render(<ViewSecrets secrets={SECRETS} />);
+    fireEvent.click(screen.getByRole("button", { name: /shhicon/i }));
 
-    // open modal
-    await user.click(screen.getByRole("button"));
-
-    // cards = same count as secrets
-    const frontCards = screen.getAllByRole("img", { name: /Secret \w+/ });
-    const backCards = screen.getAllByRole("img", { name: /Card back/ });
-    expect(frontCards).toHaveLength(mockSecrets.length);
-    expect(backCards).toHaveLength(mockSecrets.length - 1);
-
-    // check each card image
-    expect(frontCards[0]).toHaveAttribute(
-      "src",
-      "/Cards/03-secret_murderer.png"
-    );
-    expect(frontCards[1]).toHaveAttribute(
-      "src",
-      "/Cards/04-secret_accomplice.png"
-    );
-    expect(frontCards[2]).toHaveAttribute(
-      "src",
-      "/Cards/06-secret_back.png"
-    );
-
-    expect(backCards[0]).toHaveAttribute(
-      "src",
-      "/Cards/05-secret_front.png"
-    );
-    expect(backCards[1]).toHaveAttribute(
-      "src",
-      "/Cards/05-secret_front.png"
-    );
-  });
-
-  it("opens and closes the modal", async () => {
-    const user = userEvent.setup();
-    render(<ViewMySecrets secrets={mockSecrets} />);
-
-    await user.click(screen.getByRole("button"));
     expect(screen.getByText("X")).toBeInTheDocument();
+    expect(
+      screen.getByRole("img", { name: "Secret murderer" })
+    ).toBeInTheDocument();
 
-    await user.click(screen.getByText("X"));
-    expect(screen.queryByText("X")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText("X"));
+    expect(
+      screen.queryByRole("img", { name: "Secret murderer" })
+    ).not.toBeInTheDocument();
+    expect(document.body.classList.contains("my-active-SecretsView")).toBe(
+      false
+    );
   });
 
-  it("Shows message when there are no secrets", async () => {
-    const user = userEvent.setup();
-    render(<ViewMySecrets secrets={mockNoSecrets} />);
+  it("closes the modal by clicking the overlay", () => {
+    render(<ViewSecrets secrets={SECRETS} />);
+    fireEvent.click(screen.getByRole("button", { name: /shhicon/i }));
 
-    await user.click(screen.getByRole("button"));
-    expect(screen.getByText(/Out of secrets/i)).toBeInTheDocument();
+    const overlay = document.querySelector(".overlay");
+    expect(overlay).toBeTruthy();
+
+    fireEvent.click(overlay);
+    expect(
+      screen.queryByRole("img", { name: "Secret murderer" })
+    ).not.toBeInTheDocument();
+    expect(document.body.classList.contains("my-active-SecretsView")).toBe(
+      false
+    );
+  });
+
+  it("shows 'Out of secrets!' when secrets is empty", () => {
+    render(<ViewSecrets secrets={[]} />);
+    fireEvent.click(screen.getByRole("button", { name: /shhicon/i }));
+    expect(screen.getByText(/Out of secrets!/i)).toBeInTheDocument();
   });
 });

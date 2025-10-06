@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import "./ViewSecrets.css";
-
-const imageMap = {
-  murderer: "/Cards/03-secret_murderer.png",
-  accomplice: "/Cards/04-secret_accomplice.png",
-  regular: "/Cards/06-secret_back.png",
-  secretFront: "/Cards/05-secret_front.png",
-  shhIcon: "/Icons/shhIcon.png",
-};
+import { SECRETS_MAP } from "../../generalMaps.js";
 
 export default function ViewSecrets({ secrets }) {
   const [ViewSecrets, setViewSecrets] = useState(false);
@@ -31,16 +24,20 @@ export default function ViewSecrets({ secrets }) {
         <div className="light-dots">
           {secrets.map((secret) => (
             <div
-              key={secret.class}
-              className={`light-dot ${secret.revealed ? "revealed" : "unrevealed"}`}
+              key={secret.secretID}
+              className={`light-dot ${
+                secret.revealed ? "revealed" : "unrevealed"
+              }`}
               title={
-                secret.revealed ? `Secret ${secret.class}` : `Secret hidden`
+                secret.revealed
+                  ? `Secret ${secret.secretName}`
+                  : `Secret hidden`
               }
             />
           ))}
         </div>
 
-        <img src={imageMap["shhIcon"]} alt="shhIcon" />
+        <img src={"/Icons/shhIcon.png"} alt="shhIcon" />
       </button>
 
       {ViewSecrets &&
@@ -50,14 +47,19 @@ export default function ViewSecrets({ secrets }) {
             <div className="secrets-grid">
               {hasSecrets ? (
                 secrets.map((secret) => (
-                  <div key={secret.class} className="secret-card">
+                  <div key={secret.secretID} className="secret-card">
                     {secret.revealed ? (
                       <img
-                        src={imageMap[secret.class]}
-                        alt={`Secret ${secret.class}`}
+                        className="front"
+                        src={SECRETS_MAP[secret.secretName]}
+                        alt={`Secret ${secret.secretName}`}
                       />
                     ) : (
-                      <img src={imageMap["secretFront"]} alt={`Secret hidden`} />
+                      <img
+                        className="back"
+                        src={"/Cards/05-secret_front.png"}
+                        alt={`Secret hidden`}
+                      />
                     )}
                   </div>
                 ))

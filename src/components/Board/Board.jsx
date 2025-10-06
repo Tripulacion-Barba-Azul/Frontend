@@ -1,6 +1,21 @@
 import PlayerBadge from "./PlayerBadge/PlayerBadge.jsx";
 import { buildSeatedPlayersFromOrders } from "./Seats/seatsLogic.js";
 
+/**
+ * Input:
+ * - players: Array[{
+ *     name: string,
+ *     avatar: string,          // key in AVATAR_MAP
+ *     order: number,           // 1..N ordering within the match
+ *     actualPlayer: boolean,   // marks the local user
+ *     role: string "detective"|"murderer"|"accomplice",
+ *     turnStatus: string “waiting”|“playing”|“discarding”|“drawing”
+ *     numCards: Int,
+ *     secrets: Array:[{secretName: string,
+ *                      revealed: Bool}]
+ *   }>
+ */
+
 export default function Board({ players }) {
   // Early validation to prevent errors
   if (!Array.isArray(players) || players.length < 2) {
@@ -18,8 +33,6 @@ export default function Board({ players }) {
       </div>
     );
   }
-
-
 
   // Build seated data
   const seated = buildSeatedPlayersFromOrders(players);
