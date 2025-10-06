@@ -1,0 +1,42 @@
+.no-action-button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.no-action-button {
+  background-color: #4a5568;
+  color: #f7fafc;
+  border: 2px solid #2d3748;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.no-action-button:hover:not(:disabled) {
+  background-color: #2d3748;
+  border-color: #1a202c;
+  transform: translateY(-1px);
+}
+
+.no-action-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.no-action-button:disabled {
+  background-color: #718096;
+  border-color: #4a5568;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.no-action-error {
+  color: #f56565;
+  font-size: 12px;
+  text-align: center;
+  margin-top: 4px;
+}
