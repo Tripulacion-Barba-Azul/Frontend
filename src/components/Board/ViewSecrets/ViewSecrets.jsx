@@ -50,13 +50,11 @@ export default function ViewSecrets({ secrets }) {
                   <div key={secret.secretID} className="secret-card">
                     {secret.revealed ? (
                       <img
-                        className="front"
                         src={SECRETS_MAP[secret.secretName]}
                         alt={`Secret ${secret.secretName}`}
                       />
                     ) : (
                       <img
-                        className="back"
                         src={"/Cards/05-secret_front.png"}
                         alt={`Secret hidden`}
                       />

@@ -20,8 +20,8 @@ import {
  *     playerName: string,
  *     playerID: Int,
  *     orderNumber: number,           // 1..N ordering within the match
- *     role: string             "detective"|"murderer"|"accomplice",
- *     turnStatus: string       “waiting”|“playing”|“discarding”|“drawing”
+ *     role: string                   "detective"|"murderer"|"accomplice",
+ *     turnStatus: string             “waiting”|“playing”|“discarding”|“drawing”
  *     avatar: string,                // key in AVATAR_MAP
  *   }>
  *
@@ -104,7 +104,13 @@ export default function SyncOrchestrator({
         </div>
 
         {/* Own Cards */}
-        <OwnCards cards={ownCards} />
+        <OwnCards
+          cards={ownCards}
+          turnStatus={
+            boardPlayers.find((player) => player.playerID === currentPlayerId)
+              ?.turnStatus
+          }
+        />
 
         {/* View My Cards */}
         <div className="fixed left-110 bottom-45 z-50 pointer-events-auto">
