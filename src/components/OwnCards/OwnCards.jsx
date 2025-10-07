@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import "./OwnCards.css";
 import { CARDS_MAP } from "../generalMaps.js";
 import DiscardButton from "./DiscardButton/DiscardButton";
+import DrawRegularCardButton from "./DrawRegularCardButton/DrawRegularCardButton.jsx";
 
 export default function OwnCards({
   cardIds = [],
@@ -86,7 +87,10 @@ export default function OwnCards({
         )}
 
         {turnStatus === "drawing" && (
-          <button className="owncards-action">Draw 1 from deck</button>
+          <DrawRegularCardButton
+          isDrawCardPhase={true}
+          playerCardCount={cardIds.length}
+        />
         )}
       </div>
     </div>

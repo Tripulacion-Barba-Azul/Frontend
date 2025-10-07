@@ -6,10 +6,18 @@ import "@testing-library/jest-dom";
 import OwnCards from "./OwnCards.jsx";
 import { CARDS_MAP } from "../generalMaps.js";
 
-// Mock the DiscardButton so tests don't need react-router or fetch behavior
-vi.mock("./DiscardButton/DiscardButton", () => ({
-  default: () => null,
-}));
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual = await importOriginal();
+
+  return {
+    ...actual,
+    useSearchParams: () => [
+      new URLSearchParams({ playerId: "1" }), // fake param
+      vi.fn(),
+    ],
+    useParams: () => ({ gameId: "123" }), // fake param
+  };
+});
 
 // Helper to render easily
 const setup = (cards = [], props = {}) =>
