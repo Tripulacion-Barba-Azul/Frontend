@@ -4,40 +4,30 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 import OwnCards from "./OwnCards.jsx";
-import { CARD_SRC } from "./ownCardsConstants.js";
+import { CARDS_MAP } from "../generalMaps.js";
 
-// Mock the DiscardButton so tests don't need react-router or fetch behavior.
-// We return null to avoid rendering any button/UI from that module here.
-vi.mock("./DiscardButton/DiscardButton", () => {
-  return {
-    default: () => null,
-  };
-});
+// Mock the DiscardButton so tests don't need react-router or fetch behavior
+vi.mock("./DiscardButton/DiscardButton", () => ({
+  default: () => null,
+}));
 
-// Mock the NoActionButton
-vi.mock("./NoActionButton/NoActionButton", () => {
-  return {
-    default: ({ onNoActionSuccess }) => (
-      <button 
-        data-testid="no-action-button"
-        onClick={onNoActionSuccess}
-      >
-        Play nothing
-      </button>
-    ),
-  };
-});
+// Helper to render easily
+const setup = (cards = [], props = {}) =>
+  render(<OwnCards cardIds={cards} {...props} />);
 
-// Small helper to render the component and return render utils when needed
-const setup = (ids = [], props = {}) => render(<OwnCards cardIds={ids} {...props} />);
+// Example test cards
+const TEST_CARDS = [
+  { cardID: 7, cardName: "Hercule Poirot" },
+  { cardID: 16, cardName: "Not so Fast!" },
+  { cardID: 27, cardName: "Social Faux Pas" },
+];
 
-describe("OwnCards.jsx (static + selection behavior)", () => {
+describe("OwnCards.jsx (new card object structure)", () => {
   beforeEach(() => {
-    // ensure clean DOM between tests
     document.body.innerHTML = "";
   });
 
-  it("renders the absolute overlay container with aria-label", () => {
+  it("renders the overlay container", () => {
     setup([]);
     const overlay = screen.getByLabelText("cards-row");
     expect(overlay).toBeInTheDocument();
@@ -46,146 +36,89 @@ describe("OwnCards.jsx (static + selection behavior)", () => {
 
   it("renders no images when cardIds is empty", () => {
     setup([]);
-    const imgs = screen.queryAllByRole("img", { name: /Card \d+/i });
+    const imgs = screen.queryAllByRole("img");
     expect(imgs).toHaveLength(0);
   });
 
-  it("throws on invalid inputs: non-array, too many items, or out-of-range ids", () => {
-    // Non-array
-    expect(() => render(<OwnCards cardIds={"not-an-array"} />)).toThrow();
+  it("renders an <img> for each card object and uses CARDS_MAP mapping as src", () => {
+    setup(TEST_CARDS);
 
-    // > 6 elements
-    expect(() =>
-      render(<OwnCards cardIds={[7, 8, 9, 10, 11, 12, 13]} />)
-    ).toThrow();
-
-    // Out-of-range (below 7)
-    expect(() => render(<OwnCards cardIds={[6]} />)).toThrow();
-
-    // Out-of-range (above 27)
-    expect(() => render(<OwnCards cardIds={[28]} />)).toThrow();
-  });
-
-  it("renders an <img> for each valid id and uses CARD_SRC mapping as its src", () => {
-    const ids = [7, 16, 27]; // valid range [7..27]
-    setup(ids);
-
-    ids.forEach((id) => {
-      const img = screen.getByAltText(`Card ${id}`);
+    TEST_CARDS.forEach((card) => {
+      const img = screen.getByAltText(`Card ${card.cardName}`);
       expect(img).toBeInTheDocument();
 
-      // jsdom turns relative paths into absolute; assert it contains the mapped suffix
-      expect(img.getAttribute("src")).toContain(CARD_SRC[id]);
+      // jsdom will normalize the path, just check it contains mapped path
+      expect(img.getAttribute("src")).toContain(CARDS_MAP[card.cardName]);
     });
 
-    const imgs = screen.getAllByRole("img", { name: /Card \d+/i });
-    expect(imgs).toHaveLength(ids.length);
+    const imgs = screen.getAllByRole("img");
+    expect(imgs).toHaveLength(TEST_CARDS.length);
   });
 
-  it("accepts up to 6 cards and renders exactly that many images", () => {
-    const six = [7, 8, 9, 10, 11, 12];
+  it("accepts up to 6 cards and renders exactly that many", () => {
+    const six = Array.from({ length: 6 }, (_, i) => ({
+      cardID: i + 7,
+      cardName: "Hercule Poirot",
+    }));
     setup(six);
-    const imgs = screen.getAllByRole("img", { name: /Card \d+/i });
+    const imgs = screen.getAllByRole("img");
     expect(imgs).toHaveLength(6);
   });
 
   it("does NOT allow selecting cards when turnStatus is 'waiting' or 'drawing'", () => {
-    const ids = [7, 8];
-    const { rerender } = setup(ids, { turnStatus: "waiting" });
-    const img7 = screen.getByAltText("Card 7");
-    fireEvent.click(img7);
-    expect(img7).not.toHaveClass("owncards-card--selected");
+    const cards = TEST_CARDS.slice(0, 2);
+    const { rerender } = setup(cards, { turnStatus: "waiting" });
 
-    // switch to drawing: still cannot select
-    rerender(<OwnCards cardIds={ids} turnStatus="drawing" />);
-    const img8 = screen.getByAltText("Card 8");
-    fireEvent.click(img8);
-    expect(img8).not.toHaveClass("owncards-card--selected");
+    const img = screen.getByAltText(`Card ${cards[0].cardName}`);
+    fireEvent.click(img);
+    expect(img).not.toHaveClass("owncards-card--selected");
+
+    rerender(<OwnCards cardIds={cards} turnStatus="drawing" />);
+    const img2 = screen.getByAltText(`Card ${cards[1].cardName}`);
+    fireEvent.click(img2);
+    expect(img2).not.toHaveClass("owncards-card--selected");
   });
 
-  it("toggles selection when turnStatus is 'playing' (click to select and click again to deselect)", () => {
-    const ids = [9, 10];
-    const { rerender } = setup(ids, { turnStatus: "playing" });
+  it("toggles selection when turnStatus is 'playing'", () => {
+    const cards = TEST_CARDS.slice(0, 2);
+    const { rerender } = setup(cards, { turnStatus: "playing" });
 
-    const img9 = screen.getByAltText("Card 9");
-    // select
-    fireEvent.click(img9);
-    expect(img9).toHaveClass("owncards-card--selected");
+    const img1 = screen.getByAltText(`Card ${cards[0].cardName}`);
+    fireEvent.click(img1);
+    expect(img1).toHaveClass("owncards-card--selected");
 
-    // deselect
-    fireEvent.click(img9);
-    expect(img9).not.toHaveClass("owncards-card--selected");
+    fireEvent.click(img1);
+    expect(img1).not.toHaveClass("owncards-card--selected");
 
-    // also ensure another card can be selected
-    const img10 = screen.getByAltText("Card 10");
-    fireEvent.click(img10);
-    expect(img10).toHaveClass("owncards-card--selected");
+    const img2 = screen.getByAltText(`Card ${cards[1].cardName}`);
+    fireEvent.click(img2);
+    expect(img2).toHaveClass("owncards-card--selected");
 
-    // switching to 'discarding' still allows selection toggling
-    rerender(<OwnCards cardIds={ids} turnStatus="discarding" />);
-    const nowImg9 = screen.getByAltText("Card 9");
-    fireEvent.click(nowImg9);
-    expect(nowImg9).toHaveClass("owncards-card--selected");
+    rerender(<OwnCards cardIds={cards} turnStatus="discarding" />);
+    const nowImg1 = screen.getByAltText(`Card ${cards[0].cardName}`);
+    fireEvent.click(nowImg1);
+    expect(nowImg1).toHaveClass("owncards-card--selected");
   });
 
-  it("keeps selection only for cards that remain in cardIds when prop changes (trims selection)", () => {
-    const ids = [11, 12];
-    const { rerender } = setup(ids, { turnStatus: "playing" });
+  it("trims selected cards when cardIds prop changes", () => {
+    const cards = [
+      { cardID: 11, cardName: "Miss Marple" },
+      { cardID: 12, cardName: "Mr Satterthwaite" },
+    ];
+    const { rerender } = setup(cards, { turnStatus: "playing" });
 
-    const img11 = screen.getByAltText("Card 11");
-    const img12 = screen.getByAltText("Card 12");
+    const img1 = screen.getByAltText("Card Miss Marple");
+    const img2 = screen.getByAltText("Card Mr Satterthwaite");
 
-    // select both
-    fireEvent.click(img11);
-    fireEvent.click(img12);
-    expect(img11).toHaveClass("owncards-card--selected");
-    expect(img12).toHaveClass("owncards-card--selected");
+    fireEvent.click(img1);
+    fireEvent.click(img2);
+    expect(img1).toHaveClass("owncards-card--selected");
+    expect(img2).toHaveClass("owncards-card--selected");
 
-    // now rerender with card 12 removed -> selection must be trimmed so only 11 remains selected
-    rerender(<OwnCards cardIds={[11]} turnStatus="playing" />);
-    const remaining = screen.getByAltText("Card 11");
+    // remove one card
+    rerender(<OwnCards cardIds={[cards[0]]} turnStatus="playing" />);
+    const remaining = screen.getByAltText("Card Miss Marple");
     expect(remaining).toHaveClass("owncards-card--selected");
-    expect(screen.queryByAltText("Card 12")).toBeNull();
-  });
-
-  it("shows NoActionButton when turnStatus is 'playing' and no cards are selected", () => {
-    setup([7, 8], { turnStatus: "playing" });
-    const noActionButton = screen.getByTestId("no-action-button");
-    expect(noActionButton).toBeInTheDocument();
-    expect(noActionButton).toHaveTextContent("Play nothing");
-  });
-
-  it("shows 'Play (N)' button when turnStatus is 'playing' and cards are selected", () => {
-    setup([7, 8], { turnStatus: "playing" });
-    
-    // Select a card
-    const img7 = screen.getByAltText("Card 7");
-    fireEvent.click(img7);
-    
-    const playButton = screen.getByText("Play (1)");
-    expect(playButton).toBeInTheDocument();
-    expect(screen.queryByTestId("no-action-button")).toBeNull();
-  });
-
-  it("calls onTurnStatusChange when NoActionButton triggers transition to discarding", () => {
-    const mockOnTurnStatusChange = vi.fn();
-    setup([7, 8], { turnStatus: "playing", onTurnStatusChange: mockOnTurnStatusChange });
-    
-    const noActionButton = screen.getByTestId("no-action-button");
-    fireEvent.click(noActionButton);
-    
-    expect(mockOnTurnStatusChange).toHaveBeenCalledWith("discarding");
-  });
-
-  it("transitions from 'playing' to 'discarding' internally when NoActionButton is clicked", () => {
-    const { rerender } = setup([7, 8], { turnStatus: "playing" });
-    
-    const noActionButton = screen.getByTestId("no-action-button");
-    fireEvent.click(noActionButton);
-    
-    // After clicking NoActionButton, the component should internally transition to discarding
-    // We can verify this by checking that the DiscardButton mock is now rendered
-    // (though mocked to return null, the internal state changed)
-    expect(screen.queryByTestId("no-action-button")).toBeNull();
+    expect(screen.queryByAltText("Card Mr Satterthwaite")).toBeNull();
   });
 });

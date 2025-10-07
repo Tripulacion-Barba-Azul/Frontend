@@ -1,0 +1,159 @@
+/* Overlay que cubre toda la pantalla */
+.game-end-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Popup principal */
+.game-end-popup {
+  background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+  border: 2px solid #444;
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  animation: popIn 0.4s ease-out;
+}
+
+/* Header del popup */
+.game-end-header h2 {
+  color: #ffffff;
+  font-size: 24px;
+  margin: 0 0 20px 0;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* Contenido principal */
+.game-end-content {
+  margin: 20px 0;
+}
+
+/* Sección de ganadores */
+.winners-section {
+  margin-bottom: 20px;
+}
+
+.winners-section h3 {
+  color: #ffd700;
+  font-size: 18px;
+  margin: 0 0 10px 0;
+}
+
+.winners-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.winner-name {
+  background: linear-gradient(90deg, #ffd700, #ffed4e);
+  color: #1a1a1a;
+  padding: 8px 16px;
+  margin: 5px 0;
+  border-radius: 20px;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+/* Sección del rol */
+.role-section {
+  margin: 20px 0;
+}
+
+.winning-role {
+  color: #cccccc;
+  font-size: 16px;
+  margin: 0;
+}
+
+.role-badge {
+  background: linear-gradient(90deg, #4CAF50, #45a049);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+/* Botón de volver al inicio */
+.game-end-actions {
+  margin-top: 30px;
+}
+
+.btn-back-home {
+  background: linear-gradient(145deg, #e74c3c, #c0392b);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+}
+
+.btn-back-home:hover {
+  background: linear-gradient(145deg, #c0392b, #a93226);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+}
+
+.btn-back-home:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 10px rgba(231, 76, 60, 0.3);
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsividad */
+@media (max-width: 480px) {
+  .game-end-popup {
+    padding: 20px;
+    margin: 20px;
+  }
+  
+  .game-end-header h2 {
+    font-size: 20px;
+  }
+  
+  .winner-name {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+  
+  .btn-back-home {
+    padding: 10px 24px;
+    font-size: 14px;
+  }
+}

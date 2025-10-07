@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import Lobby from "../Lobby/Lobby";
 import SyncOrchestrator from "../Sync/SyncOrchestrator";
+import GameEndScreen from "../GameEndScreen/GameEndSreen";
 import {
   buildUiPlayers,
   buildCardsState,
@@ -190,6 +191,9 @@ websocket.onmessage = (event) => {
           refreshTrigger={refreshLobby}
         />
       )}
+      
+      {/* Componente de fin de partida que se superpone cuando la partida termina */}
+      <GameEndScreen websocket={wsRef.current} />
     </>
   );
 }
