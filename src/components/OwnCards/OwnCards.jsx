@@ -37,33 +37,6 @@ export default function OwnCards({
 
   const selectedArray = Array.from(selectedIds);
 
-  const [selectedIds, setSelectedIds] = useState(new Set());
-
-  // keep selected set trimmed if cardIds prop changes
-  useEffect(() => {
-    setSelectedIds((prev) => {
-      const next = new Set([...prev].filter((id) => cardIds.includes(id)));
-      return next;
-    });
-  }, [cardIds]);
-
-  const canSelect = turnStatus === "playing" || turnStatus === "discarding";
-
-  const toggleSelect = useCallback(
-    (id) => {
-      if (!canSelect) return; // selection disabled in "waiting" and "drawing"
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(id)) next.delete(id);
-        else next.add(id);
-        return next;
-      });
-    },
-    [canSelect]
-  );
-
-  const selectedArray = Array.from(selectedIds);
-
   return (
     <div className={`owncards-overlay ${className}`} aria-label="cards-row">
       <div className="owncards-row">
