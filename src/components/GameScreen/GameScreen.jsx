@@ -3,182 +3,106 @@ import { useParams, useSearchParams } from "react-router-dom";
 import Lobby from "../Lobby/Lobby";
 import SyncOrchestrator from "../Sync/SyncOrchestrator";
 import GameEndScreen from "../GameEndScreen/GameEndSreen";
-import {
-  buildUiPlayers,
-  buildCardsState,
-  buildSecretsState,
-} from "./GameScreenLogic";
 
 export default function GameScreen() {
   const { gameId } = useParams();
   const [searchParams] = useSearchParams();
   const playerId = searchParams.get("playerId");
 
-  const [started, setStarted] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-
-  const [cards, setCards] = useState([]);
-  const [secrets, setSecrets] = useState([]);
-  const [players, setPlayers] = useState([]);
-  const [playerTurnId, setTurn] = useState(null);
-  const [remainingOnDeck, setRemainingOnDeck] = useState(null);
-  
-  // Estados para verificar si tenemos datos válidos
-  const [validPlayers, setValidPlayers] = useState([]);
-  const [validCards, setValidCards] = useState([]);
-  const [validSecrets, setValidSecrets] = useState([]);
-  const [gameDataReady, setGameDataReady] = useState(false);
-  
+  const [started, setStarted] = useState(false);
   const [refreshLobby, setRefreshLobby] = useState(0);
 
-  // Callback para cuando un jugador se une en el lobby
-  const handlePlayerJoined = () => {
-    // Triggear actualización del lobby
-    setRefreshLobby(prev => prev + 1);
-    console.log('🎯 Player joined event handled in GameScreen');
-  };
+  const [publicData, setPublicData] = useState(null);
+  const [privateData, setPrivateData] = useState(null);
 
   const wsRef = useRef(null);
-  const wsEndpoint = `ws://localhost:8000/ws/${gameId}`;
+  const wsEndpoint = `ws://localhost:8000/ws/${gameId}/${playerId}`;
 
-  // Connect / reconnect when gameId changes
+  const handlePlayerJoined = () => setRefreshLobby((prev) => prev + 1);
+
   useEffect(() => {
     if (!gameId) return;
-
-    if (wsRef.current) {
-      wsRef.current.close();
-    }
-
-    const websocket = new WebSocket(wsEndpoint);
-
-    websocket.onopen = () => {
-      console.log("✅ WebSocket conectado");
-      setIsConnected(true);
+  
+    let retryTimeout = null;
+    let websocket = null;
+  
+    const connect = () => {
+      websocket = new WebSocket(wsEndpoint);
+  
+      websocket.onopen = () => {
+        console.log("✅ WebSocket conectado");
+        setIsConnected(true);
+      };
+  
+      websocket.onclose = () => {
+        console.warn("🔌 WebSocket desconectado, intentando reconectar...");
+        setIsConnected(false);
+  
+        retryTimeout = setTimeout(connect, 1500); // 🔁 Reintenta en 3s
+      };
+  
+      websocket.onerror = (error) => {
+        console.error("⚠️ Error en WebSocket:", error);
+        websocket.close(); // fuerza cierre → disparará onclose → reconecta
+      };
+  
+      wsRef.current = websocket;
     };
-
-    websocket.onclose = () => {
-      console.log("❌ WebSocket desconectado");
-      setIsConnected(false);
-    };
-
-    websocket.onerror = (error) => {
-      console.error("⚠️ Error en WebSocket:", error);
-      setIsConnected(false);
-    };
-
-    wsRef.current = websocket;
-
+  
+    connect();
+  
     return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
+      if (retryTimeout) clearTimeout(retryTimeout);
+      if (websocket) websocket.close();
     };
   }, [gameId]);
 
-  // Handle incoming messages
+  // Manejar mensajes entrantes
   useEffect(() => {
     const websocket = wsRef.current;
-if (!websocket) return;
+    if (!websocket) return;
 
-websocket.onmessage = (event) => {
-  // log crudo
-  console.log("📨 RAW WS message:", event.data);
+    websocket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
 
-  try {
-    const data = JSON.parse(event.data);
-    console.log("📩 Parsed message:", data);
+        switch (data.event) {
+          case "publicUpdate":
+            setPublicData(data.payload);
+            if (data.payload?.gameStatus === "inProgress") setStarted(true);
+            break;
 
-    switch (data.event) {
-      case "game_started":
-        console.log("🚀 Partida empezó");
-        console.log("👉 Secrets recibidos:", data.secrets);
-        console.log("👉 Cards recibidas:", data.cards);
-        console.log("👉 Players recibidos:", data.players);
-        console.log("👉 playerTurn recibidos:", data.playerTurnId);
+          case "privateUpdate":
+            setPrivateData(data.payload);
+            break;
 
-        setStarted(true);
+          case "playerJoined":
+            handlePlayerJoined();
+            break;
 
-        if (typeof data.playerTurnId === "number") {
-          setTurn(data.playerTurnId);
+          case "gameStarted":
+            setStarted(true);
+            break;
+
+          default:
+            console.warn("Evento no manejado:", data.event);
         }
-
-        if (Array.isArray(data.players)) {
-          console.log("🛠️ Players recibidos:", data.players);
-          
-          const builtPlayers = buildUiPlayers({
-            players: data.players,
-            playerTurnId: data.playerTurnId,
-            playerId: Number(playerId)
-          });
-          
-          console.log("🛠️ Players construidos:", builtPlayers);
-          setPlayers(builtPlayers);
-          setValidPlayers(builtPlayers);
-        }
-
-        if (Array.isArray(data.cards)) {
-          console.log("🃏 Cards recibidas:", data.cards);
-          const builtCards = buildCardsState({
-            remainingOnDeck: data.remainingOnDeck,
-            cards: data.cards
-          });
-          console.log("🃏 Cards construidas:", builtCards);
-          setCards(builtCards);
-          setValidCards(builtCards);
-        }
-
-        if (Array.isArray(data.secrets)) {
-          console.log("🕵️‍♂️ Secrets construidos:", data.secrets);
-          const builtSecrets = buildSecretsState(data.secrets);
-          console.log("🕵️‍♂️ Secrets construidos after:", builtSecrets);
-          setSecrets(builtSecrets);
-          setValidSecrets(builtSecrets);
-        }
-
-        if (typeof data.remainingOnDeck === "number") {
-          console.log("📦 Remaining deck:", data.remainingOnDeck);
-          setRemainingOnDeck(data.remainingOnDeck);
-        }
-
-        break;
-
-      case "player_joined":
-        console.log("👤 Jugador se unió:", data.player);
-        handlePlayerJoined();
-        break;
-
-      default:
-        console.log("❓ Evento no manejado:", data.event);
-    }
-  } catch (err) {
-    console.warn("⚠️ Mensaje (no JSON):", event.data);
-  }
-};
+      } catch (err) {
+        console.warn("⚠️ Mensaje no JSON:", event.data);
+      }
+    };
   }, [wsRef.current]);
 
-  // Effect para verificar cuando todos los datos están listos
-  useEffect(() => {
-    if (started && validPlayers.length >= 2 && validCards.length > 0 && validSecrets.length > 0) {
-      console.log("🎯 Game data is ready, setting gameDataReady to true");
-      console.log("🎯 validPlayers:", validPlayers.length);
-      console.log("🎯 validCards:", validCards.length); 
-      console.log("🎯 validSecrets:", validSecrets.length);
-      setGameDataReady(true);
-    } else {
-      setGameDataReady(false);
-    }
-  }, [started, validPlayers, validCards, validSecrets]);
-
-  // Verificar que tenemos todos los datos necesarios antes de renderizar el juego
-  const hasValidGameData = gameDataReady;
+  // El juego está listo si tenemos datos públicos y privados
+  const gameDataReady = publicData && privateData && started;
 
   return (
     <>
-      {hasValidGameData ? (
+      {gameDataReady ? (
         <SyncOrchestrator
-          serverPlayers={validPlayers}
-          serverCards={validCards}
-          serverSecrets={validSecrets}
+          publicData={publicData}
+          privateData={privateData}
           currentPlayerId={parseInt(playerId)}
         />
       ) : (
@@ -191,9 +115,63 @@ websocket.onmessage = (event) => {
           refreshTrigger={refreshLobby}
         />
       )}
-      
-      {/* Componente de fin de partida que se superpone cuando la partida termina */}
+
       <GameEndScreen websocket={wsRef.current} />
     </>
   );
 }
+
+// event: "privateUpdate"
+// payload:  {
+// 	        cards: [{
+//           		id: int
+//           		name: string
+//           		type: enum(string)
+//           }]
+// 	        secrets: [{
+// 		          id: int
+// 		          reveled: bool
+// 		          name: String <NOT NULL>
+//           }]
+// 	        role: enum(string) # "murderer" | "accomplice" | "detective"
+// 	        ally: {
+// 		          id: int
+// 		          role: enum(String) # "murderer" | "accomplice"
+//               } | null
+// }
+
+// event: "publicUpdate"
+// payload:	{
+//         	actionStatus: enum(string) # ”blocked” | “unblocked”
+//         	gameStatus: enum(string) # “waiting” | “inProgress” | “finished”
+//         	regularDeckCount: int
+//         	discardPileTop: {
+//         			id: int
+//         			name: String
+//           }
+//         	draftCards: [{
+//         			id: int
+//         			name: String
+//           }]
+//         	discardPileCount: int
+//           players: [{
+//         	    id: int
+//         	    name: String
+//         	    avatar: int
+//         	    turnOrder: int
+//         	    turnStatus: enum(string) # “waiting” | “playing” | “discarding” | “discardingOpt” | “Drawing”
+//         	    cardCount: int
+//         	    secrets: [{
+//         		      id: int
+//         		      revealed: bool
+//         		      name: String #default null
+//               }]
+//         	    sets: [{
+//         			    setName: enum(string)
+//         			    cards: [{
+//         			        id: int
+//         			        name: enum(string)
+//                   }]
+//               }]
+//           }]
+//       }
