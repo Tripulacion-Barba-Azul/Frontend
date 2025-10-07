@@ -4,9 +4,9 @@ import { useParams, useSearchParams } from "react-router-dom";
 export default function DiscardButton({selectedCards, handSize, onDiscardSuccess }) {
 
   // Si le llegamos a meter esta info en cookies obviamente que esto hay que cambiarlo
-  const [searchParams] = useSearchParams();
-  const { gameId } = useParams();
-  const playerId = searchParams.get("playerId");
+  // const [searchParams] = useSearchParams();
+  // const { gameId } = useParams();
+  // const playerId = searchParams.get("playerId");
   //
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -26,9 +26,9 @@ export default function DiscardButton({selectedCards, handSize, onDiscardSuccess
     if (!canDiscard || loading) return;
 
     setLoading(true);
-
+   
     try {
-      const response = await fetch(`/games/${gameId}/actions/discard`, {
+      const response = await fetch(`/play/${gameId}/actions/discard`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
