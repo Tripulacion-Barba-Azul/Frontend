@@ -1,46 +1,93 @@
-import React from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import "./OwnCards.css";
-import { CARD_SRC } from "./ownCardsConstants.js";
+import { CARDS_MAP } from "../generalMaps.js";
+import DiscardButton from "./DiscardButton/DiscardButton";
 
-function validateCardIds(cardIds) {
-  if (!Array.isArray(cardIds)) return false;
-  if (cardIds.length > 6) return false;
-  return cardIds.every((id) => Number.isInteger(id) && id >= 7 && id <= 27);
-}
+export default function OwnCards({
+  cardIds = [],
+  className = "",
+  turnStatus = "waiting", // "waiting" | "playing" | "discarding" | "drawing"
+}) {
+  const [selectedIds, setSelectedIds] = useState(new Set());
 
-/**
- * Render the player's hand row.
- *
- * Behavior:
- *      + Validates `cardIds` and throws on invalid input.
- *      + Shows cards in a fixed row at the bottom-center of the screen (at the actualPlayer own cards view).
- *
- * Props:
- *     cardIds=[]       - Array of card IDs(ints) (each in [7, 27], max 6 elements).
- *     className=""     - Extra class names for outer styling (reserved).
- */
+  // keep selected set trimmed if cardIds prop changes
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      const next = new Set([...prev].filter((id) =>
+        cardIds.some((card) => card.cardID === id)
+      ));
+      return next;
+    });
+  }, [cardIds]);
 
-export default function OwnCards({ cardIds = [], className = "" }) {
-  if (!validateCardIds(cardIds)) {
-    throw new Error("Invalid array of cards");
-  }
+  const canSelect = turnStatus === "playing" || turnStatus === "discarding";
+
+  const toggleSelect = useCallback(
+    (id) => {
+      if (!canSelect) return; // selection disabled in "waiting" and "drawing"
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+      });
+    },
+    [canSelect]
+  );
+
+  const selectedArray = Array.from(selectedIds);
 
   return (
     <div className={`owncards-overlay ${className}`} aria-label="cards-row">
       <div className="owncards-row">
-        {cardIds.map((id) => {
+        {cardIds.map(({ cardID, cardName }) => {
+          const isSelected = selectedIds.has(cardID);
+          const disabledClass = canSelect ? "" : "owncards-card--disabled";
+
+          const imgSrc = CARDS_MAP[cardName];
+          if (!imgSrc) {
+            console.warn(`⚠️ Missing entry in CARDS_MAP for cardName: "${cardName}"`);
+          }
+
           return (
             <img
-              key={id}
-              src={CARD_SRC[id]}
-              alt={`Card ${id}`}
-              className="owncards-card"
+              key={cardID}
+              src={imgSrc || ""}
+              alt={`Card ${cardName}`}
+              className={`owncards-card ${
+                isSelected ? "owncards-card--selected" : ""
+              } ${disabledClass}`}
               width={130}
               height={198}
               draggable={false}
+              onClick={() => toggleSelect(cardID)}
             />
           );
         })}
+      </div>
+
+      {/* Action placeholders — no functionality */}
+      <div className="owncards-actions">
+        {turnStatus === "playing" &&
+          (selectedArray.length === 0 ? (
+            <button className="owncards-action">Play nothing</button>
+          ) : (
+            <button className="owncards-action">
+              Play ({selectedArray.length})
+            </button>
+          ))}
+
+        {turnStatus === "discarding" && (
+          <DiscardButton
+            selectedCards={selectedArray}
+            handSize={cardIds.length}
+            onDiscardSuccess={() => setSelectedIds(new Set())}
+          />
+        )}
+
+        {turnStatus === "drawing" && (
+          <button className="owncards-action">Draw 1 from deck</button>
+        )}
       </div>
     </div>
   );

@@ -1,73 +1,124 @@
 import React from "react";
-import { describe, it, expect, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
 import OwnCards from "./OwnCards.jsx";
-import { CARD_SRC } from "./ownCardsConstants.js";
+import { CARDS_MAP } from "../generalMaps.js";
 
-// Small helper to render the component
-const setup = (ids = []) => render(<OwnCards cardIds={ids} />);
+// Mock the DiscardButton so tests don't need react-router or fetch behavior
+vi.mock("./DiscardButton/DiscardButton", () => ({
+  default: () => null,
+}));
 
-describe("OwnCards.jsx (static, non-interactive)", () => {
+// Helper to render easily
+const setup = (cards = [], props = {}) =>
+  render(<OwnCards cardIds={cards} {...props} />);
+
+// Example test cards
+const TEST_CARDS = [
+  { cardID: 7, cardName: "Hercule Poirot" },
+  { cardID: 16, cardName: "Not so Fast!" },
+  { cardID: 27, cardName: "Social Faux Pas" },
+];
+
+describe("OwnCards.jsx (new card object structure)", () => {
   beforeEach(() => {
-    // ensure clean DOM between tests
     document.body.innerHTML = "";
   });
 
-  it("renders the absolute overlay container with aria-label", () => {
+  it("renders the overlay container", () => {
     setup([]);
     const overlay = screen.getByLabelText("cards-row");
-    // Container exists and is absolute overlay (pointer-events disabled)
     expect(overlay).toBeInTheDocument();
     expect(overlay).toHaveClass("owncards-overlay");
   });
 
   it("renders no images when cardIds is empty", () => {
     setup([]);
-    // No card images should be present
-    const imgs = screen.queryAllByRole("img", { name: /Card \d+/i });
+    const imgs = screen.queryAllByRole("img");
     expect(imgs).toHaveLength(0);
   });
 
-  it("throws on invalid inputs: non-array, too many items, or out-of-range ids", () => {
-    // Non-array
-    expect(() => render(<OwnCards cardIds={"not-an-array"} />)).toThrow();
+  it("renders an <img> for each card object and uses CARDS_MAP mapping as src", () => {
+    setup(TEST_CARDS);
 
-    // > 6 elements
-    expect(() =>
-      render(<OwnCards cardIds={[7, 8, 9, 10, 11, 12, 13]} />)
-    ).toThrow();
-
-    // Out-of-range (below 7)
-    expect(() => render(<OwnCards cardIds={[6]} />)).toThrow();
-
-    // Out-of-range (above 27)
-    expect(() => render(<OwnCards cardIds={[28]} />)).toThrow();
-  });
-
-  it("renders an <img> for each valid id and uses CARD_SRC mapping as its src", () => {
-    const ids = [7, 16, 27]; // valid range [7..27]
-    setup(ids);
-
-    // One <img> per id, with alt "Card <id>"
-    ids.forEach((id) => {
-      const img = screen.getByAltText(`Card ${id}`);
+    TEST_CARDS.forEach((card) => {
+      const img = screen.getByAltText(`Card ${card.cardName}`);
       expect(img).toBeInTheDocument();
 
-      // jsdom turns relative paths into absolute; assert it contains the mapped suffix
-      expect(img.getAttribute("src")).toContain(CARD_SRC[id]);
-
-      // Total count check
-      const imgs = screen.getAllByRole("img", { name: /Card \d+/i });
-      expect(imgs).toHaveLength(ids.length);
+      // jsdom will normalize the path, just check it contains mapped path
+      expect(img.getAttribute("src")).toContain(CARDS_MAP[card.cardName]);
     });
+
+    const imgs = screen.getAllByRole("img");
+    expect(imgs).toHaveLength(TEST_CARDS.length);
   });
 
-  it("accepts up to 6 cards and renders exactly that many images", () => {
-    const six = [7, 8, 9, 10, 11, 12];
+  it("accepts up to 6 cards and renders exactly that many", () => {
+    const six = Array.from({ length: 6 }, (_, i) => ({
+      cardID: i + 7,
+      cardName: "Hercule Poirot",
+    }));
     setup(six);
-    const imgs = screen.getAllByRole("img", { name: /Card \d+/i });
+    const imgs = screen.getAllByRole("img");
     expect(imgs).toHaveLength(6);
+  });
+
+  it("does NOT allow selecting cards when turnStatus is 'waiting' or 'drawing'", () => {
+    const cards = TEST_CARDS.slice(0, 2);
+    const { rerender } = setup(cards, { turnStatus: "waiting" });
+
+    const img = screen.getByAltText(`Card ${cards[0].cardName}`);
+    fireEvent.click(img);
+    expect(img).not.toHaveClass("owncards-card--selected");
+
+    rerender(<OwnCards cardIds={cards} turnStatus="drawing" />);
+    const img2 = screen.getByAltText(`Card ${cards[1].cardName}`);
+    fireEvent.click(img2);
+    expect(img2).not.toHaveClass("owncards-card--selected");
+  });
+
+  it("toggles selection when turnStatus is 'playing'", () => {
+    const cards = TEST_CARDS.slice(0, 2);
+    const { rerender } = setup(cards, { turnStatus: "playing" });
+
+    const img1 = screen.getByAltText(`Card ${cards[0].cardName}`);
+    fireEvent.click(img1);
+    expect(img1).toHaveClass("owncards-card--selected");
+
+    fireEvent.click(img1);
+    expect(img1).not.toHaveClass("owncards-card--selected");
+
+    const img2 = screen.getByAltText(`Card ${cards[1].cardName}`);
+    fireEvent.click(img2);
+    expect(img2).toHaveClass("owncards-card--selected");
+
+    rerender(<OwnCards cardIds={cards} turnStatus="discarding" />);
+    const nowImg1 = screen.getByAltText(`Card ${cards[0].cardName}`);
+    fireEvent.click(nowImg1);
+    expect(nowImg1).toHaveClass("owncards-card--selected");
+  });
+
+  it("trims selected cards when cardIds prop changes", () => {
+    const cards = [
+      { cardID: 11, cardName: "Miss Marple" },
+      { cardID: 12, cardName: "Mr Satterthwaite" },
+    ];
+    const { rerender } = setup(cards, { turnStatus: "playing" });
+
+    const img1 = screen.getByAltText("Card Miss Marple");
+    const img2 = screen.getByAltText("Card Mr Satterthwaite");
+
+    fireEvent.click(img1);
+    fireEvent.click(img2);
+    expect(img1).toHaveClass("owncards-card--selected");
+    expect(img2).toHaveClass("owncards-card--selected");
+
+    // remove one card
+    rerender(<OwnCards cardIds={[cards[0]]} turnStatus="playing" />);
+    const remaining = screen.getByAltText("Card Miss Marple");
+    expect(remaining).toHaveClass("owncards-card--selected");
+    expect(screen.queryByAltText("Card Mr Satterthwaite")).toBeNull();
   });
 });
