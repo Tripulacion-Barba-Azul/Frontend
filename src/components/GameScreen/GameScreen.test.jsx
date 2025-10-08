@@ -1,159 +1,390 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, waitFor, act } from '@testing-library/react';
+import { useParams, useSearchParams } from 'react-router-dom';
+import GameScreen from './GameScreen';
 
-// GameScreenLogic.test.js
-import { describe, it, expect, vi, beforeEach } from "vitest";
-
-// ✅ Mock constants so tests are self-contained
-vi.mock("./GameScreenConstants.js", () => ({
-  cardMapping: {
-    "Hercule Poirot": "detective_poirot",
-    "Miss Marple": "detective_marple",
-    "Not so Fast!": "instant_notsofast",
-  },
-  secretMapping: {
-    "Secret Hate": "secret_hate",
-    "You are the murderer": "murderer",
-    "Gambling Problem": "gambling_problem",
-  },
+// Mock dependencies
+vi.mock('react-router-dom', () => ({
+  useParams: vi.fn(),
+  useSearchParams: vi.fn(),
 }));
 
-// Import after mocks
-import {
-  buildUiPlayers,
-  toCanonicalCardName,
-  buildCardsState,
-  buildSecretsState,
-} from "./GameScreenLogic.js";
+vi.mock('../Lobby/Lobby', () => ({
+  default: ({ isConnected }) => (
+    <div data-testid="lobby">Lobby - Connected: {isConnected.toString()}</div>
+  ),
+}));
 
-describe("GameScreenLogic", () => {
+vi.mock('../Sync/SyncOrchestrator', () => ({
+  default: ({ publicData, privateData, currentPlayerId }) => (
+    <div data-testid="sync-orchestrator">
+      Sync - Player: {currentPlayerId}, Public: {publicData ? 'yes' : 'no'}, Private: {privateData ? 'yes' : 'no'}
+    </div>
+  ),
+}));
+
+vi.mock('../GameEndScreen/GameEndSreen', () => ({
+  default: () => <div data-testid="game-end-screen">Game End Screen</div>,
+}));
+
+// Mock WebSocket
+const createMockWebSocket = () => ({
+  close: vi.fn(),
+  send: vi.fn(),
+  onopen: null,
+  onclose: null,
+  onerror: null,
+  onmessage: null,
+  readyState: 1, // OPEN
+});
+
+let mockWebSocket;
+
+describe('GameScreen', () => {
+  const mockGameId = '123';
+  const mockPlayerId = '456';
+
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // Setup router mocks
+    useParams.mockReturnValue({ gameId: mockGameId });
+    useSearchParams.mockReturnValue([
+      new URLSearchParams(`playerId=${mockPlayerId}`),
+    ]);
+
+    // Create new WebSocket mock for each test
+    mockWebSocket = createMockWebSocket();
+    global.WebSocket = vi.fn(() => mockWebSocket);
   });
 
-  describe("buildUiPlayers()", () => {
-    it("places the turn player first (order=1), sets flags, and preserves direction with deterministic RNG", () => {
-      const players = [
-        { id: 4, name: "Joaquin", rol: "PlayerRol.DETECTIVE" },
-        { id: 5, name: "Eliseo", rol: "PlayerRol.MURDERER" },
-      ];
-      const playerTurnId = 5;
-      const playerId = 4;
-      const rng = () => 0; // no rotation of the remainder
-
-      const out = buildUiPlayers({ players, playerTurnId, playerId, rng });
-
-      expect(out).toHaveLength(2);
-
-      // First is the turn player
-      expect(out[0]).toMatchObject({
-        name: "Eliseo",
-        avatar: "default",
-        order: 1,
-        actualPlayer: false, // playerId=4
-        role: "murderer", // mapping from PlayerRol.MURDERER
-        turn: true,
-      });
-
-      // Second is the other player
-      expect(out[1]).toMatchObject({
-        name: "Joaquin",
-        avatar: "default",
-        order: 2,
-        actualPlayer: true, // id=4 is the local player
-        role: "detective",
-        turn: false,
-      });
-    });
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
-  describe("toCanonicalCardName()", () => {
-    it("maps known card names to canonical keys", () => {
-      expect(toCanonicalCardName("Hercule Poirot")).toBe("detective_poirot");
-      expect(toCanonicalCardName("Not so Fast!")).toBe("instant_notsofast");
-    });
+  it('renders lobby when game is not ready', () => {
+    render(<GameScreen />);
 
-    it("returns empty string for unknown names", () => {
-      expect(toCanonicalCardName("Unknown Card")).toBe("");
-      expect(toCanonicalCardName("")).toBe("");
-    });
+    expect(screen.getByTestId('lobby')).toBeInTheDocument();
+    expect(screen.getByTestId('game-end-screen')).toBeInTheDocument();
   });
 
-  describe("buildCardsState()", () => {
-    it("normalizes existing cards to hand flags and appends deck cards (unique IDs)", () => {
-      const existing = [
-        { cardOwnerID: 4, cardID: 62, cardName: "Hercule Poirot" },
-        { cardOwnerID: 5, cardID: 113, cardName: "Not so Fast!" },
-      ];
-      const remainingOnDeck = 3;
+  it('creates WebSocket connection on mount', () => {
+    render(<GameScreen />);
 
-      const out = buildCardsState({ remainingOnDeck, cards: existing });
-
-      // total = existing + deck
-      expect(out).toHaveLength(existing.length + remainingOnDeck);
-
-      // existing normalized
-      const e0 = out.find((c) => c.cardID === 62);
-      const e1 = out.find((c) => c.cardID === 113);
-      expect(e0).toMatchObject({
-        cardName: "detective_poirot",
-        cardOwnerID: 4,
-        isInDeck: false,
-        isInDiscard: false,
-        isInDiscardTop: false,
-      });
-      expect(e1).toMatchObject({
-        cardName: "instant_notsofast",
-        cardOwnerID: 5,
-        isInDeck: false,
-        isInDiscard: false,
-        isInDiscardTop: false,
-      });
-
-      // deck cards appended: in-deck=true, unique IDs not colliding with existing
-      const deckCards = out.filter((c) => c.isInDeck === true);
-      expect(deckCards).toHaveLength(remainingOnDeck);
-      const deckIds = new Set(deckCards.map((c) => c.cardID));
-      expect(deckIds.size).toBe(remainingOnDeck);
-      // flags on deck entries
-      for (const d of deckCards) {
-        expect(d.isInDiscard).toBe(false);
-        expect(d.isInDiscardTop).toBe(false);
-        // (owner policy depends on your implementation; this test doesn't assert it)
-      }
-    });
+    expect(WebSocket).toHaveBeenCalledWith(`ws://localhost:8000/ws/${mockGameId}/${mockPlayerId}`);
   });
 
-  describe("buildSecretsState()", () => {
-    it("maps names via secretMapping, assigns unique integer IDs starting at 1000, and copies flags/owners", () => {
-      const input = [
-        { secretOwnerID: 4, secretName: "Secret Hate", revealed: false },
-        {
-          secretOwnerID: 5,
-          secretName: "You are the murderer",
-          revealed: true,
-        },
-        { secretOwnerID: 5, secretName: "Gambling Problem", revealed: false },
-      ];
+  it('does not create WebSocket when gameId is missing', () => {
+    useParams.mockReturnValue({ gameId: undefined });
 
-      const out = buildSecretsState(input);
+    render(<GameScreen />);
 
-      expect(out).toHaveLength(3);
+    expect(WebSocket).not.toHaveBeenCalled();
+  });
 
-      // names mapped
-      expect(out.map((s) => s.secretName)).toEqual([
-        "secret_hate",
-        "murderer",
-        "gambling_problem",
-      ]);
+  it('handles WebSocket open event', () => {
+    render(<GameScreen />);
 
-      // IDs unique and integers, starting from 1000 by current implementation
-      const ids = out.map((s) => s.secretID);
-      expect(new Set(ids).size).toBe(3);
-      for (const id of ids) expect(Number.isInteger(id)).toBe(true);
-      expect(ids[0]).toBe(1000);
-
-      // copy of flags/owner
-      expect(out[0]).toMatchObject({ revealed: false, secretOwnerID: 4 });
-      expect(out[1]).toMatchObject({ revealed: true, secretOwnerID: 5 });
+    // Trigger WebSocket open
+    act(() => {
+      mockWebSocket.onopen?.();
     });
+
+    expect(screen.getByText('Lobby - Connected: true')).toBeInTheDocument();
+  });
+
+  it('handles WebSocket close event and attempts reconnection', async () => {
+    vi.useFakeTimers();
+    
+    render(<GameScreen />);
+
+    // First connection
+    act(() => {
+      mockWebSocket.onopen?.();
+    });
+
+    expect(screen.getByText('Lobby - Connected: true')).toBeInTheDocument();
+
+    // Close connection
+    act(() => {
+      mockWebSocket.onclose?.();
+    });
+
+    expect(screen.getByText('Lobby - Connected: false')).toBeInTheDocument();
+
+    // Advance timers to trigger reconnection
+    act(() => {
+      vi.advanceTimersByTime(1500);
+    });
+
+    // Should attempt to reconnect
+    expect(WebSocket).toHaveBeenCalledTimes(2);
+  });
+
+  it('handles WebSocket error event', () => {
+    render(<GameScreen />);
+
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    act(() => {
+      mockWebSocket.onerror?.(new Event('error'));
+    });
+
+    expect(mockWebSocket.close).toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it('handles publicUpdate message and sets public data', () => {
+    render(<GameScreen />);
+
+    const publicData = {
+      gameStatus: 'inProgress',
+      regularDeckCount: 10,
+      discardPileTop: { id: 1, name: 'Card1' },
+      DraftCards: [],
+      DiscardPileCount: 5,
+      Players: [],
+    };
+
+    act(() => {
+      mockWebSocket.onmessage?.({
+        data: JSON.stringify({
+          event: 'publicUpdate',
+          payload: publicData,
+        }),
+      });
+    });
+
+    // Public data should be set, but SyncOrchestrator not rendered yet (needs private data and started)
+    expect(screen.getByTestId('lobby')).toBeInTheDocument();
+  });
+
+  it('handles privateUpdate message', () => {
+    render(<GameScreen />);
+
+    const privateData = {
+      cards: [{ id: 1, name: 'Card1', type: 'action' }],
+      secrets: [{ id: 1, revealed: false, name: 'Secret1' }],
+      role: 'detective',
+      ally: null,
+    };
+
+    act(() => {
+      mockWebSocket.onmessage?.({
+        data: JSON.stringify({
+          event: 'privateUpdate',
+          payload: privateData,
+        }),
+      });
+    });
+
+    // Private data should be set, but game not started yet
+    expect(screen.getByTestId('lobby')).toBeInTheDocument();
+  });
+
+  it('handles playerJoined message', () => {
+    render(<GameScreen />);
+
+    act(() => {
+      mockWebSocket.onmessage?.({
+        data: JSON.stringify({
+          event: 'playerJoined',
+        }),
+      });
+    });
+
+    // Refresh lobby should be triggered
+    expect(screen.getByTestId('lobby')).toBeInTheDocument();
+  });
+
+  it('handles gameStarted message and sets started state', () => {
+    render(<GameScreen />);
+
+    act(() => {
+      mockWebSocket.onmessage?.({
+        data: JSON.stringify({
+          event: 'gameStarted',
+        }),
+      });
+    });
+
+    // Game should be started, but SyncOrchestrator not rendered yet (needs public and private data)
+    expect(screen.getByTestId('lobby')).toBeInTheDocument();
+  });
+
+  it('handles publicUpdate with inProgress gameStatus and starts game', () => {
+    render(<GameScreen />);
+
+    const publicData = {
+      gameStatus: 'inProgress', // This should trigger setStarted(true)
+      regularDeckCount: 10,
+      discardPileTop: { id: 1, name: 'Card1' },
+      DraftCards: [],
+      DiscardPileCount: 5,
+      Players: [],
+    };
+
+    act(() => {
+      mockWebSocket.onmessage?.({
+        data: JSON.stringify({
+          event: 'publicUpdate',
+          payload: publicData,
+        }),
+      });
+    });
+
+    // Game should be started due to gameStatus: 'inProgress'
+    // But still needs private data to render SyncOrchestrator
+    expect(screen.getByTestId('lobby')).toBeInTheDocument();
+  });
+
+  it('handles unknown event types', () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    render(<GameScreen />);
+
+    act(() => {
+      mockWebSocket.onmessage?.({
+        data: JSON.stringify({
+          event: 'unknownEvent',
+          payload: { some: 'data' },
+        }),
+      });
+    });
+
+    expect(consoleWarn).toHaveBeenCalledWith('Evento no manejado:', 'unknownEvent');
+    consoleWarn.mockRestore();
+  });
+
+  it('handles non-JSON messages', () => {
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    render(<GameScreen />);
+
+    act(() => {
+      mockWebSocket.onmessage?.({
+        data: 'not json',
+      });
+    });
+
+    expect(consoleWarn).toHaveBeenCalledWith('⚠️ Mensaje no JSON:', 'not json');
+    consoleWarn.mockRestore();
+  });
+
+  it('renders SyncOrchestrator when all game data is ready', () => {
+    render(<GameScreen />);
+
+    // Set up all required data
+    const publicData = {
+      gameStatus: 'inProgress',
+      regularDeckCount: 10,
+      discardPileTop: { id: 1, name: 'Card1' },
+      DraftCards: [],
+      DiscardPileCount: 5,
+      Players: [],
+    };
+
+    const privateData = {
+      cards: [{ id: 1, name: 'Card1', type: 'action' }],
+      secrets: [{ id: 1, revealed: false, name: 'Secret1' }],
+      role: 'detective',
+      ally: null,
+    };
+
+    act(() => {
+      // Send all required messages to make game data ready
+      mockWebSocket.onmessage?.({
+        data: JSON.stringify({
+          event: 'publicUpdate',
+          payload: publicData,
+        }),
+      });
+
+      mockWebSocket.onmessage?.({
+        data: JSON.stringify({
+          event: 'privateUpdate',
+          payload: privateData,
+        }),
+      });
+
+      // The publicUpdate with gameStatus: 'inProgress' should set started to true
+      // So we don't need a separate gameStarted message
+    });
+
+    // Now all conditions should be met: publicData, privateData, and started
+    expect(screen.getByTestId('sync-orchestrator')).toBeInTheDocument();
+    expect(screen.getByText('Sync - Player: 456, Public: yes, Private: yes')).toBeInTheDocument();
+  });
+
+  it('renders SyncOrchestrator when gameStarted message is received after data', () => {
+    render(<GameScreen />);
+
+    const publicData = {
+      gameStatus: 'waiting', // Not inProgress yet
+      regularDeckCount: 10,
+      discardPileTop: { id: 1, name: 'Card1' },
+      DraftCards: [],
+      DiscardPileCount: 5,
+      Players: [],
+    };
+
+    const privateData = {
+      cards: [{ id: 1, name: 'Card1', type: 'action' }],
+      secrets: [{ id: 1, revealed: false, name: 'Secret1' }],
+      role: 'detective',
+      ally: null,
+    };
+
+    act(() => {
+      // Set data first
+      mockWebSocket.onmessage?.({
+        data: JSON.stringify({
+          event: 'publicUpdate',
+          payload: publicData,
+        }),
+      });
+
+      mockWebSocket.onmessage?.({
+        data: JSON.stringify({
+          event: 'privateUpdate',
+          payload: privateData,
+        }),
+      });
+
+      // Then start the game
+      mockWebSocket.onmessage?.({
+        data: JSON.stringify({
+          event: 'gameStarted',
+        }),
+      });
+    });
+
+    // Now all conditions should be met
+    expect(screen.getByTestId('sync-orchestrator')).toBeInTheDocument();
+  });
+
+  it('cleans up WebSocket on unmount', () => {
+    const { unmount } = render(<GameScreen />);
+
+    unmount();
+
+    expect(mockWebSocket.close).toHaveBeenCalled();
+  });
+
+  it('cleans up retry timeout on unmount', () => {
+    vi.useFakeTimers();
+    
+    const { unmount } = render(<GameScreen />);
+
+    // Set up a pending retry
+    act(() => {
+      mockWebSocket.onclose?.();
+    });
+
+    unmount();
+
+    // Should clean up properly without errors
+    expect(mockWebSocket.close).toHaveBeenCalled();
   });
 });

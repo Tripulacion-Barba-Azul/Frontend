@@ -3,6 +3,7 @@ import "./OwnCards.css";
 import { CARDS_MAP } from "../generalMaps.js";
 import DiscardButton from "./DiscardButton/DiscardButton";
 import NoActionButton from "./NoActionButton/NoActionButton";
+import DrawRegularCardButton from "./DrawRegularCardButton/DrawRegularCardButton.jsx";
 
 export default function OwnCards({
   cardIds = [],
@@ -68,14 +69,6 @@ export default function OwnCards({
     [canSelect]
   );
 
-  const handleNoActionSuccess = useCallback(() => {
-    // Transition to discarding phase
-    setInternalTurnStatus("discarding");
-    if (onTurnStatusChange) {
-      onTurnStatusChange("discarding");
-    }
-  }, [onTurnStatusChange]);
-
   const handleDiscardSuccess = useCallback(() => {
     setSelectedIds(new Set());
     // Optionally transition to another phase after discarding
@@ -119,7 +112,7 @@ export default function OwnCards({
       <div className="owncards-actions">
         {turnStatus === "playing" &&
           (selectedArray.length === 0 ? (
-            <NoActionButton onNoActionSuccess={handleNoActionSuccess} />
+            <NoActionButton/>
           ) : (
             <button className="owncards-action">
               Play ({selectedArray.length})
@@ -135,7 +128,10 @@ export default function OwnCards({
         )}
 
         {turnStatus === "drawing" && (
-          <button className="owncards-action">Draw 1 from deck</button>
+          <DrawRegularCardButton
+          isDrawCardPhase={true}
+          playerCardCount={cardIds.length}
+        />
         )}
       </div>
     </div>
