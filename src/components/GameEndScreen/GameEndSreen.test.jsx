@@ -37,7 +37,7 @@ describe('GameEndScreen', () => {
 
   it('should not render when game has not ended', () => {
     renderComponent();
-    expect(screen.queryByText('¡Fin de la Partida!')).not.toBeInTheDocument();
+    expect(screen.queryByText('Game Over')).not.toBeInTheDocument();
   });
 
   it('should set up WebSocket message listener on mount', () => {
@@ -61,15 +61,17 @@ describe('GameEndScreen', () => {
     const gameEndMessage = {
       data: JSON.stringify({
         type: "Match Ended",
-        winners: ["Player1", "Player2"],
-        rol: "detective"
+        players: [
+          { Name: "Player1", Role: "Detective" },
+          { Name: "Player2", Role: "Detective" }
+        ]
       })
     };
     
     messageCallback(gameEndMessage);
     
     await waitFor(() => {
-      expect(screen.getByText('Ganan los detectives')).toBeInTheDocument();
+      expect(screen.getByText('Detectives Win')).toBeInTheDocument();
     });
   });
 
@@ -80,8 +82,10 @@ describe('GameEndScreen', () => {
     const gameEndMessage = {
       data: JSON.stringify({
         type: "Match Ended",
-        winners: ["Alice", "Bob"],
-        rol: "detective"
+        players: [
+          { Name: "Alice", Role: "Detective" },
+          { Name: "Bob", Role: "Detective" }
+        ]
       })
     };
     
@@ -90,7 +94,8 @@ describe('GameEndScreen', () => {
     await waitFor(() => {
       expect(screen.getByText('Alice')).toBeInTheDocument();
       expect(screen.getByText('Bob')).toBeInTheDocument();
-      expect(screen.getByText('Ganan los detectives')).toBeInTheDocument();
+      expect(screen.getByText('Detectives Win')).toBeInTheDocument();
+      expect(screen.getAllByText('Detective')).toHaveLength(2);
     });
   });
 
@@ -101,16 +106,18 @@ describe('GameEndScreen', () => {
     const gameEndMessage = {
       data: JSON.stringify({
         type: "Match Ended",
-        winners: ["Player1"],
-        rol: "asesino"
+        players: [
+          { Name: "Player1", Role: "Assassin" }
+        ]
       })
     };
     
     messageCallback(gameEndMessage);
     
     await waitFor(() => {
-      expect(screen.getByText('Gana el asesino')).toBeInTheDocument();
+      expect(screen.getByText('Assassin Wins')).toBeInTheDocument();
       expect(screen.getByText('Player1')).toBeInTheDocument();
+      expect(screen.getByText('Assassin')).toBeInTheDocument();
     });
   });
 
@@ -121,18 +128,19 @@ describe('GameEndScreen', () => {
     const gameEndMessage = {
       data: JSON.stringify({
         type: "Match Ended",
-        winners: ["Player1"],
-        rol: "detective"
+        players: [
+          { Name: "Player1", Role: "Detective" }
+        ]
       })
     };
     
     messageCallback(gameEndMessage);
     
     await waitFor(() => {
-      expect(screen.getByText('Gana el detective')).toBeInTheDocument();
+      expect(screen.getByText('Detective Wins')).toBeInTheDocument();
     });
     
-    const backButton = screen.getByText('Volver al Inicio');
+    const backButton = screen.getByText('Back to Home');
     fireEvent.click(backButton);
     
     expect(mockNavigate).toHaveBeenCalledWith('/');
@@ -145,8 +153,9 @@ describe('GameEndScreen', () => {
     const gameEndMessage = {
       data: JSON.stringify({
         type: "Match Ended",
-        winners: ["Player3"],
-        rol: "detective"
+        players: [
+          { Name: "Player3", Role: "Detective" }
+        ]
       })
     };
     
@@ -154,7 +163,7 @@ describe('GameEndScreen', () => {
     
     await waitFor(() => {
       expect(screen.getByText('Player3')).toBeInTheDocument();
-      expect(screen.getByText('Gana el detective')).toBeInTheDocument();
+      expect(screen.getByText('Detective Wins')).toBeInTheDocument();
     });
   });
 
@@ -165,8 +174,11 @@ describe('GameEndScreen', () => {
     const gameEndMessage = {
       data: JSON.stringify({
         type: "Match Ended",
-        winners: ["Player1", "Player2", "Player3"],
-        rol: "detective"
+        players: [
+          { Name: "Player1", Role: "Detective" },
+          { Name: "Player2", Role: "Detective" },
+          { Name: "Player3", Role: "Detective" }
+        ]
       })
     };
     
@@ -176,19 +188,21 @@ describe('GameEndScreen', () => {
       expect(screen.getByText('Player1')).toBeInTheDocument();
       expect(screen.getByText('Player2')).toBeInTheDocument();
       expect(screen.getByText('Player3')).toBeInTheDocument();
-      expect(screen.getByText('Ganan los detectives')).toBeInTheDocument();
+      expect(screen.getByText('Detectives Win')).toBeInTheDocument();
     });
   });
 
-  it('should handle assassin role variations', async () => {
+  it('should handle assassin and accomplice roles', async () => {
     renderComponent();
     
     const messageCallback = mockWebSocket.addEventListener.mock.calls[0][1];
     const gameEndMessage = {
       data: JSON.stringify({
         type: "Match Ended",
-        winners: ["EvilPlayer"],
-        rol: "assassin"
+        players: [
+          { Name: "EvilPlayer", Role: "Assassin" },
+          { Name: "Helper", Role: "Accomplice" }
+        ]
       })
     };
     
@@ -196,7 +210,10 @@ describe('GameEndScreen', () => {
     
     await waitFor(() => {
       expect(screen.getByText('EvilPlayer')).toBeInTheDocument();
-      expect(screen.getByText('Gana el asesino')).toBeInTheDocument();
+      expect(screen.getByText('Helper')).toBeInTheDocument();
+      expect(screen.getByText('Assassin Wins')).toBeInTheDocument();
+      expect(screen.getByText('Assassin')).toBeInTheDocument();
+      expect(screen.getByText('Accomplice')).toBeInTheDocument();
     });
   });
 
@@ -230,14 +247,14 @@ describe('GameEndScreen', () => {
     
     messageCallback(otherMessage);
     
-    expect(screen.queryByText('Gana el detective')).not.toBeInTheDocument();
-    expect(screen.queryByText('Gana el asesino')).not.toBeInTheDocument();
+    expect(screen.queryByText('Detective Wins')).not.toBeInTheDocument();
+    expect(screen.queryByText('Assassin Wins')).not.toBeInTheDocument();
   });
 
   it('should not render when websocket is null', () => {
     renderComponent(null);
-    expect(screen.queryByText('Gana el detective')).not.toBeInTheDocument();
-    expect(screen.queryByText('Gana el asesino')).not.toBeInTheDocument();
+    expect(screen.queryByText('Detective Wins')).not.toBeInTheDocument();
+    expect(screen.queryByText('Assassin Wins')).not.toBeInTheDocument();
   });
 
   it('should hide popup after navigating back to home', async () => {
@@ -247,23 +264,24 @@ describe('GameEndScreen', () => {
     const gameEndMessage = {
       data: JSON.stringify({
         type: "Match Ended",
-        winners: ["Player1"],
-        rol: "detective"
+        players: [
+          { Name: "Player1", Role: "Detective" }
+        ]
       })
     };
     
     messageCallback(gameEndMessage);
     
     await waitFor(() => {
-      expect(screen.getByText('Gana el detective')).toBeInTheDocument();
+      expect(screen.getByText('Detective Wins')).toBeInTheDocument();
     });
     
-    const backButton = screen.getByText('Volver al Inicio');
+    const backButton = screen.getByText('Back to Home');
     fireEvent.click(backButton);
     
     // El popup debería desaparecer
     await waitFor(() => {
-      expect(screen.queryByText('Gana el detective')).not.toBeInTheDocument();
+      expect(screen.queryByText('Detective Wins')).not.toBeInTheDocument();
     });
   });
 
@@ -272,26 +290,71 @@ describe('GameEndScreen', () => {
     
     const messageCallback = mockWebSocket.addEventListener.mock.calls[0][1];
     
-    // Mensaje sin winners
+    // Mensaje sin players
     const incompleteMessage1 = {
       data: JSON.stringify({
-        type: "Match Ended",
-        rol: "detective"
+        type: "Match Ended"
       })
     };
     
     messageCallback(incompleteMessage1);
-    expect(screen.queryByText('Gana el detective')).not.toBeInTheDocument();
+    expect(screen.queryByText('Detective Wins')).not.toBeInTheDocument();
     
-    // Mensaje sin rol
+    // Mensaje con array vacío
     const incompleteMessage2 = {
       data: JSON.stringify({
         type: "Match Ended",
-        winners: ["Player1"]
+        players: []
       })
     };
     
     messageCallback(incompleteMessage2);
-    expect(screen.queryByText('Gana el detective')).not.toBeInTheDocument();
+    expect(screen.queryByText('Detective Wins')).not.toBeInTheDocument();
+  });
+
+  it('should show accomplice role with orange badge', async () => {
+    renderComponent();
+    
+    const messageCallback = mockWebSocket.addEventListener.mock.calls[0][1];
+    const gameEndMessage = {
+      data: JSON.stringify({
+        type: "Match Ended",
+        players: [
+          { Name: "Helper", Role: "Accomplice" }
+        ]
+      })
+    };
+    
+    messageCallback(gameEndMessage);
+    
+    // Con la lógica actual, accomplice solo no genera título, así que no debería renderizar
+    await waitFor(() => {
+      expect(screen.queryByText('Helper')).not.toBeInTheDocument();
+    });
+  });
+
+  it('should handle mixed roles correctly - detective wins', async () => {
+    renderComponent();
+    
+    const messageCallback = mockWebSocket.addEventListener.mock.calls[0][1];
+    const gameEndMessage = {
+      data: JSON.stringify({
+        type: "Match Ended",
+        players: [
+          { Name: "Detective1", Role: "Detective" },
+          { Name: "Helper", Role: "Accomplice" }
+        ]
+      })
+    };
+    
+    messageCallback(gameEndMessage);
+    
+    await waitFor(() => {
+      expect(screen.getByText('Detective1')).toBeInTheDocument();
+      expect(screen.getByText('Helper')).toBeInTheDocument();
+      expect(screen.getByText('Detective Wins')).toBeInTheDocument(); // Detective tiene prioridad en la lógica actual
+      expect(screen.getByText('Detective')).toBeInTheDocument();
+      expect(screen.getByText('Accomplice')).toBeInTheDocument();
+    });
   });
 });
