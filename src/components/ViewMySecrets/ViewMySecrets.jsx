@@ -1,18 +1,10 @@
 import { useState } from "react";
 import "./ViewMySecrets.css";
 import { createPortal } from "react-dom";
-
-const imageMap = {
-  murderer: "/Cards/03-secret_murderer.png",
-  accomplice: "/Cards/04-secret_accomplice.png",
-  regular: "/Cards/06-secret_back.png",
-  secretFront: "/Cards/05-secret_front.png",
-  shhIcon: "/Icons/shhIcon.png",
-};
+import { SECRETS_MAP } from "../generalMaps";
 
 export default function ViewSecrets({ secrets }) {
   const [ViewSecrets, setViewSecrets] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   const toggleViewSecrets = () => {
     setViewSecrets(!ViewSecrets);
@@ -32,60 +24,64 @@ export default function ViewSecrets({ secrets }) {
         <div className="my-light-dots">
           {secrets.map((secret) => (
             <div
-              key={secret.class}
+              key={secret.id}
               className={`my-light-dot ${
                 secret.revealed ? "revealed" : "unrevealed"
               }`}
               title={
-                secret.revealed ? `Secret ${secret.class}` : `Secret hidden`
+                secret.revealed ? `Secret ${secret.name}` : `Secret hidden`
               }
             />
           ))}
         </div>
 
-        <img src={imageMap["shhIcon"]} alt="shhIcon" />
+        <img src={"/Icons/shhIcon.png"} alt="shhIcon" />
       </button>
 
-      {ViewSecrets && createPortal(
-        <div className="my-viewsecrets">
-          <div onClick={toggleViewSecrets} className="overlay"></div>
-          <div className="my-secrets-grid">
-            {hasSecrets ? (
-              secrets.map((secret) => (
-                <div key={secret.class} className="my-secret-card">
-                  {secret.revealed ? (
-                    <img
-                      src={imageMap[secret.class]}
-                      alt={`Secret ${secret.class}`}
-                    />
-                  ) : (
-                    <>
+      {ViewSecrets &&
+        createPortal(
+          <div className="my-viewsecrets">
+            <div onClick={toggleViewSecrets} className="overlay"></div>
+            <div className="my-secrets-grid">
+              {hasSecrets ? (
+                secrets.map((secret) => (
+                  <div key={secret.id} className="my-secret-card">
+                    {secret.revealed ? (
                       <img
-                        className="front"
-                        src={imageMap[secret.class]}
-                        alt={`Secret ${secret.class}`}
+                        src={SECRETS_MAP[secret.name]}
+                        alt={`Secret ${secret.name}`}
                       />
-                      <img
-                        className="back"
-                        src={imageMap["secretFront"]}
-                        alt="Card back"
-                      />
-                    </>
-                  )}
+                    ) : (
+                      <>
+                        <img
+                          className="front"
+                          src={SECRETS_MAP[secret.name]}
+                          alt={`Secret ${secret.name}`}
+                        />
+                        <img
+                          className="back"
+                          src={"/Cards/05-secret_front.png"}
+                          alt="Card back"
+                        />
+                      </>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="my-no-secrets-message">
+                  <p>Out of secrets!</p>
                 </div>
-              ))
-            ) : (
-              <div className="my-no-secrets-message">
-                <p>Out of secrets!</p>
-              </div>
-            )}
-          </div>
-          <button className="my-close-viewsecrets" onClick={toggleViewSecrets}>
-            X
-          </button>
-        </div>,
-        document.body
-      )}
+              )}
+            </div>
+            <button
+              className="my-close-viewsecrets"
+              onClick={toggleViewSecrets}
+            >
+              X
+            </button>
+          </div>,
+          document.body
+        )}
     </>
   );
 }

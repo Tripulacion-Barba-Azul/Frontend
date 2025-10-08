@@ -1,6 +1,7 @@
 .RegularDeck-container {
   position: relative;
   display: inline-block;
+  left: 10%;
 }
 
 .RegularDeck-image {
@@ -52,8 +53,8 @@
   border: 2px solid red;
 }
 .RegularDeck-container.murderer .RegularDeck-image {
-  width: 130px; /* <-- bajá o subí este número hasta que se vea proporcionado */
+  width: 130px;
   height: auto;
-  object-fit: contain; /* evita deformaciones si el lienzo difiere */
-  transform: translateY(-8px); /* opcional: pequeño ajuste vertical */
+  object-fit: contain;
+  transform: translateY(-8px);
 }

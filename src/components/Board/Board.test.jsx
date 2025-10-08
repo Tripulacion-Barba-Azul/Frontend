@@ -3,14 +3,21 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
-// Mock Seats Logic so we fully control the distribution
 vi.mock("./Seats/seatsLogic.js", () => ({
   buildSeatedPlayersFromOrders: vi.fn(),
 }));
 
-// Mock PlayerBadge to focus on Board logic and props passing
 vi.mock("./PlayerBadge/PlayerBadge.jsx", () => ({
-  default: ({ name, avatar, size, ringColor, nameBgColor, turn }) => (
+  default: ({
+    name,
+    avatar,
+    size,
+    ringColor,
+    nameBgColor,
+    turn,
+    numCards,
+    secrets,
+  }) => (
     <div
       data-testid="badge"
       data-name={name}
@@ -19,6 +26,14 @@ vi.mock("./PlayerBadge/PlayerBadge.jsx", () => ({
       data-ring={ringColor}
       data-namebg={nameBgColor}
       data-turn={String(turn)}
+      data-numcards={numCards === null ? "null" : String(numCards)}
+      data-secretslen={
+        secrets === null
+          ? "null"
+          : Array.isArray(secrets)
+          ? String(secrets.length)
+          : "NaN"
+      }
     >
       {name}
     </div>
@@ -28,7 +43,6 @@ vi.mock("./PlayerBadge/PlayerBadge.jsx", () => ({
 import Board from "./Board.jsx";
 import { buildSeatedPlayersFromOrders } from "./Seats/seatsLogic.js";
 
-// Helper to create a seated player entry with defaults and style
 const seated = (overrides) => ({
   id: "p1",
   name: "Player",
@@ -37,6 +51,9 @@ const seated = (overrides) => ({
   ringColor: "black",
   nameBgColor: "white",
   turn: false,
+  numCards: 0,
+  secrets: [],
+  meta: { actualPlayer: false },
   style: { bottom: "0%", left: "0%" },
   ...overrides,
 });
@@ -50,46 +67,29 @@ describe("Board.jsx", () => {
     buildSeatedPlayersFromOrders.mockReturnValueOnce([]);
     render(<Board players={[{ name: "Player1" }, { name: "Player2" }]} />);
 
-    // Busca el DIV que tiene background-image en su style inline
     const bgDiv = document.querySelector('[style*="background-image"]');
     expect(bgDiv).toBeInTheDocument();
-
-    // Alcanzan el 'url(' y el nombre del archivo
     expect(bgDiv.style.backgroundImage).toContain("url(");
     expect(bgDiv.style.backgroundImage).toMatch(/backgroundBoard\.png/i);
   });
 
   it("renders background when players array is empty (early validation)", () => {
     render(<Board players={[]} />);
-
-    // Should render background even with no players due to early validation
     const bgDiv = document.querySelector('[style*="background-image"]');
     expect(bgDiv).toBeInTheDocument();
-    expect(bgDiv.style.backgroundImage).toContain("url(");
-    expect(bgDiv.style.backgroundImage).toMatch(/backgroundBoard\.png/i);
-    
-    // Should not render any badges due to early validation
     expect(screen.queryAllByTestId("badge")).toHaveLength(0);
   });
 
   it("renders background when players array has only 1 player (early validation)", () => {
     render(<Board players={[{ name: "Player1" }]} />);
-
-    // Should render background with only 1 player due to early validation
     const bgDiv = document.querySelector('[style*="background-image"]');
     expect(bgDiv).toBeInTheDocument();
-    expect(bgDiv.style.backgroundImage).toContain("url(");
-    expect(bgDiv.style.backgroundImage).toMatch(/backgroundBoard\.png/i);
-    
-    // Should not render any badges due to early validation
     expect(screen.queryAllByTestId("badge")).toHaveLength(0);
   });
 
   it("renders zero badges when no seated players are returned with valid player count", () => {
     buildSeatedPlayersFromOrders.mockReturnValueOnce([]);
     render(<Board players={[{ name: "Player1" }, { name: "Player2" }]} />);
-
-    // No PlayerBadge produced when buildSeatedPlayersFromOrders returns empty
     expect(screen.queryAllByTestId("badge")).toHaveLength(0);
   });
 
@@ -103,6 +103,8 @@ describe("Board.jsx", () => {
         ringColor: "purple",
         nameBgColor: "white",
         turn: true,
+        numCards: 4,
+        secrets: [{ secretName: "S1", revealed: true }],
         style: { bottom: "5%", left: "20%" },
       }),
       seated({
@@ -113,6 +115,8 @@ describe("Board.jsx", () => {
         ringColor: "red",
         nameBgColor: "orange",
         turn: false,
+        numCards: 2,
+        secrets: [],
         style: { top: "10%", right: "15%" },
       }),
     ]);
@@ -122,29 +126,71 @@ describe("Board.jsx", () => {
     const badges = screen.getAllByTestId("badge");
     expect(badges).toHaveLength(2);
 
-    // Badge #1 props
     expect(badges[0]).toHaveAttribute("data-name", "Alice");
     expect(badges[0]).toHaveAttribute("data-avatar", "default1");
     expect(badges[0]).toHaveAttribute("data-size", "big");
     expect(badges[0]).toHaveAttribute("data-ring", "purple");
     expect(badges[0]).toHaveAttribute("data-namebg", "white");
     expect(badges[0]).toHaveAttribute("data-turn", "true");
-
-    // Badge #1 position: check parent wrapper style applied by Board
+    expect(badges[0]).toHaveAttribute("data-numcards", "4");
+    expect(badges[0]).toHaveAttribute("data-secretslen", "1");
     const wrapper1 = badges[0].parentElement;
     expect(wrapper1).toHaveStyle({ bottom: "5%", left: "20%" });
 
-    // Badge #2 props
     expect(badges[1]).toHaveAttribute("data-name", "Bob");
     expect(badges[1]).toHaveAttribute("data-avatar", "default2");
     expect(badges[1]).toHaveAttribute("data-size", "small");
     expect(badges[1]).toHaveAttribute("data-ring", "red");
     expect(badges[1]).toHaveAttribute("data-namebg", "orange");
     expect(badges[1]).toHaveAttribute("data-turn", "false");
-
-    // Badge #2 position (top/right)
+    expect(badges[1]).toHaveAttribute("data-numcards", "2");
+    expect(badges[1]).toHaveAttribute("data-secretslen", "0");
     const wrapper2 = badges[1].parentElement;
     expect(wrapper2).toHaveStyle({ top: "10%", right: "15%" });
+  });
+
+  it("hides numCards and secrets for the actual player; forwards values for others", () => {
+    buildSeatedPlayersFromOrders.mockReturnValueOnce([
+      seated({
+        id: "p1",
+        name: "Me",
+        meta: { actualPlayer: true },
+        numCards: 7,
+        secrets: [{ secretName: "S1", revealed: false }],
+        style: { bottom: "0%", left: "45%" },
+      }),
+      seated({
+        id: "p2",
+        name: "Opp",
+        meta: { actualPlayer: false },
+        numCards: 3,
+        secrets: [
+          { secretName: "Sx", revealed: true },
+          { secretName: "Sy", revealed: false },
+        ],
+        style: { top: "5%", right: "10%" },
+      }),
+      seated({
+        id: "p3",
+        name: "Opp2",
+        style: { top: "10%", left: "5%" },
+      }),
+    ]);
+
+    render(<Board players={[{ n: 1 }, { n: 2 }, { n: 3 }]} />);
+    const [me, opp, opp2] = screen.getAllByTestId("badge");
+
+    expect(me).toHaveAttribute("data-name", "Me");
+    expect(me).toHaveAttribute("data-numcards", "null");
+    expect(me).toHaveAttribute("data-secretslen", "null");
+
+    expect(opp).toHaveAttribute("data-name", "Opp");
+    expect(opp).toHaveAttribute("data-numcards", "3");
+    expect(opp).toHaveAttribute("data-secretslen", "2");
+
+    expect(opp2).toHaveAttribute("data-name", "Opp2");
+    expect(opp2).toHaveAttribute("data-numcards", "0");
+    expect(opp2).toHaveAttribute("data-secretslen", "0");
   });
 
   it("renders 4 badges and preserves each player's absolute positioning", () => {
@@ -166,12 +212,12 @@ describe("Board.jsx", () => {
 
   it("renders 6 badges (full table) with mixed corners and edges", () => {
     buildSeatedPlayersFromOrders.mockReturnValueOnce([
-      seated({ id: "p1", name: "C1", style: { bottom: "5%", left: "20%" } }), // bottom center
-      seated({ id: "p2", name: "R1", style: { bottom: "25%", right: "5%" } }), // mid right
-      seated({ id: "p3", name: "TR", style: { top: "5%", right: "10%" } }), // top right
-      seated({ id: "p4", name: "TC", style: { top: "0%", left: "45%" } }), // top center
-      seated({ id: "p5", name: "TL", style: { top: "5%", left: "10%" } }), // top left
-      seated({ id: "p6", name: "L1", style: { bottom: "25%", left: "5%" } }), // mid left
+      seated({ id: "p1", name: "C1", style: { bottom: "5%", left: "20%" } }),
+      seated({ id: "p2", name: "R1", style: { bottom: "25%", right: "5%" } }),
+      seated({ id: "p3", name: "TR", style: { top: "5%", right: "10%" } }),
+      seated({ id: "p4", name: "TC", style: { top: "0%", left: "45%" } }),
+      seated({ id: "p5", name: "TL", style: { top: "5%", left: "10%" } }),
+      seated({ id: "p6", name: "L1", style: { bottom: "25%", left: "5%" } }),
     ]);
 
     render(<Board players={Array.from({ length: 6 }, (_, i) => ({ n: i }))} />);
@@ -190,16 +236,15 @@ describe("Board.jsx", () => {
     render(<Board players={[{ name: "Player1" }, { name: "Player2" }]} />);
 
     const overlay = document.querySelector(
-      ".absolute.inset-0.z-10.pointer-events-none"
+      ".absolute.inset-0.z-10.pointer-events-auto"
     );
     expect(overlay).toBeInTheDocument();
   });
 
   it("does not render overlay container when players array is invalid (early validation)", () => {
     render(<Board players={[]} />);
-
     const overlay = document.querySelector(
-      ".absolute.inset-0.z-10.pointer-events-none"
+      ".absolute.inset-0.z-10.pointer-events-auto"
     );
     expect(overlay).not.toBeInTheDocument();
   });

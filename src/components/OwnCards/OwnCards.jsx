@@ -6,21 +6,16 @@ import NoActionButton from "./NoActionButton/NoActionButton";
 import DrawRegularCardButton from "./DrawRegularCardButton/DrawRegularCardButton.jsx";
 
 export default function OwnCards({
-  cardIds = [],
+  cards = [],
   className = "",
   turnStatus = "waiting", // "waiting" | "playing" | "discarding" | "drawing"
 }) {
   const [selectedIds, setSelectedIds] = useState(new Set());
 
-  // keep selected set trimmed if cardIds prop changes
+  // deselect all when cards or turnStatus change
   useEffect(() => {
-    setSelectedIds((prev) => {
-      const next = new Set([...prev].filter((id) =>
-        cardIds.some((card) => card.cardID === id)
-      ));
-      return next;
-    });
-  }, [cardIds]);
+    setSelectedIds(new Set());
+  }, [cards, turnStatus]);
 
   const canSelect = turnStatus === "playing" || turnStatus === "discarding";
 
@@ -40,34 +35,36 @@ export default function OwnCards({
   const selectedArray = Array.from(selectedIds);
 
   return (
-    <div className={`owncards-overlay ${className}`} aria-label="cards-row">
-      <div className="owncards-row">
-        {cardIds.map(({ cardID, cardName }) => {
-          const isSelected = selectedIds.has(cardID);
-          const disabledClass = canSelect ? "" : "owncards-card--disabled";
 
-          const imgSrc = CARDS_MAP[cardName];
-          if (!imgSrc) {
-            console.warn(`⚠️ Missing entry in CARDS_MAP for cardName: "${cardName}"`);
-          }
+    <>
+        <div className="owncards-row">
+          {cards.map((card) => {
+            const isSelected = selectedIds.has(card.id);
+            const disabledClass = canSelect ? "" : "owncards-card--disabled";
 
-          return (
-            <img
-              key={cardID}
-              src={imgSrc || ""}
-              alt={`Card ${cardName}`}
-              className={`owncards-card ${
-                isSelected ? "owncards-card--selected" : ""
-              } ${disabledClass}`}
-              width={130}
-              height={198}
-              draggable={false}
-              onClick={() => toggleSelect(cardID)}
-            />
-          );
-        })}
-      </div>
+            const imgSrc = CARDS_MAP[card.name];
+            if (!imgSrc) {
+              console.warn(
+                `⚠️ Missing entry in CARDS_MAP for name: "${card.name}"`
+              );
+            }
 
+            return (
+              <img
+                key={card.id}
+                src={imgSrc || ""}
+                alt={`Card ${card.name}`}
+                className={`owncards-card ${
+                  isSelected ? "owncards-card--selected" : ""
+                } ${disabledClass}`}
+                width={130}
+                height={198}
+                draggable={false}
+                onClick={() => toggleSelect(card.id)}
+              />
+            );
+          })}
+        </div>
       {/* Action placeholders — no functionality */}
       <div className="owncards-actions">
         {turnStatus === "playing" &&

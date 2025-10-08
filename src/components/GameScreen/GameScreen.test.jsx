@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, act } from '@testing-library/react';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -9,21 +10,27 @@ vi.mock('react-router-dom', () => ({
   useSearchParams: vi.fn(),
 }));
 
+
 vi.mock('../Lobby/Lobby', () => ({
+
   default: ({ isConnected }) => (
     <div data-testid="lobby">Lobby - Connected: {isConnected.toString()}</div>
   ),
 }));
 
+
 vi.mock('../Sync/SyncOrchestrator', () => ({
   default: ({ publicData, privateData, currentPlayerId }) => (
     <div data-testid="sync-orchestrator">
       Sync - Player: {currentPlayerId}, Public: {publicData ? 'yes' : 'no'}, Private: {privateData ? 'yes' : 'no'}
+
     </div>
   ),
 }));
 
+
 vi.mock('../GameEndScreen/GameEndSreen', () => ({
+
   default: () => <div data-testid="game-end-screen">Game End Screen</div>,
 }));
 
@@ -40,6 +47,7 @@ const createMockWebSocket = () => ({
 
 let mockWebSocket;
 
+
 describe('GameScreen', () => {
   const mockGameId = '123';
   const mockPlayerId = '456';
@@ -47,6 +55,7 @@ describe('GameScreen', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     
+
     // Setup router mocks
     useParams.mockReturnValue({ gameId: mockGameId });
     useSearchParams.mockReturnValue([
@@ -62,6 +71,7 @@ describe('GameScreen', () => {
     vi.useRealTimers();
   });
 
+
   it('renders lobby when game is not ready', () => {
     render(<GameScreen />);
 
@@ -76,6 +86,7 @@ describe('GameScreen', () => {
   });
 
   it('does not create WebSocket when gameId is missing', () => {
+
     useParams.mockReturnValue({ gameId: undefined });
 
     render(<GameScreen />);
@@ -83,7 +94,9 @@ describe('GameScreen', () => {
     expect(WebSocket).not.toHaveBeenCalled();
   });
 
+
   it('handles WebSocket open event', () => {
+
     render(<GameScreen />);
 
     // Trigger WebSocket open
@@ -129,11 +142,13 @@ describe('GameScreen', () => {
 
     act(() => {
       mockWebSocket.onerror?.(new Event('error'));
+
     });
 
     expect(mockWebSocket.close).toHaveBeenCalled();
     consoleError.mockRestore();
   });
+
 
   it('handles publicUpdate message and sets public data', () => {
     render(<GameScreen />);
@@ -150,6 +165,7 @@ describe('GameScreen', () => {
     act(() => {
       mockWebSocket.onmessage?.({
         data: JSON.stringify({
+
           event: 'publicUpdate',
           payload: publicData,
         }),
@@ -167,12 +183,14 @@ describe('GameScreen', () => {
       cards: [{ id: 1, name: 'Card1', type: 'action' }],
       secrets: [{ id: 1, revealed: false, name: 'Secret1' }],
       role: 'detective',
+
       ally: null,
     };
 
     act(() => {
       mockWebSocket.onmessage?.({
         data: JSON.stringify({
+
           event: 'privateUpdate',
           payload: privateData,
         }),
@@ -180,6 +198,7 @@ describe('GameScreen', () => {
     });
 
     // Private data should be set, but game not started yet
+
     expect(screen.getByTestId('lobby')).toBeInTheDocument();
   });
 
@@ -351,7 +370,14 @@ describe('GameScreen', () => {
           payload: privateData,
         }),
       });
+    });
 
+    expect(consoleWarn).toHaveBeenCalledWith(
+      "Evento no manejado:",
+      "unknownEvent"
+    );
+    consoleWarn.mockRestore();
+  });
       // Then start the game
       mockWebSocket.onmessage?.({
         data: JSON.stringify({

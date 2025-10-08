@@ -1,7 +1,9 @@
+
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import DrawRegularCardButton from './DrawRegularCardButton';
+
 
 // Mock fetch
 global.fetch = vi.fn();
@@ -9,6 +11,7 @@ global.fetch = vi.fn();
 // Mock router hooks
 const mockUseParams = vi.fn();
 const mockUseSearchParams = vi.fn();
+
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
@@ -18,6 +21,7 @@ vi.mock('react-router-dom', async () => {
     useSearchParams: () => mockUseSearchParams(),
   };
 });
+
 
 describe('DrawRegularCardButton', () => {
   beforeEach(() => {

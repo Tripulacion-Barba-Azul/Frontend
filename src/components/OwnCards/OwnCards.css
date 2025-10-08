@@ -1,20 +1,22 @@
 .owncards-overlay {
   position: absolute;
   inset: 0;
-  /* allow clicks on overlay and its children */
-  pointer-events: auto;
+  /* Make overlay ignore clicks, but allow children to be clickable */
+  pointer-events: none;
 }
 
 /* Fixed row: bottom-center with a stable gap */
 .owncards-row {
   position: absolute;
   left: 50%;
-  bottom: 1.2%;
+  bottom: 0.5%;
   transform: translateX(-50%);
   display: flex;
-  gap: 12px;
+  gap: 5px;
   user-select: none;
+  /* Ensure row and children can receive clicks */
   pointer-events: auto;
+  z-index: 10;
 }
 
 /* Each card image */
@@ -30,7 +32,7 @@
   pointer-events: auto;
   cursor: pointer;
   position: relative;
-  z-index: 1;
+  z-index: 10;
 
   /* smooth movement when selecting/deselecting */
   transition: transform 160ms ease, box-shadow 160ms ease;
@@ -56,7 +58,10 @@
   bottom: 16px;  /* distance from bottom edge */
   display: flex;
   gap: 8px;
+  /* Ensure actions can receive clicks */
   pointer-events: auto;
+  z-index: 10;
+
 }
 
 /* Minimal button look — replace with your button component later if needed */
@@ -70,4 +75,7 @@
   cursor: pointer;
   font-size: 25px;
   user-select: none;
+  /* Ensure button can receive clicks */
+  pointer-events: auto;
+  z-index: 10;
 }

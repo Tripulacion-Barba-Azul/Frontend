@@ -1,7 +1,33 @@
 import PlayerBadge from "./PlayerBadge/PlayerBadge.jsx";
 import { buildSeatedPlayersFromOrders } from "./Seats/seatsLogic.js";
 
-export default function Board({ players }) {
+/**
+ * Input:
+ * - players: Array[{
+ *     id: number,
+ *     name: string,
+ *     avatar: string,          // key in AVATAR_MAP
+ *     turnOrder: number,           // 1..N ordering within the match
+ *     turnStatus: string “waiting”|“playing”|“discarding”|“drawing”
+ *     cardCount: number,
+ *     secrets: Array:[{id: number,
+ *                      name: string #default null,
+ *                      revealed: Bool}]
+ *   }>
+ *
+ * - currentPlayerId: number
+ *
+ * - currentPlayerRole: string | null
+ *
+ * - currentPlayerAlly: {id: number, role: string} | null
+ */
+
+export default function Board({
+  players,
+  currentPlayerId,
+  currentPlayerRole,
+  currentPlayerAlly,
+}) {
   // Early validation to prevent errors
   if (!Array.isArray(players) || players.length < 2) {
     return (
@@ -19,10 +45,13 @@ export default function Board({ players }) {
     );
   }
 
-
-
   // Build seated data
-  const seated = buildSeatedPlayersFromOrders(players);
+  const seated = buildSeatedPlayersFromOrders(
+    players,
+    currentPlayerId,
+    currentPlayerRole,
+    currentPlayerAlly
+  );
 
   // Anchor box (full board plane)
   const anchorStyle = { bottom: "0%", top: "0%", right: "0%", left: "0%" };
@@ -41,8 +70,8 @@ export default function Board({ players }) {
       ></div>
 
       {/* Foreground: badges */}
-      <div className="absolute inset-0 z-10 pointer-events-none">
-        <div className="absolute pointer-events-none" style={anchorStyle}>
+      <div className="absolute inset-0 z-10 pointer-events-auto">
+        <div className="absolute pointer-events-auto" style={anchorStyle}>
           {seated.map((p) => (
             <div
               key={p.id}

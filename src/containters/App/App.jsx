@@ -4,6 +4,7 @@ import CreateGameScreen from "../../components/PreGameScreen/CreateGameScreen/Cr
 import JoinGameScreen from "../../components/PreGameScreen/JoinGameScreen/JoinGameScreen";
 import GameMatchesList from "../../components/GameMatchesList/GameMatchesList";
 import GameScreen from "../../components/GameScreen/GameScreen";
+import ExamplePageOrchestrator from "../../components/Sync/ExamplePageOrchestrator";
 
 function App() {
   return (
