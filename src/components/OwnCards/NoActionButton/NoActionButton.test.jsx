@@ -24,7 +24,6 @@ const renderComponent = (component) => {
 };
 
 describe("NoActionButton", () => {
-  const mockOnNoActionSuccess = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -36,19 +35,19 @@ describe("NoActionButton", () => {
   });
 
   test("renders no action button correctly", () => {
-    renderComponent(<NoActionButton onNoActionSuccess={mockOnNoActionSuccess} />);
+    renderComponent(<NoActionButton />);
     
     expect(screen.getByRole("button", { name: /play nothing/i })).toBeInTheDocument();
   });
 
-  test("calls API and onNoActionSuccess when button is clicked", async () => {
+  test("calls API successfully when button is clicked", async () => {
     const user = userEvent.setup();
     fetch.mockResolvedValueOnce({
       ok: true,
       json: async () => ({}),
     });
 
-    renderComponent(<NoActionButton onNoActionSuccess={mockOnNoActionSuccess} />);
+    renderComponent(<NoActionButton />);
     
     const button = screen.getByRole("button", { name: /play nothing/i });
     await user.click(button);
@@ -59,19 +58,21 @@ describe("NoActionButton", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cards: [],
-          actualPlayerID: 1,
+          actualPlayerID: "1",
         }),
       });
     });
 
-    expect(mockOnNoActionSuccess).toHaveBeenCalledTimes(1);
+    // Verify button returns to normal state after successful request
+    expect(screen.getByRole("button", { name: /play nothing/i })).toBeInTheDocument();
+    expect(screen.getByRole("button")).not.toBeDisabled();
   });
 
   test("shows error message when API call fails", async () => {
     const user = userEvent.setup();
     fetch.mockRejectedValueOnce(new Error("Network error"));
 
-    renderComponent(<NoActionButton onNoActionSuccess={mockOnNoActionSuccess} />);
+    renderComponent(<NoActionButton />);
     
     const button = screen.getByRole("button", { name: /play nothing/i });
     await user.click(button);
@@ -80,14 +81,15 @@ describe("NoActionButton", () => {
       expect(screen.getByText("Failed to perform no action")).toBeInTheDocument();
     });
 
-    expect(mockOnNoActionSuccess).not.toHaveBeenCalled();
+    // Verify no additional actions are performed
+    expect(button).not.toBeDisabled();
   });
 
   test("shows loading state when request is in progress", async () => {
     const user = userEvent.setup();
     fetch.mockImplementationOnce(() => new Promise(() => {})); // Never resolves
 
-    renderComponent(<NoActionButton onNoActionSuccess={mockOnNoActionSuccess} />);
+    renderComponent(<NoActionButton />);
     
     const button = screen.getByRole("button", { name: /play nothing/i });
     await user.click(button);
@@ -105,7 +107,7 @@ describe("NoActionButton", () => {
       status: 400,
     });
 
-    renderComponent(<NoActionButton onNoActionSuccess={mockOnNoActionSuccess} />);
+    renderComponent(<NoActionButton />);
     
     const button = screen.getByRole("button", { name: /play nothing/i });
     await user.click(button);
@@ -114,6 +116,7 @@ describe("NoActionButton", () => {
       expect(screen.getByText("Failed to perform no action")).toBeInTheDocument();
     });
 
-    expect(mockOnNoActionSuccess).not.toHaveBeenCalled();
+    // Verify no additional actions are performed
+    expect(button).not.toBeDisabled();
   });
 });

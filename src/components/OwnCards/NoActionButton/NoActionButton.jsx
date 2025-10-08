@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import "./NoActionButton.css";
 
-export default function NoActionButton({ onNoActionSuccess }) {
+export default function NoActionButton() {
   const [searchParams] = useSearchParams();
   const { gameId } = useParams();
   const playerId = searchParams.get("playerId");
@@ -23,7 +23,7 @@ export default function NoActionButton({ onNoActionSuccess }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cards: [],
-          actualPlayerID: Number(playerId),
+          actualPlayerID: playerId,
         }),
       });
       
@@ -31,8 +31,7 @@ export default function NoActionButton({ onNoActionSuccess }) {
         throw new Error(`No action failed with status ${response.status}`);
       }
       
-      // Transition to discarding phase
-      onNoActionSuccess();
+      // Request sent successfully - no additional actions needed
     } catch (err) {
       console.error(err);
       setError("Failed to perform no action");
