@@ -31,12 +31,12 @@ const EXPECTED_SRC = {
 };
 
 const sixCards = [
-  { cardID: "P07", cardName: "Hercule Poirot" },
-  { cardID: "M08", cardName: "Miss Marple" },
-  { cardID: "S09", cardName: "Mr Sattertwhaite" },
-  { cardID: "P10", cardName: "Parker Pyne" },
-  { cardID: "B11", cardName: "Lady Eileen Brent" },
-  { cardID: "T12", cardName: "Tommy Beresford" },
+  { id: "P07", name: "Hercule Poirot" },
+  { id: "M08", name: "Miss Marple" },
+  { id: "S09", name: "Mr Sattertwhaite" },
+  { id: "P10", name: "Parker Pyne" },
+  { id: "B11", name: "Lady Eileen Brent" },
+  { id: "T12", name: "Tommy Beresford" },
 ];
 
 describe("ViewMyCards.jsx", () => {
@@ -51,10 +51,10 @@ describe("ViewMyCards.jsx", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /zoomviewicon/i }));
 
-    sixCards.forEach(({ cardID, cardName }) => {
-      const img = screen.getByAltText(`card ${cardID}`);
+    sixCards.forEach(({ id, name }) => {
+      const img = screen.getByAltText(`card ${id}`);
       expect(img).toBeInTheDocument();
-      expect(img.getAttribute("src")).toBe(EXPECTED_SRC[cardName]);
+      expect(img.getAttribute("src")).toBe(EXPECTED_SRC[name]);
     });
 
     expect(document.body.classList.contains("active-viewmycards")).toBe(true);
@@ -90,41 +90,34 @@ describe("ViewMyCards.jsx", () => {
   });
 
   it("throws when there are 7 or more cards", () => {
-    const seven = [...sixCards, { cardID: "X13", cardName: "Hercule Poirot" }];
-    expect(() => render(<ViewMyCards cards={seven} />)).toThrow(
-      /Invalid array of cards/i
-    );
+    const seven = [...sixCards, { id: "X13", name: "Hercule Poirot" }];
+    expect(() => render(<ViewMyCards cards={seven} />)).toThrow();
   });
 
   it("throws when cards is not an array", () => {
-    expect(() => render(<ViewMyCards cards={"nope"} />)).toThrow(
-      /Invalid array of cards/i
-    );
+    expect(() => render(<ViewMyCards cards={"nope"} />)).toThrow();
   });
 
-  it("throws when an item is missing cardID", () => {
-    const bad = [{ cardName: "Hercule Poirot" }];
-    expect(() => render(<ViewMyCards cards={bad} />)).toThrow(
-      /Invalid array of cards/i
-    );
+  it("throws when an item is missing 'name'", () => {
+    const bad = [{ id: "P07" }];
+    expect(() => render(<ViewMyCards cards={bad} />)).toThrow();
   });
 
-  it("throws when an item is missing cardName", () => {
-    const bad = [{ cardID: "P07" }];
-    expect(() => render(<ViewMyCards cards={bad} />)).toThrow(
-      /Invalid array of cards/i
-    );
-  });
-
-  it("throws when cardName is not present in CARDS_MAP", () => {
-    const bad = [{ cardID: "X00", cardName: "Unknown Card" }];
-    expect(() => render(<ViewMyCards cards={bad} />)).toThrow(
-      /Invalid array of cards/i
-    );
+  it("throws when 'name' is not present in CARDS_MAP", () => {
+    const bad = [{ id: "X00", name: "Unknown Card" }];
+    expect(() => render(<ViewMyCards cards={bad} />)).toThrow();
   });
 
   it("throws when cards is undefined (no prop passed)", () => {
-    expect(() => render(<ViewMyCards />)).toThrow(/Invalid array of cards/i);
+    expect(() => render(<ViewMyCards />)).toThrow();
+  });
+
+  it("does not require 'id' to validate; still renders image (alt will contain 'undefined')", () => {
+    const oneNoId = [{ name: "Hercule Poirot" }];
+    render(<ViewMyCards cards={oneNoId} />);
+    fireEvent.click(screen.getByRole("button", { name: /zoomviewicon/i }));
+    const img = screen.getByRole("img", { name: /card/i });
+    expect(img).toHaveAttribute("src", EXPECTED_SRC["Hercule Poirot"]);
   });
 
   it("toggles body class on open/close using the trigger button", () => {

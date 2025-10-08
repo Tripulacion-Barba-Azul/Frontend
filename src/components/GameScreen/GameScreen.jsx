@@ -137,6 +137,8 @@ export default function GameScreen() {
 // 	        role: enum(string) # "murderer" | "accomplice" | "detective"
 // 	        ally: {
 // 		          id: int
+//              name: string
+//              avatar: int
 // 		          role: enum(String) # "murderer" | "accomplice"
 //               } | null
 // }

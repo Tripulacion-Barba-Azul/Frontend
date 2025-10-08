@@ -2,11 +2,10 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { describe, it, expect, vi, afterEach } from "vitest";
 
-vi.mock("../generalMaps.js", () => ({
+vi.mock("../generalMaps", () => ({
   SECRETS_MAP: {
     murderer: "/Cards/03-secret_murderer.png",
     accomplice: "/Cards/04-secret_accomplice.png",
-    secretFront: "/Cards/05-secret_front.png",
     regular: "/Cards/06-secret_back.png",
   },
 }));
@@ -14,13 +13,13 @@ vi.mock("../generalMaps.js", () => ({
 import ViewSecrets from "./ViewMySecrets.jsx";
 
 afterEach(() => {
-  document.body.classList.remove("my-active-SecretsView");
+  document.body.classList.remove("my-active-viewsecrets");
 });
 
 const SECRETS = [
-  { secretID: "A", secretName: "murderer", revealed: true },
-  { secretID: "B", secretName: "accomplice", revealed: false },
-  { secretID: "C", secretName: "regular", revealed: false },
+  { id: "A", name: "murderer", revealed: true },
+  { id: "B", name: "accomplice", revealed: false },
+  { id: "C", name: "regular", revealed: false },
 ];
 
 describe("ViewMySecrets.jsx (as implemented)", () => {
@@ -32,13 +31,16 @@ describe("ViewMySecrets.jsx (as implemented)", () => {
 
   it("renders one light-dot per secret with correct classes and titles", () => {
     render(<ViewSecrets secrets={SECRETS} />);
+
     const dots = screen.getAllByTitle(/Secret/i);
     expect(dots).toHaveLength(SECRETS.length);
 
     expect(dots[0]).toHaveClass("revealed");
     expect(dots[0]).toHaveAttribute("title", "Secret murderer");
+
     expect(dots[1]).toHaveClass("unrevealed");
     expect(dots[1]).toHaveAttribute("title", "Secret hidden");
+
     expect(dots[2]).toHaveClass("unrevealed");
     expect(dots[2]).toHaveAttribute("title", "Secret hidden");
   });
@@ -63,10 +65,10 @@ describe("ViewMySecrets.jsx (as implemented)", () => {
     });
   });
 
-  it("closes the modal via the close button 'X'", () => {
+  it("closes the modal via the close button 'X' and removes the body class", () => {
     render(<ViewSecrets secrets={SECRETS} />);
-    fireEvent.click(screen.getByRole("button", { name: /shhicon/i }));
 
+    fireEvent.click(screen.getByRole("button", { name: /shhicon/i }));
     expect(screen.getByText("X")).toBeInTheDocument();
     expect(
       screen.getByRole("img", { name: "Secret murderer" })
@@ -76,13 +78,14 @@ describe("ViewMySecrets.jsx (as implemented)", () => {
     expect(
       screen.queryByRole("img", { name: "Secret murderer" })
     ).not.toBeInTheDocument();
-    expect(document.body.classList.contains("my-active-SecretsView")).toBe(
+    expect(document.body.classList.contains("my-active-viewsecrets")).toBe(
       false
     );
   });
 
   it("closes the modal by clicking the overlay", () => {
     render(<ViewSecrets secrets={SECRETS} />);
+
     fireEvent.click(screen.getByRole("button", { name: /shhicon/i }));
 
     const overlay = document.querySelector(".overlay");
@@ -92,7 +95,7 @@ describe("ViewMySecrets.jsx (as implemented)", () => {
     expect(
       screen.queryByRole("img", { name: "Secret murderer" })
     ).not.toBeInTheDocument();
-    expect(document.body.classList.contains("my-active-SecretsView")).toBe(
+    expect(document.body.classList.contains("my-active-viewsecrets")).toBe(
       false
     );
   });

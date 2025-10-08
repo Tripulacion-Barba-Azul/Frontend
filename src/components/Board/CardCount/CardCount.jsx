@@ -9,7 +9,7 @@ export default function CardCount({ number }) {
   return (
     <div className="cardcount-container">
       <img src={CardIcon} alt="Card Icon" className="base-image" />
-      <div className="number-overlay">{number}</div>
+      <div className="number-overlay">{validatedNumber}</div>
     </div>
   );
 }

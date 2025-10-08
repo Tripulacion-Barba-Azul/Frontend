@@ -14,44 +14,41 @@ import DiscardPile from "./DiscardPile";
 const getDiscardImg = () => screen.getByRole("img", { name: /discard pile/i });
 
 describe("DiscardPile", () => {
-  it("no renderiza nada cuando number = 0", () => {
+  it("renders nothing when number = 0", () => {
     const { container } = render(<DiscardPile number={0} />);
     expect(container.firstChild).toBeNull();
   });
 
-  it("muestra variante 'thin' cuando 1 <= number <= 10", () => {
+  it("shows 'thin' variant when 1 <= number <= 6", () => {
     render(<DiscardPile number={5} />);
     const img = getDiscardImg();
     expect(img.getAttribute("src")).toContain("discardicon-thin.png");
     expect(screen.getByTestId("discard-container")).toHaveClass("thin");
   });
 
-  it("muestra variante 'half' cuando 11 <= number <= 30", () => {
+  it("shows 'half' variant when 6 <= number <= 26", () => {
     render(<DiscardPile number={20} />);
     const img = getDiscardImg();
     expect(img.getAttribute("src")).toContain("discardicon-half.png");
     expect(screen.getByTestId("discard-container")).toHaveClass("half");
   });
 
-  it("muestra variante 'full' cuando number >= 31", () => {
+  it("shows 'full' variant when number >= 26", () => {
     render(<DiscardPile number={42} />);
     const img = getDiscardImg();
     expect(img.getAttribute("src")).toContain("discardicon-full.png");
     expect(screen.getByTestId("discard-container")).toHaveClass("full");
   });
 
-  it("clamp: valores fuera de rango no rompen y muestran 'full' si es muy grande", () => {
+  it("clamps out-of-range values and shows 'full' for very large numbers", () => {
     render(<DiscardPile number={999} />);
     const img = getDiscardImg();
     expect(img.getAttribute("src")).toContain("discardicon-full.png");
   });
 
-  it("renderiza top card cuando cardName existe en CARDS_MAP", () => {
+  it("renders top card when card.name exists in CARDS_MAP and uses card.id in alt", () => {
     render(
-      <DiscardPile
-        number={15}
-        card={{ cardName: "Hercule Poirot", cardID: "P07" }}
-      />
+      <DiscardPile number={15} card={{ name: "Hercule Poirot", id: "P07" }} />
     );
 
     const topCard = screen.getByAltText("Top card P07");
@@ -59,18 +56,15 @@ describe("DiscardPile", () => {
     expect(topCard.getAttribute("src")).toBe("/Cards/07-detective_poirot.png");
   });
 
-  it("no renderiza top card cuando card es undefined", () => {
+  it("does not render top card when card is undefined", () => {
     render(<DiscardPile number={15} />);
     const topCards = screen.queryAllByAltText(/Top card/i);
     expect(topCards.length).toBe(0);
   });
 
-  it("no renderiza top card cuando cardName no está en el mapa", () => {
+  it("does not render top card when card.name is not in CARDS_MAP", () => {
     render(
-      <DiscardPile
-        number={15}
-        card={{ cardName: "Desconocida", cardID: "X00" }}
-      />
+      <DiscardPile number={15} card={{ name: "Unknown Card", id: "X00" }} />
     );
     const topCards = screen.queryAllByAltText(/Top card/i);
     expect(topCards.length).toBe(0);

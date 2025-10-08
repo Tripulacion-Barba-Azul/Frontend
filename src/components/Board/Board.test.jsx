@@ -3,12 +3,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
-// Mock Seats Logic so we fully control the distribution
 vi.mock("./Seats/seatsLogic.js", () => ({
   buildSeatedPlayersFromOrders: vi.fn(),
 }));
 
-// Mock PlayerBadge to focus on Board logic and props passing
 vi.mock("./PlayerBadge/PlayerBadge.jsx", () => ({
   default: ({
     name,
@@ -45,7 +43,6 @@ vi.mock("./PlayerBadge/PlayerBadge.jsx", () => ({
 import Board from "./Board.jsx";
 import { buildSeatedPlayersFromOrders } from "./Seats/seatsLogic.js";
 
-// Helper to create a seated player entry with defaults and style
 const seated = (overrides) => ({
   id: "p1",
   name: "Player",
@@ -129,7 +126,6 @@ describe("Board.jsx", () => {
     const badges = screen.getAllByTestId("badge");
     expect(badges).toHaveLength(2);
 
-    // Badge #1 props
     expect(badges[0]).toHaveAttribute("data-name", "Alice");
     expect(badges[0]).toHaveAttribute("data-avatar", "default1");
     expect(badges[0]).toHaveAttribute("data-size", "big");
@@ -141,7 +137,6 @@ describe("Board.jsx", () => {
     const wrapper1 = badges[0].parentElement;
     expect(wrapper1).toHaveStyle({ bottom: "5%", left: "20%" });
 
-    // Badge #2 props
     expect(badges[1]).toHaveAttribute("data-name", "Bob");
     expect(badges[1]).toHaveAttribute("data-avatar", "default2");
     expect(badges[1]).toHaveAttribute("data-size", "small");
@@ -160,8 +155,8 @@ describe("Board.jsx", () => {
         id: "p1",
         name: "Me",
         meta: { actualPlayer: true },
-        numCards: 7, // should be hidden -> null
-        secrets: [{ secretName: "S1", revealed: false }], // should be hidden -> null
+        numCards: 7,
+        secrets: [{ secretName: "S1", revealed: false }],
         style: { bottom: "0%", left: "45%" },
       }),
       seated({
@@ -178,7 +173,6 @@ describe("Board.jsx", () => {
       seated({
         id: "p3",
         name: "Opp2",
-        // numCards/secrets undefined -> should fallback to 0 / []
         style: { top: "10%", left: "5%" },
       }),
     ]);
@@ -186,17 +180,14 @@ describe("Board.jsx", () => {
     render(<Board players={[{ n: 1 }, { n: 2 }, { n: 3 }]} />);
     const [me, opp, opp2] = screen.getAllByTestId("badge");
 
-    // actualPlayer: hidden values
     expect(me).toHaveAttribute("data-name", "Me");
     expect(me).toHaveAttribute("data-numcards", "null");
     expect(me).toHaveAttribute("data-secretslen", "null");
 
-    // others: forwarded values
     expect(opp).toHaveAttribute("data-name", "Opp");
     expect(opp).toHaveAttribute("data-numcards", "3");
     expect(opp).toHaveAttribute("data-secretslen", "2");
 
-    // fallbacks for undefined: 0 / []
     expect(opp2).toHaveAttribute("data-name", "Opp2");
     expect(opp2).toHaveAttribute("data-numcards", "0");
     expect(opp2).toHaveAttribute("data-secretslen", "0");
@@ -245,7 +236,7 @@ describe("Board.jsx", () => {
     render(<Board players={[{ name: "Player1" }, { name: "Player2" }]} />);
 
     const overlay = document.querySelector(
-      ".absolute.inset-0.z-10.pointer-events-none"
+      ".absolute.inset-0.z-10.pointer-events-auto"
     );
     expect(overlay).toBeInTheDocument();
   });
@@ -253,7 +244,7 @@ describe("Board.jsx", () => {
   it("does not render overlay container when players array is invalid (early validation)", () => {
     render(<Board players={[]} />);
     const overlay = document.querySelector(
-      ".absolute.inset-0.z-10.pointer-events-none"
+      ".absolute.inset-0.z-10.pointer-events-auto"
     );
     expect(overlay).not.toBeInTheDocument();
   });

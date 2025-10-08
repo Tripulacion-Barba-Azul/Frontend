@@ -13,10 +13,10 @@ export default function DiscardPile({ number, card }) {
   }
 
   let discardImage, discardClass;
-  if (validatedNumber >= 31) {
+  if (validatedNumber >= 26) {
     discardImage = fullDiscard;
     discardClass = "full";
-  } else if (validatedNumber >= 11) {
+  } else if (validatedNumber >= 6) {
     discardImage = halfDiscard;
     discardClass = "half";
   } else {
