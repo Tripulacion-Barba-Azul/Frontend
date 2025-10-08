@@ -2,8 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import Lobby from "../Lobby/Lobby";
 import SyncOrchestrator from "../Sync/SyncOrchestrator";
-// import GameEndScreen from "../GameEndScreen/GameEndSreen";
-import GameEndScreen from "../Lobby/Lobby";
+import GameEndScreen from "../GameEndScreen/GameEndSreen";
 
 export default function GameScreen() {
   const { gameId } = useParams();
@@ -137,8 +136,6 @@ export default function GameScreen() {
 // 	        role: enum(string) # "murderer" | "accomplice" | "detective"
 // 	        ally: {
 // 		          id: int
-//              name: string
-//              avatar: int
 // 		          role: enum(String) # "murderer" | "accomplice"
 //               } | null
 // }

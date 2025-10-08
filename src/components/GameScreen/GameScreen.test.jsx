@@ -1,3 +1,4 @@
+import "@testing-library/jest-dom/vitest";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor, act } from "@testing-library/react";
 import { useParams, useSearchParams } from "react-router-dom";
