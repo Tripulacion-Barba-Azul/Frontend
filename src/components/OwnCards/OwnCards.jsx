@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import "./OwnCards.css";
 import { CARDS_MAP } from "../generalMaps.js";
 import DiscardButton from "./DiscardButton/DiscardButton";
+import NoActionButton from "./NoActionButton/NoActionButton";
 import DrawRegularCardButton from "./DrawRegularCardButton/DrawRegularCardButton.jsx";
 
 export default function OwnCards({
@@ -34,6 +35,7 @@ export default function OwnCards({
   const selectedArray = Array.from(selectedIds);
 
   return (
+
     <>
         <div className="owncards-row">
           {cards.map((card) => {
@@ -67,7 +69,7 @@ export default function OwnCards({
       <div className="owncards-actions">
         {turnStatus === "playing" &&
           (selectedArray.length === 0 ? (
-            <button className="owncards-action">Play nothing</button>
+            <NoActionButton/>
           ) : (
             <button className="owncards-action">
               Play ({selectedArray.length})
@@ -77,18 +79,18 @@ export default function OwnCards({
         {turnStatus === "discarding" && (
           <DiscardButton
             selectedCards={selectedArray}
-            handSize={cards.length}
+            handSize={cardIds.length}
             onDiscardSuccess={() => setSelectedIds(new Set())}
           />
         )}
 
         {turnStatus === "drawing" && (
           <DrawRegularCardButton
-            isDrawCardPhase={true}
-            playerCardCount={cards.length}
-          />
+          isDrawCardPhase={true}
+          playerCardCount={cardIds.length}
+        />
         )}
       </div>
-      </>
+    </div>
   );
 }

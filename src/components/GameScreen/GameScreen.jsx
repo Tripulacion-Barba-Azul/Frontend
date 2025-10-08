@@ -23,10 +23,10 @@ export default function GameScreen() {
 
   useEffect(() => {
     if (!gameId) return;
-
+  
     let retryTimeout = null;
     let websocket = null;
-
+  
     const connect = () => {
       websocket = new WebSocket(wsEndpoint);
 
@@ -35,22 +35,26 @@ export default function GameScreen() {
         setIsConnected(true);
       };
 
+  
       websocket.onclose = () => {
         console.warn("🔌 WebSocket desconectado, intentando reconectar...");
         setIsConnected(false);
-
+  
         retryTimeout = setTimeout(connect, 1500); // 🔁 Reintenta en 3s
       };
+  
 
       websocket.onerror = (error) => {
         console.error("⚠️ Error en WebSocket:", error);
         websocket.close(); // fuerza cierre → disparará onclose → reconecta
       };
 
+  
       wsRef.current = websocket;
     };
-
+  
     connect();
+  
 
     return () => {
       if (retryTimeout) clearTimeout(retryTimeout);
@@ -175,3 +179,4 @@ export default function GameScreen() {
 //               }]
 //           }]
 //       }
+

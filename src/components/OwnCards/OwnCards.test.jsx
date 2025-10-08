@@ -160,4 +160,26 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     rerender(<OwnCards cards={cards} turnStatus="drawing" />);
     expect(screen.getByTestId("draw-card-button")).toBeInTheDocument();
   });
+
+  it("trims selected cards when cardIds prop changes", () => {
+    const cards = [
+      { cardID: 11, cardName: "Miss Marple" },
+      { cardID: 12, cardName: "Mr Satterthwaite" },
+    ];
+    const { rerender } = setup(cards, { turnStatus: "playing" });
+
+    const img1 = screen.getByAltText("Card Miss Marple");
+    const img2 = screen.getByAltText("Card Mr Satterthwaite");
+
+    fireEvent.click(img1);
+    fireEvent.click(img2);
+    expect(img1).toHaveClass("owncards-card--selected");
+    expect(img2).toHaveClass("owncards-card--selected");
+
+    // remove one card
+    rerender(<OwnCards cardIds={[cards[0]]} turnStatus="playing" />);
+    const remaining = screen.getByAltText("Card Miss Marple");
+    expect(remaining).toHaveClass("owncards-card--selected");
+    expect(screen.queryByAltText("Card Mr Satterthwaite")).toBeNull();
+  });
 });
