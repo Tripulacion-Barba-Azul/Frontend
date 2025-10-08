@@ -7,21 +7,16 @@ import DrawRegularCardButton from "./DrawRegularCardButton/DrawRegularCardButton
 export default function OwnCards({
   cards = [],
   className = "",
-  turnStatus = "playing", // "waiting" | "playing" | "discarding" | "drawing"
+  turnStatus = "waiting", // "waiting" | "playing" | "discarding" | "drawing"
 }) {
   const [selectedIds, setSelectedIds] = useState(new Set());
 
-  // keep selected set trimmed if cards prop changes
+  // deselect all when cards or turnStatus change
   useEffect(() => {
-    setSelectedIds((prev) => {
-      const next = new Set(
-        [...prev].filter((id) => cards.some((card) => card.id === id))
-      );
-      return next;
-    });
-  }, [cards]);
+    setSelectedIds(new Set());
+  }, [cards, turnStatus]);
 
-  const canSelect = "playing" === "playing" || turnStatus === "discarding";
+  const canSelect = turnStatus === "playing" || turnStatus === "discarding";
 
   const toggleSelect = useCallback(
     (id) => {
@@ -39,11 +34,7 @@ export default function OwnCards({
   const selectedArray = Array.from(selectedIds);
 
   return (
-    <div>
-      <div
-        className={`owncards-wrapper ${className}`}
-        aria-label="own-cards-area"
-      >
+    <>
         <div className="owncards-row">
           {cards.map((card) => {
             const isSelected = selectedIds.has(card.id);
@@ -72,10 +63,9 @@ export default function OwnCards({
             );
           })}
         </div>
-      </div>
       {/* Action placeholders — no functionality */}
       <div className="owncards-actions">
-        {"playing" === "playing" &&
+        {turnStatus === "playing" &&
           (selectedArray.length === 0 ? (
             <button className="owncards-action">Play nothing</button>
           ) : (
@@ -84,7 +74,7 @@ export default function OwnCards({
             </button>
           ))}
 
-        {"" === "discarding" && (
+        {turnStatus === "discarding" && (
           <DiscardButton
             selectedCards={selectedArray}
             handSize={cards.length}
@@ -92,13 +82,13 @@ export default function OwnCards({
           />
         )}
 
-        {"" === "drawing" && (
+        {turnStatus === "drawing" && (
           <DrawRegularCardButton
             isDrawCardPhase={true}
             playerCardCount={cards.length}
           />
         )}
       </div>
-    </div>
+      </>
   );
 }
