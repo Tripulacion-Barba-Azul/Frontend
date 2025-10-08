@@ -8,15 +8,16 @@ import ExamplePageOrchestrator from "../../components/Sync/ExamplePageOrchestrat
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<TitleScreen />} />
-        <Route path="/create" element={<CreateGameScreen />} />
-        <Route path="/join" element={<GameMatchesList />} />
-        <Route path="/join/:gameId" element={<JoinGameScreen />} />
-        <Route path="/game/:gameId" element={<GameScreen />} />
-      </Routes>
-    </BrowserRouter>
+    <ExamplePageOrchestrator />
+    // <BrowserRouter>
+    //   <Routes>
+    //     <Route path="/" element={<TitleScreen />} />
+    //     <Route path="/create" element={<CreateGameScreen />} />
+    //     <Route path="/join" element={<GameMatchesList />} />
+    //     <Route path="/join/:gameId" element={<JoinGameScreen />} />
+    //     <Route path="/game/:gameId" element={<GameScreen />} />
+    //   </Routes>
+    // </BrowserRouter>
   );
 }
 

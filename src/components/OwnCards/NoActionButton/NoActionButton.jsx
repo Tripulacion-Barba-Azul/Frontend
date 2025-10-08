@@ -6,17 +6,17 @@ export default function NoActionButton() {
   const [searchParams] = useSearchParams();
   const { gameId } = useParams();
   const playerId = searchParams.get("playerId");
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
   const handleNoAction = async () => {
     setError("");
-    
+
     if (loading) return;
-    
+
     setLoading(true);
-    
+
     try {
       const response = await fetch(`/play/${gameId}/actions/play-card`, {
         method: "POST",
@@ -26,11 +26,11 @@ export default function NoActionButton() {
           actualPlayerID: playerId,
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error(`No action failed with status ${response.status}`);
       }
-      
+
       // Request sent successfully - no additional actions needed
     } catch (err) {
       console.error(err);
@@ -39,7 +39,7 @@ export default function NoActionButton() {
       setLoading(false);
     }
   };
-  
+
   return (
     <div className="no-action-button-container">
       <button
@@ -49,9 +49,7 @@ export default function NoActionButton() {
       >
         {loading ? "Processing..." : "Play nothing"}
       </button>
-      {error && (
-        <div className="no-action-error">{error}</div>
-      )}
+      {error && <div className="no-action-error">{error}</div>}
     </div>
   );
 }

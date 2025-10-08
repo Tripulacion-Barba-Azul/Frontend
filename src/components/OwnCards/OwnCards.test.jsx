@@ -1,7 +1,8 @@
+// OwnCards.test.jsx
 import React from "react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 
 import OwnCards from "./OwnCards.jsx";
 
@@ -17,8 +18,7 @@ vi.mock("../generalMaps.js", () => ({
   },
 }));
 
-// Mock router hooks because child components (e.g., DrawRegularCardButton / DiscardButton)
-// use useParams/useSearchParams. We don't wrap in a MemoryRouter for these tests.
+// Mock router hooks because children use useParams/useSearchParams
 vi.mock("react-router-dom", async (importOriginal) => {
   const actual = await importOriginal();
   return {
@@ -54,13 +54,12 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     expect(screen.queryAllByRole("img")).toHaveLength(0);
   });
 
-  it("renders an <img> for each card and uses CARDS_MAP[name] as src with alt='Card <name>'", () => {
+  it("renders an <img> for each card with src from CARDS_MAP and alt='Card <name>'", () => {
     setup(TEST_CARDS, { turnStatus: "playing" });
 
     TEST_CARDS.forEach(({ name }) => {
       const img = screen.getByAltText(`Card ${name}`);
       expect(img).toBeInTheDocument();
-      // Or simply assert it is non-empty due to our mock:
       expect(img.getAttribute("src")).not.toBe("");
     });
 
@@ -80,18 +79,20 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     expect(screen.getAllByRole("img")).toHaveLength(6);
   });
 
-  it("does NOT allow selecting cards when turnStatus is 'waiting' or 'drawing'", () => {
+  it("does NOT allow selecting cards when turnStatus is 'waiting' or 'drawing' and applies disabled class", () => {
     const cards = TEST_CARDS.slice(0, 2);
     const { rerender } = setup(cards, { turnStatus: "waiting" });
 
     const img1 = screen.getByAltText(`Card ${cards[0].name}`);
+    const img2 = screen.getByAltText(`Card ${cards[1].name}`);
     fireEvent.click(img1);
     expect(img1).not.toHaveClass("owncards-card--selected");
+    expect(img1).toHaveClass("owncards-card--disabled");
+    expect(img2).toHaveClass("owncards-card--disabled");
 
     rerender(<OwnCards cards={cards} turnStatus="drawing" />);
-    const img2 = screen.getByAltText(`Card ${cards[1].name}`);
-    fireEvent.click(img2);
-    expect(img2).not.toHaveClass("owncards-card--selected");
+    const img1Again = screen.getByAltText(`Card ${cards[0].name}`);
+    expect(img1Again).toHaveClass("owncards-card--disabled");
   });
 
   it("toggles selection when turnStatus is 'playing' (and also allows selection in 'discarding')", () => {
@@ -116,25 +117,25 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     expect(nowImg1).toHaveClass("owncards-card--selected");
   });
 
-  it("clears selection when cards array changes", () => {
-    const cards = TEST_CARDS.slice(0, 2);
+  it("keeps remaining selected cards and trims removed ones when cards array changes", () => {
+    const cards = TEST_CARDS.slice(0, 2); // A, B
     const { rerender } = setup(cards, { turnStatus: "playing" });
 
-    const img1 = screen.getByAltText(`Card ${cards[0].name}`);
-    const img2 = screen.getByAltText(`Card ${cards[1].name}`);
-    fireEvent.click(img1);
-    fireEvent.click(img2);
-    expect(img1).toHaveClass("owncards-card--selected");
-    expect(img2).toHaveClass("owncards-card--selected");
+    const imgA = screen.getByAltText(`Card ${cards[0].name}`); // select A & B
+    const imgB = screen.getByAltText(`Card ${cards[1].name}`);
+    fireEvent.click(imgA);
+    fireEvent.click(imgB);
+    expect(imgA).toHaveClass("owncards-card--selected");
+    expect(imgB).toHaveClass("owncards-card--selected");
 
-    // Change cards: component should clear selection (per current useEffect)
+    // remove B; selection must keep A selected and drop B
     rerender(<OwnCards cards={[cards[0]]} turnStatus="playing" />);
-    const remaining = screen.getByAltText(`Card ${cards[0].name}`);
-    expect(remaining).not.toHaveClass("owncards-card--selected");
+    const imgAafter = screen.getByAltText(`Card ${cards[0].name}`);
+    expect(imgAafter).toHaveClass("owncards-card--selected");
     expect(screen.queryByAltText(`Card ${cards[1].name}`)).toBeNull();
   });
 
-  it("clears selection when turnStatus changes", () => {
+  it("does NOT clear selection when turnStatus changes; it only disables interaction", () => {
     const cards = TEST_CARDS.slice(0, 1);
     const { rerender } = setup(cards, { turnStatus: "playing" });
 
@@ -144,7 +145,8 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
 
     rerender(<OwnCards cards={cards} turnStatus="waiting" />);
     const sameImg = screen.getByAltText(`Card ${cards[0].name}`);
-    expect(sameImg).not.toHaveClass("owncards-card--selected");
+    expect(sameImg).toHaveClass("owncards-card--selected");
+    expect(sameImg).toHaveClass("owncards-card--disabled");
   });
 
   it("renders DiscardButton in 'discarding' and DrawRegularCardButton in 'drawing'", () => {
@@ -161,25 +163,32 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     expect(screen.getByTestId("draw-card-button")).toBeInTheDocument();
   });
 
-  it("trims selected cards when cardIds prop changes", () => {
-    const cards = [
-      { cardID: 11, cardName: "Miss Marple" },
-      { cardID: 12, cardName: "Mr Satterthwaite" },
-    ];
+  it("in 'playing' shows NoActionButton when nothing is selected and 'Play (n)' when there is a selection", () => {
+    const cards = TEST_CARDS.slice(0, 2);
+
+    // With no selection -> NoActionButton ("Play nothing")
     const { rerender } = setup(cards, { turnStatus: "playing" });
+    expect(
+      screen.getByRole("button", { name: /Play nothing/i })
+    ).toBeInTheDocument();
 
-    const img1 = screen.getByAltText("Card Miss Marple");
-    const img2 = screen.getByAltText("Card Mr Satterthwaite");
-
+    // Select one -> OwnCards renders "Play (1)" button
+    const img1 = screen.getByAltText(`Card ${cards[0].name}`);
     fireEvent.click(img1);
-    fireEvent.click(img2);
-    expect(img1).toHaveClass("owncards-card--selected");
-    expect(img2).toHaveClass("owncards-card--selected");
+    expect(
+      screen.getByRole("button", { name: /Play \(1\)/i })
+    ).toBeInTheDocument();
 
-    // remove one card
-    rerender(<OwnCards cardIds={[cards[0]]} turnStatus="playing" />);
-    const remaining = screen.getByAltText("Card Miss Marple");
-    expect(remaining).toHaveClass("owncards-card--selected");
-    expect(screen.queryByAltText("Card Mr Satterthwaite")).toBeNull();
+    // Select second -> "Play (2)"
+    const img2 = screen.getByAltText(`Card ${cards[1].name}`);
+    fireEvent.click(img2);
+    expect(
+      screen.getByRole("button", { name: /Play \(2\)/i })
+    ).toBeInTheDocument();
+
+    // Switch to 'waiting' -> action buttons disappear from 'playing' branch
+    rerender(<OwnCards cards={cards} turnStatus="waiting" />);
+    expect(screen.queryByRole("button", { name: /Play nothing/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Play \(\d+\)/i })).toBeNull();
   });
 });
