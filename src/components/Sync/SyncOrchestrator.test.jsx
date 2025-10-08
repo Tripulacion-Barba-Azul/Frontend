@@ -1,10 +1,8 @@
-// SyncOrchestrator.test.jsx
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, cleanup, screen } from "@testing-library/react";
+import { render, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
-// --- Mocks for all child sync modules to capture props ---
 let lastBoardProps = null;
 let lastDeckProps = null;
 let lastDiscardProps = null;
@@ -12,288 +10,233 @@ let lastOwnCardsProps = null;
 let lastViewMyCardsProps = null;
 let lastViewMySecretsProps = null;
 
-const BoardSyncMock = vi.fn((props) => {
+const BoardMock = vi.fn((props) => {
   lastBoardProps = props;
-  return <div data-testid="BoardSyncMock" />;
+  return <div data-testid="BoardMock" />;
 });
-const RegularDeckSyncMock = vi.fn((props) => {
+const RegularDeckMock = vi.fn((props) => {
   lastDeckProps = props;
-  return <div data-testid="RegularDeckSyncMock" />;
+  return <div data-testid="RegularDeckMock" />;
 });
-const DiscardPileSyncMock = vi.fn((props) => {
+const DiscardPileMock = vi.fn((props) => {
   lastDiscardProps = props;
-  return <div data-testid="DiscardPileSyncMock" />;
+  return <div data-testid="DiscardPileMock" />;
 });
-const OwnCardsSyncMock = vi.fn((props) => {
+const OwnCardsMock = vi.fn((props) => {
   lastOwnCardsProps = props;
-  return <div data-testid="OwnCardsSyncMock" />;
+  return <div data-testid="OwnCardsMock" />;
 });
-const ViewMyCardsSyncMock = vi.fn((props) => {
+const ViewMyCardsMock = vi.fn((props) => {
   lastViewMyCardsProps = props;
-  return <div data-testid="ViewMyCardsSyncMock" />;
+  return <div data-testid="ViewMyCardsMock" />;
 });
-const ViewMySecretsSyncMock = vi.fn((props) => {
+const ViewMySecretsMock = vi.fn((props) => {
   lastViewMySecretsProps = props;
-  return <div data-testid="ViewMySecretsSyncMock" />;
+  return <div data-testid="ViewMySecretsMock" />;
 });
 
-// The paths below must match the imports inside SyncOrchestrator.jsx
-vi.mock("./Board/BoardSync.jsx", () => ({ default: (p) => BoardSyncMock(p) }));
-vi.mock("./RegularDeck/RegularDeckSync.jsx", () => ({
-  default: (p) => RegularDeckSyncMock(p),
+vi.mock("../Board/Board.jsx", () => ({ default: (p) => BoardMock(p) }));
+vi.mock("../RegularDeck/RegularDeck.jsx", () => ({
+  default: (p) => RegularDeckMock(p),
 }));
-vi.mock("./DiscardPile/DiscardPileSync.jsx", () => ({
-  default: (p) => DiscardPileSyncMock(p),
+vi.mock("../DiscardPile/DiscardPile.jsx", () => ({
+  default: (p) => DiscardPileMock(p),
 }));
-vi.mock("./OwnCards/OwnCardsSync.jsx", () => ({
-  default: (p) => OwnCardsSyncMock(p),
+vi.mock("../OwnCards/OwnCards.jsx", () => ({
+  default: (p) => OwnCardsMock(p),
 }));
-vi.mock("./ViewMySecrets/ViewMySecretsSync.jsx", () => ({
-  default: (p) => ViewMySecretsSyncMock(p),
+vi.mock("../ViewMyCards/ViewMyCards.jsx", () => ({
+  default: (p) => ViewMyCardsMock(p),
 }));
-vi.mock("./ViewMyCards/ViewMyCardsSync.jsx", () => ({
-  default: (p) => ViewMyCardsSyncMock(p),
+vi.mock("../ViewMySecrets/ViewMySecrets.jsx", () => ({
+  default: (p) => ViewMySecretsMock(p),
 }));
 
-// Import after mocks
 import SyncOrchestrator from "./SyncOrchestrator.jsx";
+
+function makePublicPlayers() {
+  return [
+    {
+      id: 1,
+      name: "Alice",
+      avatar: "default",
+      turnOrder: 1,
+      turnStatus: "playing",
+      cardCount: 3,
+      secrets: [{ id: 501, name: "murderer", revealed: true }],
+      sets: [],
+    },
+    {
+      id: 2,
+      name: "Bob",
+      avatar: "default",
+      turnOrder: 2,
+      turnStatus: "waiting",
+      cardCount: 0,
+      secrets: [
+        { id: 502, name: "murderer", revealed: false },
+        { id: 503, name: "accomplice", revealed: true },
+      ],
+      sets: [],
+    },
+    {
+      id: 3,
+      name: "Carol",
+      avatar: "default",
+      turnOrder: 3,
+      turnStatus: "waiting",
+      cardCount: 1,
+      secrets: [],
+      sets: [],
+    },
+  ];
+}
+
+function makePublicData() {
+  return {
+    actionStatus: "unblocked",
+    gameStatus: "inProgress",
+    regularDeckCount: 10,
+    discardPileTop: { id: "C-3", name: "instant_notsofast" },
+    draftCards: [],
+    discardPileCount: 2,
+    players: makePublicPlayers(),
+  };
+}
+
+function makePrivateData() {
+  return {
+    role: "detective",
+    ally: null,
+    cards: [{ id: "C-2", name: "detective_marple" }],
+    secrets: [],
+  };
+}
 
 beforeEach(() => {
   cleanup();
   lastBoardProps = lastDeckProps = lastDiscardProps = lastOwnCardsProps = null;
   lastViewMyCardsProps = lastViewMySecretsProps = null;
-
-  BoardSyncMock.mockClear();
-  RegularDeckSyncMock.mockClear();
-  DiscardPileSyncMock.mockClear();
-  OwnCardsSyncMock.mockClear();
-  ViewMyCardsSyncMock.mockClear();
-  ViewMySecretsSyncMock.mockClear();
+  BoardMock.mockClear();
+  RegularDeckMock.mockClear();
+  DiscardPileMock.mockClear();
+  OwnCardsMock.mockClear();
+  ViewMyCardsMock.mockClear();
+  ViewMySecretsMock.mockClear();
 });
 
-// --- Helpers to craft server data ---
-function makePlayers() {
-  return [
-    {
-      playerName: "Alice",
-      avatar: "default",
-      playerID: 1,
-      orderNumber: 1,
-      role: "murderer",
-      isTurn: true,
-    },
-    {
-      playerName: "Bob",
-      avatar: "default",
-      playerID: 2,
-      orderNumber: 2,
-      role: "detective",
-      isTurn: false,
-    },
-    {
-      playerName: "Carol",
-      avatar: "default",
-      playerID: 3,
-      orderNumber: 3,
-      role: "detective",
-      isTurn: false,
-    },
-  ];
-}
-function makeCards() {
-  return [
-    // in deck
-    {
-      cardID: "C-1",
-      cardOwnerID: null,
-      cardName: "detective_poirot",
-      spriteId: 7,
-      isInDeck: true,
-      isInDiscard: false,
-      isInDiscardTop: false,
-      faceUp: false,
-    },
-    // in hand (Alice)
-    {
-      cardID: "C-2",
-      cardOwnerID: 1,
-      cardName: "detective_marple",
-      spriteId: 8,
-      isInDeck: false,
-      isInDiscard: false,
-      isInDiscardTop: false,
-      faceUp: false,
-    },
-    // in discard (top)
-    {
-      cardID: "C-3",
-      cardOwnerID: null,
-      cardName: "instant_notsofast",
-      spriteId: 16,
-      isInDeck: false,
-      isInDiscard: true,
-      isInDiscardTop: true,
-      faceUp: true,
-    },
-  ];
-}
-function makeSecrets() {
-  return [
-    {
-      secretID: 1000,
-      secretName: "murderer",
-      revealed: false,
-      secretOwnerID: 2,
-    },
-    {
-      secretID: 1001,
-      secretName: "accomplice",
-      revealed: true,
-      secretOwnerID: 2,
-    },
-    {
-      secretID: 1002,
-      secretName: "regular",
-      revealed: false,
-      secretOwnerID: 3,
-    },
-  ];
-}
-
-describe("SyncOrchestrator", () => {
-  it("renders all sync layers and wires props through correctly", () => {
-    const serverPlayers = makePlayers();
-    const serverCards = makeCards();
-    const serverSecrets = makeSecrets();
+describe("SyncOrchestrator (new props: publicData/privateData)", () => {
+  it("passes correct props to all children and derives OwnCards.turnStatus from public players", () => {
     const CURRENT_PLAYER_ID = 1;
+    const publicData = makePublicData();
+    const privateData = makePrivateData();
 
-    const { container } = render(
+    render(
       <SyncOrchestrator
-        serverPlayers={serverPlayers}
-        serverCards={serverCards}
-        serverSecrets={serverSecrets}
+        publicData={publicData}
+        privateData={privateData}
         currentPlayerId={CURRENT_PLAYER_ID}
       />
     );
 
-    // Root container classes (layout envelope)
-    expect(container.firstChild).toHaveClass(
-      "relative",
-      "w-full",
-      "h-screen",
-      "overflow-hidden"
-    );
-
-    // Overlay wrapper should exist (absolute inset-0 pointer-events-none)
-    // We identify it as the parent of the sub-sync mocks (the first div inside root after BoardSync)
-    expect(screen.getByTestId("RegularDeckSyncMock").parentElement).toHaveClass(
-      "absolute",
-      "inset-0",
-      "pointer-events-none"
-    );
-
-    // BoardSync is rendered with all four props
-    expect(BoardSyncMock).toHaveBeenCalledTimes(1);
-    expect(lastBoardProps.serverPlayers).toBe(serverPlayers);
-    expect(lastBoardProps.serverCards).toBe(serverCards);
-    expect(lastBoardProps.serverSecrets).toBe(serverSecrets);
+    expect(BoardMock).toHaveBeenCalledTimes(1);
+    expect(Array.isArray(lastBoardProps.players)).toBe(true);
+    expect(lastBoardProps.players).toHaveLength(3);
     expect(lastBoardProps.currentPlayerId).toBe(CURRENT_PLAYER_ID);
+    expect(lastBoardProps.currentPlayerRole).toBe(privateData.role);
+    expect(lastBoardProps.currentPlayerAlly).toBe(privateData.ally);
 
-    // RegularDeckSync gets serverCards
-    expect(RegularDeckSyncMock).toHaveBeenCalledTimes(1);
-    expect(lastDeckProps.serverCards).toBe(serverCards);
+    expect(RegularDeckMock).toHaveBeenCalledTimes(1);
+    expect(lastDeckProps.number).toBe(publicData.regularDeckCount);
 
-    // DiscardPileSync gets serverCards
-    expect(DiscardPileSyncMock).toHaveBeenCalledTimes(1);
-    expect(lastDiscardProps.serverCards).toBe(serverCards);
+    expect(DiscardPileMock).toHaveBeenCalledTimes(1);
+    expect(lastDiscardProps.number).toBe(publicData.discardPileCount);
+    expect(lastDiscardProps.card).toEqual(publicData.discardPileTop);
 
-    // OwnCardsSync gets serverCards + currentPlayerId
-    expect(OwnCardsSyncMock).toHaveBeenCalledTimes(1);
-    expect(lastOwnCardsProps.serverCards).toBe(serverCards);
-    expect(lastOwnCardsProps.currentPlayerId).toBe(CURRENT_PLAYER_ID);
+    expect(OwnCardsMock).toHaveBeenCalledTimes(1);
+    expect(lastOwnCardsProps.cards).toEqual(privateData.cards);
+    expect(lastOwnCardsProps.turnStatus).toBe("playing");
 
-    // ViewMyCardsSync gets serverCards + currentPlayerId + anchorClass
-    expect(ViewMyCardsSyncMock).toHaveBeenCalledTimes(1);
-    expect(lastViewMyCardsProps.serverCards).toBe(serverCards);
-    expect(lastViewMyCardsProps.currentPlayerId).toBe(CURRENT_PLAYER_ID);
-    expect(typeof lastViewMyCardsProps.anchorClass).toBe("string");
-    expect(lastViewMyCardsProps.anchorClass).toMatch(/fixed .*bottom/i);
+    expect(ViewMyCardsMock).toHaveBeenCalledTimes(1);
+    expect(lastViewMyCardsProps.cards).toEqual(privateData.cards);
 
-    // ViewMySecretsSync gets allSecrets + playerId + anchorClass
-    expect(ViewMySecretsSyncMock).toHaveBeenCalledTimes(1);
-    expect(lastViewMySecretsProps.allSecrets).toBe(serverSecrets);
-    expect(lastViewMySecretsProps.playerId).toBe(CURRENT_PLAYER_ID);
-    expect(typeof lastViewMySecretsProps.anchorClass).toBe("string");
-    expect(lastViewMySecretsProps.anchorClass).toMatch(/fixed .*bottom/i);
-
-    // And all mock components are actually present in the DOM
-    expect(screen.getByTestId("BoardSyncMock")).toBeInTheDocument();
-    expect(screen.getByTestId("RegularDeckSyncMock")).toBeInTheDocument();
-    expect(screen.getByTestId("DiscardPileSyncMock")).toBeInTheDocument();
-    expect(screen.getByTestId("OwnCardsSyncMock")).toBeInTheDocument();
-    expect(screen.getByTestId("ViewMyCardsSyncMock")).toBeInTheDocument();
-    expect(screen.getByTestId("ViewMySecretsSyncMock")).toBeInTheDocument();
+    expect(ViewMySecretsMock).toHaveBeenCalledTimes(1);
+    expect(lastViewMySecretsProps.secrets).toEqual(privateData.secrets);
   });
 
-  it("re-renders children when upstream props change (smoke)", () => {
+  it("updates children when upstream props change (smoke)", () => {
     const CURRENT_PLAYER_ID = 1;
+
+    const initialPublic = makePublicData();
+    const initialPrivate = makePrivateData();
+
     const { rerender } = render(
       <SyncOrchestrator
-        serverPlayers={makePlayers()}
-        serverCards={makeCards()}
-        serverSecrets={makeSecrets()}
+        publicData={initialPublic}
+        privateData={initialPrivate}
         currentPlayerId={CURRENT_PLAYER_ID}
       />
     );
 
-    // Change input arrays (new references)
-    const newPlayers = makePlayers().map((p, i) => ({ ...p, isTurn: i === 1 })); // Bob's turn
-    const newCards = [
-      ...makeCards(),
-      {
-        cardID: "C-99",
-        cardOwnerID: 1,
-        cardName: "detective_poirot",
-        spriteId: 7,
-        isInDeck: false,
-        isInDiscard: false,
-        isInDiscardTop: false,
-        faceUp: false,
-      },
-    ];
-    const newSecrets = [
-      ...makeSecrets(),
-      {
-        secretID: 2000,
-        secretName: "murderer",
-        revealed: true,
-        secretOwnerID: 2,
-      },
-    ];
+    const updatedPublic = {
+      ...initialPublic,
+      regularDeckCount: 9,
+      discardPileCount: 3,
+      discardPileTop: { id: "C-99", name: "event_cardsonthetable" },
+      players: initialPublic.players.map((p) =>
+        p.id === CURRENT_PLAYER_ID ? { ...p, turnStatus: "discarding" } : p
+      ),
+    };
+
+    const updatedPrivate = {
+      ...initialPrivate,
+      role: "murderer",
+      ally: { id: 2, role: "accomplice" },
+      cards: [
+        ...initialPrivate.cards,
+        { id: "C-77", name: "detective_poirot" },
+      ],
+      secrets: [{ id: 2000, name: "murderer", revealed: true }],
+    };
 
     rerender(
       <SyncOrchestrator
-        serverPlayers={newPlayers}
-        serverCards={newCards}
-        serverSecrets={newSecrets}
+        publicData={updatedPublic}
+        privateData={updatedPrivate}
         currentPlayerId={CURRENT_PLAYER_ID}
       />
     );
 
-    // Ensure mocks were invoked again (new props propagated)
-    expect(BoardSyncMock).toHaveBeenCalledTimes(2);
-    expect(RegularDeckSyncMock).toHaveBeenCalledTimes(2);
-    expect(DiscardPileSyncMock).toHaveBeenCalledTimes(2);
-    expect(OwnCardsSyncMock).toHaveBeenCalledTimes(2);
-    expect(ViewMyCardsSyncMock).toHaveBeenCalledTimes(2);
-    expect(ViewMySecretsSyncMock).toHaveBeenCalledTimes(2);
+    expect(BoardMock).toHaveBeenCalledTimes(2);
+    expect(RegularDeckMock).toHaveBeenCalledTimes(2);
+    expect(DiscardPileMock).toHaveBeenCalledTimes(2);
+    expect(OwnCardsMock).toHaveBeenCalledTimes(2);
+    expect(ViewMyCardsMock).toHaveBeenCalledTimes(2);
+    expect(ViewMySecretsMock).toHaveBeenCalledTimes(2);
 
-    // And last captured props correspond to the new references
-    expect(lastBoardProps.serverPlayers).toBe(newPlayers);
-    expect(lastDeckProps.serverCards).toBe(newCards);
-    expect(lastDiscardProps.serverCards).toBe(newCards);
-    expect(lastOwnCardsProps.serverCards).toBe(newCards);
-    expect(lastViewMyCardsProps.serverCards).toBe(newCards);
-    expect(lastViewMySecretsProps.allSecrets).toBe(newSecrets);
+    expect(lastDeckProps.number).toBe(9);
+    expect(lastDiscardProps.number).toBe(3);
+    expect(lastDiscardProps.card).toEqual({
+      id: "C-99",
+      name: "event_cardsonthetable",
+    });
+
+    expect(lastBoardProps.currentPlayerRole).toBe("murderer");
+    expect(lastBoardProps.currentPlayerAlly).toEqual({
+      id: 2,
+      role: "accomplice",
+    });
+
+    expect(lastOwnCardsProps.cards.map((c) => c.id).sort()).toEqual(
+      ["C-2", "C-77"].sort()
+    );
+    expect(lastOwnCardsProps.turnStatus).toBe("discarding");
+
+    expect(lastViewMyCardsProps.cards.map((c) => c.id).sort()).toEqual(
+      ["C-2", "C-77"].sort()
+    );
+    expect(lastViewMySecretsProps.secrets).toEqual([
+      { id: 2000, name: "murderer", revealed: true },
+    ]);
   });
 });
