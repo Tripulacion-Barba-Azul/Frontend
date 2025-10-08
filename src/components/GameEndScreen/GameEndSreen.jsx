@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './GameEndSreen.css';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import "./GameEndSreen.css";
 
 export default function GameEndScreen({ websocket }) {
-  const [gameEnded, setGameEnded] = useState(false);
   const [gameEndData, setGameEndData] = useState(null);
   const navigate = useNavigate();
 
+  // Websocket
   useEffect(() => {
     if (!websocket) return;
 
@@ -15,43 +15,87 @@ export default function GameEndScreen({ websocket }) {
         const data = JSON.parse(event.data);
 
         if (data.type === "Match Ended") {
-          console.log("🏁 Fin de partida detectado");
+          console.log("🏁 Game end detected");
           setGameEndData({
-            winners: data.winners,
-            role: data.rol
+            players: data.players,
           });
-          setGameEnded(true);
         }
       } catch (error) {
         console.error("❌ Error parsing WebSocket message:", error);
       }
     };
 
-    websocket.addEventListener('message', handleMessage);
+    websocket.addEventListener("message", handleMessage);
 
     return () => {
-      websocket.removeEventListener('message', handleMessage);
+      websocket.removeEventListener("message", handleMessage);
     };
   }, [websocket]);
 
   const handleBackToHome = () => {
-    setGameEnded(false);
     setGameEndData(null);
-    navigate('/');
+    navigate("/");
   };
 
-  if (!gameEnded || !gameEndData || !gameEndData.winners || !gameEndData.role) return null;
+  // if didnt get any data, dont show anything
+  if (!gameEndData || !gameEndData.players || gameEndData.players.length === 0)
+    return null;
 
-  // Determinar el título según el rol y cantidad de ganadores
-  const winnersCount = gameEndData.winners.length;
-  const isDetective = gameEndData.role.toLowerCase() === 'detective';
+  // Define booleans to define title
+  const players = gameEndData.players;
 
-  let title = '';
-  if (isDetective) {
-    title = winnersCount > 1 ? 'Ganan los detectives' : 'Gana el detective';
-  } else {
-    title = 'Gana el asesino';
+  const hasmurderer = players.some(
+    (player) => player.Role && player.Role.toLowerCase() === "murderer"
+  );
+  const hasAccomplice = players.some(
+    (player) => player.Role && player.Role.toLowerCase() === "accomplice"
+  );
+  const detectiveCount = players.filter(
+    (player) => player.Role && player.Role.toLowerCase() === "detective"
+  ).length;
+
+  // Define title
+  let title = "";
+
+  if (hasmurderer && hasAccomplice) {
+    title = "Murderer Escapes!";
+  } else if (hasmurderer && !hasAccomplice) {
+    title = "Murderer Escapes!";
+  } else if (detectiveCount > 1) {
+    title = "The Murderer has been caught!";
+  } else if (detectiveCount === 1) {
+    title = "The Murderer has been caught!";
   }
+
+  // Assign color by role
+  const getRoleColor = (role) => {
+    if (!role) return "#cccccc";
+    switch (role.toLowerCase()) {
+      case "detective":
+        return "#ffffff";
+      case "murderer":
+        return "#e74c3c";
+      case "accomplice":
+        return "#ff8c00";
+      default:
+        return "#cccccc";
+    }
+  };
+
+  // Assign badge by role
+  const getRoleBadge = (role) => {
+    if (!role) return "";
+    switch (role.toLowerCase()) {
+      case "detective":
+        return "detective";
+      case "murderer":
+        return "murderer";
+      case "accomplice":
+        return "accomplice";
+      default:
+        return role;
+    }
+  };
 
   return (
     <div className="game-end-overlay">
@@ -59,23 +103,41 @@ export default function GameEndScreen({ websocket }) {
         <div className="game-end-header">
           <h2>{title}</h2>
         </div>
-        
+
         <div className="game-end-content">
           <div className="winners-section">
             <ul className="winners-list">
-              {gameEndData.winners.map((winner, index) => (
-                <li key={index} className="winner-name">{winner}</li>
+              {players.map((player, index) => (
+                <li key={index} className="winner-item">
+                  <span
+                    className="winner-name"
+                    style={{ color: getRoleColor(player.Role) }}
+                  >
+                    {player.Name}
+                  </span>
+                  {player.Role && (
+                    <span
+                      className="role-badge"
+                      style={{
+                        backgroundColor: getRoleColor(player.Role),
+                        color:
+                          player.Role.toLowerCase() === "detective"
+                            ? "#000000"
+                            : "#ffffff",
+                      }}
+                    >
+                      {getRoleBadge(player.Role)}
+                    </span>
+                  )}
+                </li>
               ))}
             </ul>
           </div>
         </div>
 
         <div className="game-end-actions">
-          <button 
-            className="btn-back-home" 
-            onClick={handleBackToHome}
-          >
-            Volver al Inicio
+          <button className="btn-back-home" onClick={handleBackToHome}>
+            Back to Home
           </button>
         </div>
       </div>
