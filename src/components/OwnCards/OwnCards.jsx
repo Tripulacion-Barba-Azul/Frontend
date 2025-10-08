@@ -38,46 +38,6 @@ export default function OwnCards({
   );
 
   const selectedArray = Array.from(selectedIds);
-  const [selectedIds, setSelectedIds] = useState(new Set());
-  const [internalTurnStatus, setInternalTurnStatus] = useState(turnStatus);
-
-  // keep selected set trimmed if cardIds prop changes
-  useEffect(() => {
-    setSelectedIds((prev) => {
-      const next = new Set([...prev].filter((id) => cardIds.includes(id)));
-      return next;
-    });
-  }, [cardIds]);
-
-  // Sync internal turn status with prop
-  useEffect(() => {
-    setInternalTurnStatus(turnStatus);
-  }, [turnStatus]);
-
-  const canSelect = internalTurnStatus === "playing" || internalTurnStatus === "discarding";
-
-  const toggleSelect = useCallback(
-    (id) => {
-      if (!canSelect) return; // selection disabled in "waiting" and "drawing"
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(id)) next.delete(id);
-        else next.add(id);
-        return next;
-      });
-    },
-    [canSelect]
-  );
-
-  const handleDiscardSuccess = useCallback(() => {
-    setSelectedIds(new Set());
-    // Optionally transition to another phase after discarding
-    if (onTurnStatusChange) {
-      onTurnStatusChange("waiting");
-    }
-  }, [onTurnStatusChange]);
-
-  const selectedArray = Array.from(selectedIds);
 
   return (
     <div className={`owncards-overlay ${className}`} aria-label="cards-row">
