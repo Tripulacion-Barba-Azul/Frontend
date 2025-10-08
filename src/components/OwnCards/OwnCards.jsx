@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import "./OwnCards.css";
 import { CARDS_MAP } from "../generalMaps.js";
 import DiscardButton from "./DiscardButton/DiscardButton";
+import NoActionButton from "./NoActionButton/NoActionButton";
 import DrawRegularCardButton from "./DrawRegularCardButton/DrawRegularCardButton.jsx";
 
 export default function OwnCards({
@@ -71,7 +72,7 @@ export default function OwnCards({
       <div className="owncards-actions">
         {turnStatus === "playing" &&
           (selectedArray.length === 0 ? (
-            <button className="owncards-action">Play nothing</button>
+            <NoActionButton/>
           ) : (
             <button className="owncards-action">
               Play ({selectedArray.length})
