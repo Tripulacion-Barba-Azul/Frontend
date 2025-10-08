@@ -24,7 +24,7 @@ export default function DiscardPile({ number, card }) {
     discardClass = "thin";
   }
 
-  const topCard = card?.cardName ? CARDS_MAP[card.cardName] : null;
+  const topCard = card?.name ? CARDS_MAP[card.name] : null;
 
   return (
     <div
@@ -39,7 +39,7 @@ export default function DiscardPile({ number, card }) {
       {topCard && (
         <img
           src={topCard}
-          alt={`Top card ${card.cardID}`}
+          alt={`Top card ${card.id}`}
           className="DiscardPile-topcard"
         />
       )}

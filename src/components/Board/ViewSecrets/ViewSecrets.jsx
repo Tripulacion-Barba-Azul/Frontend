@@ -24,14 +24,12 @@ export default function ViewSecrets({ secrets }) {
         <div className="light-dots">
           {secrets.map((secret) => (
             <div
-              key={secret.secretID}
+              key={secret.id}
               className={`light-dot ${
                 secret.revealed ? "revealed" : "unrevealed"
               }`}
               title={
-                secret.revealed
-                  ? `Secret ${secret.secretName}`
-                  : `Secret hidden`
+                secret.revealed ? `Secret ${secret.name}` : `Secret hidden`
               }
             />
           ))}
@@ -47,11 +45,11 @@ export default function ViewSecrets({ secrets }) {
             <div className="secrets-grid">
               {hasSecrets ? (
                 secrets.map((secret) => (
-                  <div key={secret.secretID} className="secret-card">
+                  <div key={secret.id} className="secret-card">
                     {secret.revealed ? (
                       <img
-                        src={SECRETS_MAP[secret.secretName]}
-                        alt={`Secret ${secret.secretName}`}
+                        src={SECRETS_MAP[secret.name]}
+                        alt={`Secret ${secret.name}`}
                       />
                     ) : (
                       <img

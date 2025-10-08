@@ -7,7 +7,7 @@ import DrawRegularCardButton from "./DrawRegularCardButton/DrawRegularCardButton
 export default function OwnCards({
   cards = [],
   className = "",
-  turnStatus = "waiting", // "waiting" | "playing" | "discarding" | "drawing"
+  turnStatus = "playing", // "waiting" | "playing" | "discarding" | "drawing"
 }) {
   const [selectedIds, setSelectedIds] = useState(new Set());
 
@@ -15,13 +15,13 @@ export default function OwnCards({
   useEffect(() => {
     setSelectedIds((prev) => {
       const next = new Set(
-        [...prev].filter((id) => cards.some((card) => card.cardID === id))
+        [...prev].filter((id) => cards.some((card) => card.id === id))
       );
       return next;
     });
   }, [cards]);
 
-  const canSelect = turnStatus === "playing" || turnStatus === "discarding";
+  const canSelect = "playing" === "playing" || turnStatus === "discarding";
 
   const toggleSelect = useCallback(
     (id) => {
@@ -39,39 +39,43 @@ export default function OwnCards({
   const selectedArray = Array.from(selectedIds);
 
   return (
-    <div className={`owncards-overlay ${className}`} aria-label="cards-row">
-      <div className="owncards-row">
-        {cards.map((card) => {
-          const isSelected = selectedIds.has(card.cardID);
-          const disabledClass = canSelect ? "" : "owncards-card--disabled";
+    <div>
+      <div
+        className={`owncards-wrapper ${className}`}
+        aria-label="own-cards-area"
+      >
+        <div className="owncards-row">
+          {cards.map((card) => {
+            const isSelected = selectedIds.has(card.id);
+            const disabledClass = canSelect ? "" : "owncards-card--disabled";
 
-          const imgSrc = CARDS_MAP[card.cardName];
-          if (!imgSrc) {
-            console.warn(
-              `⚠️ Missing entry in CARDS_MAP for cardName: "${card.cardName}"`
+            const imgSrc = CARDS_MAP[card.name];
+            if (!imgSrc) {
+              console.warn(
+                `⚠️ Missing entry in CARDS_MAP for name: "${card.name}"`
+              );
+            }
+
+            return (
+              <img
+                key={card.id}
+                src={imgSrc || ""}
+                alt={`Card ${card.name}`}
+                className={`owncards-card ${
+                  isSelected ? "owncards-card--selected" : ""
+                } ${disabledClass}`}
+                width={130}
+                height={198}
+                draggable={false}
+                onClick={() => toggleSelect(card.id)}
+              />
             );
-          }
-
-          return (
-            <img
-              key={card.cardID}
-              src={imgSrc || ""}
-              alt={`Card ${card.cardName}`}
-              className={`owncards-card ${
-                isSelected ? "owncards-card--selected" : ""
-              } ${disabledClass}`}
-              width={130}
-              height={198}
-              draggable={false}
-              onClick={() => toggleSelect(card.cardID)}
-            />
-          );
-        })}
+          })}
+        </div>
       </div>
-
       {/* Action placeholders — no functionality */}
       <div className="owncards-actions">
-        {turnStatus === "playing" &&
+        {"playing" === "playing" &&
           (selectedArray.length === 0 ? (
             <button className="owncards-action">Play nothing</button>
           ) : (
@@ -80,7 +84,7 @@ export default function OwnCards({
             </button>
           ))}
 
-        {turnStatus === "discarding" && (
+        {"" === "discarding" && (
           <DiscardButton
             selectedCards={selectedArray}
             handSize={cards.length}
@@ -88,7 +92,7 @@ export default function OwnCards({
           />
         )}
 
-        {turnStatus === "drawing" && (
+        {"" === "drawing" && (
           <DrawRegularCardButton
             isDrawCardPhase={true}
             playerCardCount={cards.length}

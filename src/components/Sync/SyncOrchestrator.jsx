@@ -6,120 +6,112 @@ import RegularDeck from "../RegularDeck/RegularDeck.jsx";
 import ViewMyCards from "../ViewMyCards/ViewMyCards.jsx";
 import ViewMySecrets from "../ViewMySecrets/ViewMySecrets.jsx";
 
-import {
-  computeBoardPlayers,
-  computeDeckCount,
-  computeDiscardState,
-  computeOwnCards,
-  computeOwnSecrets,
-} from "./SyncOrchestratorLogic.js";
+//
+// privateData:  {
+// 	        cards: [{
+//           		id: int
+//           		name: string
+//           		type: enum(string)
+//           }]
+// 	        secrets: [{
+// 		          id: int
+// 		          reveled: bool
+// 		          name: String <NOT NULL>
+//           }]
+// 	        role: enum(string) # "murderer" | "accomplice" | "detective"
+// 	        ally: {
+// 		          id: int
+// 		          role: enum(String) # "murderer" | "accomplice"
+//               } | null
+// }
 
-/**
- * Input:
- * - serverPlayers: Array[{
- *     playerName: string,
- *     playerID: Int,
- *     orderNumber: number,           // 1..N ordering within the match
- *     role: string                   "detective"|"murderer"|"accomplice",
- *     turnStatus: string             “waiting”|“playing”|“discarding”|“drawing”
- *     avatar: string,                // key in AVATAR_MAP
- *   }>
- *
- * - serverCards: Array[{
- *     cardName: string,
- *     cardID: Int,
- *     cardOwnerID: Int,
- *     isInDeck: Bool,
- *     isInDiscardPile: Bool,
- *     isInDiscardTop: Bool,
- *   }>
- *
- * - serverSecrets: Array[{
- *     secretName: string,
- *     secretId: Int,
- *     revealed: Bool,
- *     secretOwnerID: Int,
- *   }>
- */
+//
+// publicData:	{
+//         	actionStatus: enum(string) # ”blocked” | “unblocked”
+//         	gameStatus: enum(string) # “waiting” | “inProgress” | “finished”
+//         	regularDeckCount: int
+//         	discardPileTop: {
+//         			id: int
+//         			name: String
+//           }
+//         	draftCards: [{
+//         			id: int
+//         			name: String
+//           }]
+//         	discardPileCount: int
+//           players: [{
+//         	    id: int
+//         	    name: String
+//         	    avatar: int
+//         	    turnOrder: int
+//         	    turnStatus: enum(string) # “waiting” | “playing” | “discarding” | “Drawing”
+//         	    cardCount: int
+//         	    secrets: [{
+//         		      id: int
+//         		      revealed: bool
+//         		      name: String #default null
+//               }]
+//         	    sets: [{
+//         			    setName: enum(string)
+//         			    cards: [{
+//         			        id: int
+//         			        name: enum(string)
+//                   }]
+//               }]
+//           }]
+//       }
 
 export default function SyncOrchestrator({
-  serverPlayers,
-  serverCards,
-  serverSecrets,
+  publicData,
+  privateData,
   currentPlayerId,
 }) {
-  // Board
-  const boardPlayers = React.useMemo(() => {
-    return computeBoardPlayers({
-      serverPlayers,
-      serverCards,
-      serverSecrets,
-      currentPlayerId,
-    });
-  }, [serverPlayers, serverCards, serverSecrets, currentPlayerId]);
-
-  // Regular deck
-  const deckCount = React.useMemo(() => {
-    return computeDeckCount(serverCards);
-  }, [serverCards]);
-
-  // Discard pile
-  const { discardCount, discardTop } = React.useMemo(() => {
-    return computeDiscardState(serverCards);
-  }, [serverCards]);
-
-  // Own cards
-  const ownCards = React.useMemo(() => {
-    return computeOwnCards(serverCards, currentPlayerId);
-  }, [serverCards, currentPlayerId]);
-
-  // View my secrets
-  const ownSecrets = React.useMemo(() => {
-    return computeOwnSecrets(serverSecrets, currentPlayerId);
-  }, [serverSecrets, currentPlayerId]);
-
+  // Own cards turn status
+  const turnStatus =
+    publicData.players.find((p) => p?.id === currentPlayerId)?.turnStatus ??
+    "waiting";
   return (
     <div className="relative w-full h-screen overflow-hidden">
       {/* Board */}
-      <Board players={boardPlayers} />
+      <Board
+        players={publicData.players}
+        currentPlayerId={currentPlayerId}
+        currentPlayerRole={privateData.role}
+        currentPlayerAlly={privateData.ally}
+      />
 
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute inset-0">
         {/* Regular Deck */}
         <div
-          className={`absolute pointer-events-noneq`}
+          className="absolute"
           style={{
             bottom: "40%",
             left: "32.2%",
             transform: "translateX(-50%)",
           }}
         >
-          <div className="pointer-events-auto">
-            <RegularDeck number={deckCount} />
-          </div>
+          <RegularDeck number={publicData.regularDeckCount} />
         </div>
 
         {/* Discard Pile */}
-        <div className="absolute inset-0 pointer-events-none">
-          <DiscardPile number={discardCount} card={discardTop} />
+        <div className="absolute inset-0">
+          <DiscardPile
+            number={publicData.discardPileCount}
+            card={publicData.discardPileTop}
+          />
         </div>
 
         {/* Own Cards */}
-        <OwnCards
-          cards={ownCards}
-          turnStatus={
-            boardPlayers.find((player) => player.playerID === currentPlayerId)
-              ?.turnStatus
-          }
-        />
+        <OwnCards cards={privateData.cards} turnStatus={turnStatus} />
 
         {/* View My Cards */}
         <div className="fixed left-110 bottom-45 z-50 pointer-events-auto">
-          <ViewMyCards cards={ownCards} />
+          <ViewMyCards cards={privateData.cards} />
         </div>
 
         {/* View My Secrets */}
         <div className="fixed right-416 bottom-27 z-50 pointer-events-auto">
-          <ViewMySecrets secrets={ownSecrets} />
+          <ViewMySecrets secrets={privateData.secrets} />
         </div>
       </div>
     </div>

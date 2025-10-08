@@ -1,23 +1,35 @@
-.owncards-overlay {
-  position: absolute;
-  inset: 0;
-  /* allow clicks on overlay and its children */
-  pointer-events: auto;
-}
-
-/* Fixed row: bottom-center with a stable gap */
-.owncards-row {
+/* Contenedor reducido (no tapa toda la pantalla) */
+.owncards-wrapper {
   position: absolute;
   left: 50%;
-  bottom: 1.2%;
+  top: 78%;
   transform: translateX(-50%);
+  /* Ajusta estos valores al rectángulo amarillo deseado */
+  max-width: 900px; /* cámbialo según necesidad */
+  width: 100%;
+  padding: 12px 28px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+
+  /* Importante: no bloquear el resto */
+  pointer-events: none;
+  z-index: 30; /* suficiente para estar sobre el board */
+}
+
+/* Fila de cartas (clickeable) */
+.owncards-row {
   display: flex;
   gap: 12px;
   user-select: none;
   pointer-events: auto;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  /* Si quieres que se ajusten y hagan wrap: quitar overflow y poner flex-wrap: wrap */
 }
 
-/* Each card image */
+/* Carta */
 .owncards-card {
   width: 130px;
   height: 198px;
@@ -25,49 +37,53 @@
   border: 1px solid rgba(0, 0, 0, 0.2);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
   object-fit: cover;
-
-  /* allow clicking */
   pointer-events: auto;
   cursor: pointer;
   position: relative;
   z-index: 1;
-
-  /* smooth movement when selecting/deselecting */
   transition: transform 160ms ease, box-shadow 160ms ease;
 }
 
-/* Visual "selected": lift the card slightly */
 .owncards-card--selected {
-  transform: translateY(-50px);
+  transform: translateY(-42px);
   z-index: 3;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
 }
 
-/* When selection is disabled (waiting/drawing) make it clear */
 .owncards-card--disabled {
   cursor: default;
-  opacity: 0.75;
+  opacity: 0.65;
 }
 
-/* Actions area (placeholders only) */
 .owncards-actions {
-  position: absolute;
-  right: 16px;   /* distance from right edge */
-  bottom: 16px;  /* distance from bottom edge */
   display: flex;
-  gap: 8px;
+  gap: 10px;
   pointer-events: auto;
+  align-self: flex-end;
 }
 
-/* Minimal button look — replace with your button component later if needed */
 .owncards-action {
-  width: 250px;      
-  height: 70px;      
-  padding: 0;        
-  color: #f4e1a3;
-  background-color: rgb(163, 34, 34);           
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  width: 250px;
+  height: 100px;
+  transform: translateX(620%) translateY(813%);
+  font-size: 35px;
   cursor: pointer;
-  font-size: 25px;
+  color: #f4e1a3;
+  background: rgb(163, 34, 34);
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 6px;
   user-select: none;
+}
+
+/* (Opcional) Responsivo */
+@media (max-width: 950px) {
+  .owncards-wrapper {
+    max-width: 100%;
+    border-radius: 0;
+    padding: 10px 12px 12px;
+  }
+  .owncards-card {
+    width: 110px;
+    height: 168px;
+  }
 }

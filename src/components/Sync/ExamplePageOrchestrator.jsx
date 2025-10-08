@@ -1,11 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+// ExamplePageOrchestrator.jsx
+import { useEffect, useMemo, useRef, useState } from "react";
 import SyncOrchestrator from "./SyncOrchestrator.jsx";
 import { CARDS_MAP, SECRETS_MAP } from "../generalMaps.js";
 
-// ===== Constants derived from real maps =====
+// ===== Pools from real maps (keep your naming conventions) =====
 const CARD_NAME_POOL = Object.keys(CARDS_MAP);
 const SECRET_NAME_POOL = Object.keys(SECRETS_MAP);
-const HAND_MAX = 6; // per app contract
+const HAND_MAX = 6;
 
 // ===== Small helpers =====
 const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
@@ -20,10 +21,11 @@ const shuffle = (a) => {
 };
 
 export default function ExamplePageOrchestrator() {
-  // Choose a local/current player id for this demo
+  // Local/current player id for this demo
   const CURRENT_PLAYER_ID = 1;
 
-  // ---- Players (server) ----
+  // ---- Players (server-side model for the demo) ----
+  // We keep role only here to build privateData (Board gets role-less public players).
   const [serverPlayers, setServerPlayers] = useState(() => [
     {
       playerName: "Alice",
@@ -38,7 +40,7 @@ export default function ExamplePageOrchestrator() {
       avatar: 2,
       playerID: 2,
       orderNumber: 2,
-      role: "detective",
+      role: "accomplice",
       turnStatus: "waiting",
     },
     {
@@ -54,36 +56,34 @@ export default function ExamplePageOrchestrator() {
       avatar: 4,
       playerID: 4,
       orderNumber: 4,
-      role: "accomplice",
+      role: "detective",
       turnStatus: "waiting",
     },
   ]);
 
-  // ---- Cards (server) ----
+  // ---- Cards (server-side model) ----
   const cardIdRef = useRef(1);
   const makeCard = (overrides = {}) => {
     const cardName = overrides.cardName ?? sampleOne(CARD_NAME_POOL);
     return {
-      cardID: `C-${cardIdRef.current++}`,
-      cardName,
-      // server flags
+      cardID: `C-${cardIdRef.current++}`, // internal id in server model
+      cardName, // internal name in server model
       isInDeck: true,
       isInDiscardPile: false,
       isInDiscardTop: false,
-      cardOwnerID: null,
+      cardOwnerID: null, // null means not in any hand
       faceUp: false,
       ...overrides,
     };
   };
 
   const [serverCards, setServerCards] = useState(() => {
-    // Start with a deck of ~40 cards
     const DECK_COUNT = 40;
     const deck = Array.from({ length: DECK_COUNT }, () => makeCard());
 
     // Deal 3 cards to each player (if possible)
-    const players = [1, 2, 3, 4];
-    for (const pid of players) {
+    const pids = [1, 2, 3, 4];
+    for (const pid of pids) {
       for (let i = 0; i < 3; i++) {
         const idx = deck.findIndex((c) => c.isInDeck && !c.isInDiscardPile);
         if (idx !== -1) {
@@ -98,7 +98,7 @@ export default function ExamplePageOrchestrator() {
       }
     }
 
-    // Put one card into discard pile as the initial top
+    // One initial discard top
     const topIdx = deck.findIndex((c) => c.isInDeck && !c.isInDiscardPile);
     if (topIdx !== -1) {
       deck[topIdx] = {
@@ -113,11 +113,11 @@ export default function ExamplePageOrchestrator() {
     return deck;
   });
 
-  // ---- Secrets (server) ----
+  // ---- Secrets (server-side model) ----
   const secretIdRef = useRef(1000);
   const makeSecret = (owner, name, revealed = false) => ({
-    secretID: secretIdRef.current++,
-    secretName: name, // must be one of Object.keys(SECRETS_MAP)
+    secretID: secretIdRef.current++, // internal id
+    secretName: name, // internal name
     revealed,
     secretOwnerID: owner,
   });
@@ -129,7 +129,7 @@ export default function ExamplePageOrchestrator() {
     makeSecret(4, sampleOne(SECRET_NAME_POOL), false),
   ]);
 
-  // ===== Simulation ticks =====
+  // ===== Simulation ticks (same logic as before, only output shapes changed) =====
 
   // (A) Turn rotation — every 2s
   useEffect(() => {
@@ -145,7 +145,6 @@ export default function ExamplePageOrchestrator() {
           ...p,
           turnStatus: i === nextIdx ? "playing" : "waiting",
         }));
-        // restore original order positions
         const byId = new Map(nextOrdered.map((p) => [p.playerID, p]));
         return prev.map((p) => byId.get(p.playerID));
       });
@@ -153,8 +152,7 @@ export default function ExamplePageOrchestrator() {
     return () => clearInterval(id);
   }, []);
 
-  // (B) Hand changes — every 1.5s
-  // Actions: draw (deck → hand), discard (hand → discard pile), give (hand → other player's hand)
+  // (B) Hand changes — every 1.5s (draw / discard / give)
   const cardsTickCountRef = useRef(0);
   useEffect(() => {
     const MS = 1500;
@@ -162,11 +160,10 @@ export default function ExamplePageOrchestrator() {
       setServerCards((prev) => {
         cardsTickCountRef.current += 1;
         const next = prev.map((c) => ({ ...c })); // immutable copy
-        const players = serverPlayers.map((p) => p.playerID);
+        const pids = serverPlayers.map((p) => p.playerID);
 
         const deckIdx = () =>
           next.findIndex((c) => c.isInDeck && !c.isInDiscardPile);
-
         const handIdxOf = (pid) =>
           next
             .map((c, i) => ({ c, i }))
@@ -177,22 +174,19 @@ export default function ExamplePageOrchestrator() {
             .map(({ i }) => i);
 
         // mutate 1–2 players per tick
-        const targets = shuffle(players).slice(0, randInt(1, 2));
+        const targets = shuffle(pids).slice(0, randInt(1, 2));
         for (const pid of targets) {
           const handIdx = handIdxOf(pid);
           const handSize = handIdx.length;
 
-          // Keep local player's hand within HAND_MAX strictly
           const actionsForLocal =
             handSize <= 0
               ? ["draw"]
               : handSize >= HAND_MAX
               ? ["discard", "give"]
               : ["draw", "discard", "give"];
-
           const actionsForOther =
             handSize <= 0 ? ["draw"] : ["draw", "discard", "give"];
-
           const action = sampleOne(
             pid === CURRENT_PLAYER_ID ? actionsForLocal : actionsForOther
           );
@@ -223,9 +217,8 @@ export default function ExamplePageOrchestrator() {
             };
           } else if (action === "give" && handIdx.length > 0) {
             const idx = sampleOne(handIdx);
-            const others = players.filter((id0) => id0 !== pid);
+            const others = pids.filter((id0) => id0 !== pid);
             const receiver = sampleOne(others);
-            // prevent giving to local if that would exceed HAND_MAX
             const receiverHandSize = handIdxOf(receiver).length;
             if (receiver !== CURRENT_PLAYER_ID || receiverHandSize < HAND_MAX) {
               next[idx] = { ...next[idx], cardOwnerID: receiver };
@@ -233,12 +226,11 @@ export default function ExamplePageOrchestrator() {
           }
         }
 
-        // Every ~4 ticks, ensure some non-local reaches 0 in-hand (for UI variety)
+        // Every ~4 ticks, force some non-local to 0 in-hand (for UI variety)
         if (cardsTickCountRef.current % 4 === 0) {
-          const nonLocal = players.filter((p) => p !== CURRENT_PLAYER_ID);
+          const nonLocal = pids.filter((p) => p !== CURRENT_PLAYER_ID);
           const victim = sampleOne(nonLocal);
           const inHand = handIdxOf(victim);
-          // move all victim's in-hand to discard
           for (const i of inHand) {
             next[i] = {
               ...next[i],
@@ -247,7 +239,7 @@ export default function ExamplePageOrchestrator() {
               faceUp: true,
             };
           }
-          // make one of them the top (if any)
+          // make one of them the new top (if any discards exist)
           const discards = next
             .map((c, i) => ({ c, i }))
             .filter(({ c }) => c.isInDiscardPile);
@@ -265,7 +257,7 @@ export default function ExamplePageOrchestrator() {
     return () => clearInterval(id);
   }, [serverPlayers]);
 
-  // (C) Deck → Discard drip — every 0.8s (to exercise DiscardPile visual states)
+  // (C) Deck → Discard drip — every 0.8s (exercise DiscardPile visuals)
   useEffect(() => {
     const MS = 800;
     const id = setInterval(() => {
@@ -281,7 +273,6 @@ export default function ExamplePageOrchestrator() {
             faceUp: true,
           };
         } else {
-          // if deck is empty, pick a random discard and mark it as top
           const discards = next
             .map((c, i) => ({ c, i }))
             .filter(({ c }) => c.isInDiscardPile);
@@ -303,16 +294,16 @@ export default function ExamplePageOrchestrator() {
     const MS = 600;
     const id = setInterval(() => {
       setServerSecrets((prev) => {
-        const players = serverPlayers.map((p) => p.playerID);
-        if (players.length === 0) return prev;
+        const pids = serverPlayers.map((p) => p.playerID);
+        if (pids.length === 0) return prev;
 
         let next = [...prev];
 
         // pick one non-local to reach 11 at least once
-        const nonLocal = players.filter((id) => id !== CURRENT_PLAYER_ID);
+        const nonLocal = pids.filter((id) => id !== CURRENT_PLAYER_ID);
         if (!elevenTargetRef.current) {
           elevenTargetRef.current = sampleOne(
-            nonLocal.length ? nonLocal : players
+            nonLocal.length ? nonLocal : pids
           );
         }
         const targetPid = elevenTargetRef.current;
@@ -327,14 +318,14 @@ export default function ExamplePageOrchestrator() {
         // else random behavior (includes local so you can see ViewMySecrets too)
         const action = sampleOne(["add", "reveal", "move", "remove"]);
         if (action === "add") {
-          const owner = sampleOne(players);
+          const owner = sampleOne(pids);
           next.push(makeSecret(owner, sampleOne(SECRET_NAME_POOL), false));
         } else if (action === "reveal" && next.length > 0) {
           const i = randInt(0, next.length - 1);
           next[i] = { ...next[i], revealed: true };
         } else if (action === "move" && next.length > 0) {
           const i = randInt(0, next.length - 1);
-          const owner = sampleOne(players);
+          const owner = sampleOne(pids);
           next[i] = { ...next[i], secretOwnerID: owner };
         } else if (action === "remove" && next.length > 0) {
           const i = randInt(0, next.length - 1);
@@ -347,12 +338,120 @@ export default function ExamplePageOrchestrator() {
     return () => clearInterval(id);
   }, [serverPlayers]);
 
+  // ===== Derived "publicData" and "privateData" for SyncOrchestrator =====
+
+  const handCountOf = (pid) =>
+    serverCards.filter(
+      (c) => c.cardOwnerID === pid && !c.isInDeck && !c.isInDiscardPile
+    ).length;
+
+  const discardPileCount = useMemo(
+    () => serverCards.filter((c) => c.isInDiscardPile).length,
+    [serverCards]
+  );
+
+  const discardPileTop = useMemo(() => {
+    const top = serverCards.find((c) => c.isInDiscardTop === true) || null;
+    // PUBLIC shape must be { id, name }
+    return top ? { id: top.cardID, name: top.cardName } : null;
+  }, [serverCards]);
+
+  const regularDeckCount = useMemo(
+    () => serverCards.filter((c) => c.isInDeck && !c.isInDiscardPile).length,
+    [serverCards]
+  );
+
+  // PUBLIC players (role-less)
+  const publicPlayers = useMemo(
+    () =>
+      serverPlayers.map((sp) => ({
+        id: sp.playerID,
+        name: sp.playerName,
+        avatar: sp.avatar,
+        turnOrder: sp.orderNumber,
+        turnStatus: sp.turnStatus,
+        cardCount: handCountOf(sp.playerID),
+        secrets: serverSecrets
+          .filter((s) => s.secretOwnerID === sp.playerID)
+          .map((s) => ({
+            id: s.secretID,
+            revealed: !!s.revealed,
+            name: s.secretName ?? null, // keep your naming convention
+          })),
+        sets: [], // reserved
+      })),
+    [serverPlayers, serverCards, serverSecrets]
+  );
+
+  const currentPlayerRole = useMemo(
+    () =>
+      serverPlayers.find((p) => p.playerID === CURRENT_PLAYER_ID)?.role ?? null,
+    [serverPlayers]
+  );
+
+  const currentPlayerAlly = useMemo(() => {
+    if (currentPlayerRole !== "murderer" && currentPlayerRole !== "accomplice")
+      return null;
+    const ally = serverPlayers.find(
+      (p) => p.playerID !== CURRENT_PLAYER_ID && p.role === currentPlayerRole
+    );
+    return ally ? { id: ally.playerID, role: ally.role } : null;
+  }, [serverPlayers, currentPlayerRole]);
+
+  // PRIVATE cards/secrets must be arrays of { id, name } / { id, name, revealed }
+  const ownCards = useMemo(
+    () =>
+      serverCards
+        .filter(
+          (c) =>
+            c.cardOwnerID === CURRENT_PLAYER_ID &&
+            !c.isInDeck &&
+            !c.isInDiscardPile
+        )
+        .map((c) => ({ id: c.cardID, name: c.cardName })),
+    [serverCards]
+  );
+
+  const ownSecrets = useMemo(
+    () =>
+      serverSecrets
+        .filter((s) => s.secretOwnerID === CURRENT_PLAYER_ID)
+        .map((s) => ({
+          id: s.secretID,
+          name: s.secretName ?? null,
+          revealed: !!s.revealed,
+        })),
+    [serverSecrets]
+  );
+
+  const publicData = useMemo(
+    () => ({
+      actionStatus: "unblocked",
+      gameStatus: "inProgress",
+      regularDeckCount,
+      discardPileTop, // { id, name }
+      draftCards: [], // keep empty in this demo
+      discardPileCount,
+      players: publicPlayers,
+    }),
+    [regularDeckCount, discardPileTop, discardPileCount, publicPlayers]
+  );
+
+  const privateData = useMemo(
+    () => ({
+      role: currentPlayerRole,
+      ally: currentPlayerAlly,
+      cards: ownCards, // [{ id, name }]
+      secrets: ownSecrets, // [{ id, name, revealed }]
+    }),
+    [currentPlayerRole, currentPlayerAlly, ownCards, ownSecrets]
+  );
+
   return (
     <div className="relative w-full h-screen overflow-hidden">
       <SyncOrchestrator
-        serverPlayers={serverPlayers}
-        serverCards={serverCards}
-        serverSecrets={serverSecrets}
+        publicData={publicData}
+        privateData={privateData}
         currentPlayerId={CURRENT_PLAYER_ID}
       />
     </div>

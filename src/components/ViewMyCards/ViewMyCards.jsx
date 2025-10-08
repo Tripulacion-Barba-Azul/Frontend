@@ -6,18 +6,16 @@ import { CARDS_MAP } from "../generalMaps.js";
 function validateCards(cards) {
   const isArray = Array.isArray(cards);
   const hasValidLength = isArray && cards.length <= 6;
-  const hasRequiredFields =
-    isArray &&
-    cards.every((card) => card?.cardID != null && card?.cardName != null);
-  const hasKnownNames =
-    hasRequiredFields &&
-    cards.every(({ cardName }) => CARDS_MAP[cardName] !== undefined);
+  const hasKnownNames = cards.every(
+    ({ name }) => CARDS_MAP[name] !== undefined
+  );
 
-  return isArray && hasValidLength && hasRequiredFields && hasKnownNames;
+  return isArray && hasValidLength && hasKnownNames;
 }
 
 export default function ViewMyCards({ cards }) {
   if (!validateCards(cards)) {
+    console.error("Invalid array of cards" + JSON.stringify(cards));
     throw new Error("Invalid array of cards");
   }
 
@@ -49,11 +47,8 @@ export default function ViewMyCards({ cards }) {
             <div className="cards-grid">
               {hasCards ? (
                 cards.map((card) => (
-                  <div key={card.cardID} className="card">
-                    <img
-                      src={CARDS_MAP[card.cardName]}
-                      alt={`card ${card.cardID}`}
-                    />
+                  <div key={card.id} className="card">
+                    <img src={CARDS_MAP[card.name]} alt={`card ${card.id}`} />
                   </div>
                 ))
               ) : (
