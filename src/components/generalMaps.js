@@ -32,3 +32,13 @@ export const CARDS_MAP = {
   "Blackmailed!": "/Cards/26-devious_blackmailed.png",
   "Social Faux Pas": "/Cards/27-devious_fauxpas.png",
 };
+
+export const SETS_MAP = {
+  "Hercule Poirot": "/Icons/seticons_beresford.png",
+  "Miss Marple": "/Icons/seticons_missmarple.png",
+  "Mr Satterthwaite": "/Icons/seticons_mrsatterthwaite.png",
+  "Parker Pyne": "/Icons/seticons_parkerpyne.png",
+  "Lady Eileen Brent": "/Icons/seticons_brent.png",
+  "Tommy Beresford": "/Icons/seticons_beresford.png",
+  "Tuppence Beresford": "/Icons/seticons_beresford.png",
+}
