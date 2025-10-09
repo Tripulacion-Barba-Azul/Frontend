@@ -74,7 +74,7 @@ export default function GameScreen() {
             handlePlayerJoined();
             break;
 
-          case "game_started":
+          case "gameStarted":
             setStarted(true);
             break;
 
