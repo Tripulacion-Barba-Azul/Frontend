@@ -24,41 +24,29 @@ export default function GameScreen() {
   useEffect(() => {
     if (!gameId) return;
   
-    let retryTimeout = null;
-    let websocket = null;
-  
-    const connect = () => {
-      websocket = new WebSocket(wsEndpoint);
+    const websocket = new WebSocket(wsEndpoint);
 
-      websocket.onopen = () => {
-        console.log("✅ WebSocket conectado");
-        setIsConnected(true);
-      };
-
-  
-      websocket.onclose = () => {
-        console.warn("🔌 WebSocket desconectado, intentando reconectar...");
-        setIsConnected(false);
-  
-        retryTimeout = setTimeout(connect, 1500); // 🔁 Reintenta en 3s
-      };
-  
-
-      websocket.onerror = (error) => {
-        console.error("⚠️ Error en WebSocket:", error);
-        websocket.close(); // fuerza cierre → disparará onclose → reconecta
-      };
-
-  
-      wsRef.current = websocket;
+    websocket.onopen = () => {
+      console.log("✅ WebSocket conectado");
+      setIsConnected(true);
     };
-  
-    connect();
-  
+
+    websocket.onclose = () => {
+      console.log("❌ WebSocket desconectado");
+      setIsConnected(false);
+    };
+
+    websocket.onerror = (error) => {
+      console.error("⚠️ Error en WebSocket:", error);
+      setIsConnected(false);
+    };
+
+    wsRef.current = websocket;
 
     return () => {
-      if (retryTimeout) clearTimeout(retryTimeout);
-      if (websocket) websocket.close();
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
     };
   }, [gameId]);
 
@@ -71,17 +59,18 @@ export default function GameScreen() {
       try {
         const data = JSON.parse(event.data);
 
+
         switch (data.event) {
           case "publicUpdate":
             setPublicData(data.payload);
-            if (data.payload?.gameStatus === "inProgress") setStarted(true);
+            if (data.payload?.gameStatus === "in_progress") setStarted(true);
             break;
 
           case "privateUpdate":
             setPrivateData(data.payload);
             break;
 
-          case "playerJoined":
+          case "player_joined":
             handlePlayerJoined();
             break;
 
@@ -90,7 +79,7 @@ export default function GameScreen() {
             break;
 
           default:
-            console.warn("Evento no manejado:", data.event);
+            console.warn("Evento no manejado:", data);
         }
       } catch (err) {
         console.warn("⚠️ Mensaje no JSON:", event.data);
