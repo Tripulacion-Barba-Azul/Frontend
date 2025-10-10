@@ -5,7 +5,6 @@ import "./DrawRegularCardButton.css";
 export default function DrawRegularCardButton({
   isDrawCardPhase = false,
   playerCardCount = 0,
-  onCardDrawn,
 }) {
   const [searchParams] = useSearchParams();
   const { gameId } = useParams();
