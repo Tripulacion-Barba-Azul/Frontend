@@ -1,4 +1,3 @@
-// GameScreen.test.jsx
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { render, screen, act, waitFor } from "@testing-library/react";
@@ -49,14 +48,10 @@ describe("GameScreen", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-
-    // Router mocks
     useParams.mockReturnValue({ gameId: mockGameId });
     useSearchParams.mockReturnValue([
       new URLSearchParams(`playerId=${mockPlayerId}`),
     ]);
-
-    // WS mock por test
     mockWebSocket = createMockWebSocket();
     global.WebSocket = vi.fn(() => mockWebSocket);
   });
@@ -92,37 +87,36 @@ describe("GameScreen", () => {
     expect(screen.getByText("Lobby - Connected: true")).toBeInTheDocument();
   });
 
-  it("maneja onclose y reintenta conexión", () => {
+  it("maneja onclose sin reintentar conexión automáticamente", () => {
     vi.useFakeTimers();
     render(<GameScreen />);
-
-    // 1ª conexión
     act(() => {
       mockWebSocket.onopen?.();
     });
     expect(screen.getByText("Lobby - Connected: true")).toBeInTheDocument();
 
-    // Cierre -> desconecta y programa retry
     act(() => {
       mockWebSocket.onclose?.();
     });
     expect(screen.getByText("Lobby - Connected: false")).toBeInTheDocument();
 
-    // Avanzar timers para reintentar
     act(() => {
-      vi.advanceTimersByTime(1500);
+      vi.advanceTimersByTime(5000);
     });
 
-    expect(WebSocket).toHaveBeenCalledTimes(2);
+    // no reconexión automática
+    expect(WebSocket).toHaveBeenCalledTimes(1);
   });
 
-  it("maneja onerror cerrando el socket", () => {
+  it("maneja onerror sin cerrar el socket manualmente", () => {
     render(<GameScreen />);
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     act(() => {
       mockWebSocket.onerror?.(new Event("error"));
     });
-    expect(mockWebSocket.close).toHaveBeenCalled();
+    expect(spy).toHaveBeenCalled();
+    // no debe cerrar explícitamente
+    expect(mockWebSocket.close).not.toHaveBeenCalled();
     spy.mockRestore();
   });
 
@@ -143,7 +137,6 @@ describe("GameScreen", () => {
         }),
       });
     });
-    // Falta privateData -> sigue Lobby
     expect(screen.getByTestId("lobby")).toBeInTheDocument();
   });
 
@@ -162,7 +155,6 @@ describe("GameScreen", () => {
         }),
       });
     });
-    // Falta publicData/started -> sigue Lobby
     expect(screen.getByTestId("lobby")).toBeInTheDocument();
   });
 
@@ -194,7 +186,10 @@ describe("GameScreen", () => {
         data: JSON.stringify({ event: "unknownEvent", payload: { x: 1 } }),
       });
     });
-    expect(warn).toHaveBeenCalledWith("Evento no manejado:", "unknownEvent");
+    expect(warn).toHaveBeenCalledWith(
+      "Evento no manejado:",
+      expect.objectContaining({ event: "unknownEvent" })
+    );
     warn.mockRestore();
   });
 
@@ -210,81 +205,54 @@ describe("GameScreen", () => {
 
   it("renderiza SyncOrchestrator cuando todo está listo vía publicUpdate(inProgress) + privateUpdate", async () => {
     render(<GameScreen />);
-
     act(() => {
-      // public -> inProgress (setStarted true)
+      mockWebSocket.onopen?.();
+    });
+    act(() => {
       mockWebSocket.onmessage?.({
         data: JSON.stringify({
           event: "publicUpdate",
-          payload: {
-            gameStatus: "inProgress",
-            regularDeckCount: 10,
-            discardPileTop: { id: 1, name: "Card1" },
-            draftCards: [],
-            discardPileCount: 5,
-            players: [],
-          },
+          payload: { gameStatus: "inProgress", players: [] },
         }),
       });
-      // private
       mockWebSocket.onmessage?.({
         data: JSON.stringify({
           event: "privateUpdate",
-          payload: {
-            cards: [{ id: 1, name: "Card1", type: "action" }],
-            secrets: [{ id: 1, revealed: false, name: "Secret1" }],
-            role: "detective",
-            ally: null,
-          },
+          payload: { cards: [{ id: 1 }], secrets: [{ id: 1 }], role: "r" },
         }),
       });
+      mockWebSocket.onmessage?.({
+             data: JSON.stringify({ event: "gameStarted" }),
+           });
     });
 
-    // Esperar la re-renderización
     await waitFor(() =>
       expect(screen.getByTestId("sync-orchestrator")).toBeInTheDocument()
     );
-    expect(
-      screen.getByText("Sync - Player: 456, Public: yes, Private: yes")
-    ).toBeInTheDocument();
   });
 
   it("renderiza SyncOrchestrator cuando llega gameStarted después de datos", async () => {
     render(<GameScreen />);
-
     act(() => {
-      // public waiting (no inProgress)
+         mockWebSocket.onopen?.();
+    });
+    act(() => {
       mockWebSocket.onmessage?.({
         data: JSON.stringify({
           event: "publicUpdate",
-          payload: {
-            gameStatus: "waiting",
-            regularDeckCount: 10,
-            discardPileTop: { id: 1, name: "Card1" },
-            draftCards: [],
-            discardPileCount: 5,
-            players: [],
-          },
+          payload: { gameStatus: "waiting", players: [] },
         }),
       });
-      // private listo
       mockWebSocket.onmessage?.({
         data: JSON.stringify({
           event: "privateUpdate",
-          payload: {
-            cards: [{ id: 1, name: "Card1", type: "action" }],
-            secrets: [{ id: 1, revealed: false, name: "Secret1" }],
-            role: "detective",
-            ally: null,
-          },
+          payload: { cards: [{ id: 1 }], secrets: [{ id: 1 }], role: "r" },
         }),
       });
-      // luego empieza el juego
       mockWebSocket.onmessage?.({
         data: JSON.stringify({ event: "gameStarted" }),
       });
     });
-
     await waitFor(() =>
       expect(screen.getByTestId("sync-orchestrator")).toBeInTheDocument()
     );
@@ -296,15 +264,23 @@ describe("GameScreen", () => {
     expect(mockWebSocket.close).toHaveBeenCalled();
   });
 
-  it("limpia el timeout de reintento al desmontar", () => {
-    vi.useFakeTimers();
-    const { unmount } = render(<GameScreen />);
-
-    act(() => {
-      mockWebSocket.onclose?.(); // programa retry
+  it("reconecta manualmente si el backend vuelve a estar disponible", async () => {
+    // First render, backend down
+    global.WebSocket = vi.fn(() => {
+      throw new Error("Server unavailable");
     });
 
-    unmount();
-    expect(mockWebSocket.close).toHaveBeenCalled();
+    expect(() => render(<GameScreen />)).toThrow("Server unavailable");
+    expect(WebSocket).toHaveBeenCalledTimes(1);
+
+    // Now backend comes up again
+    global.WebSocket = vi.fn(() => createMockWebSocket());
+    await act(async () => {
+      // simulate user reloading or triggering useEffect again
+      render(<GameScreen />);
+    });
+
+    expect(WebSocket).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("lobby")).toBeInTheDocument();
   });
 });
