@@ -7,6 +7,7 @@ export const SECRETS_MAP = {
   "Secret Hate": "/Cards/06-secret_back.png",
   "Faked Dead": "/Cards/06-secret_back.png",
   Impostor: "/Cards/06-secret_back.png",
+  "Gambling Problem" : "/Cards/06-secret_back.png",
 };
 
 export const CARDS_MAP = {
