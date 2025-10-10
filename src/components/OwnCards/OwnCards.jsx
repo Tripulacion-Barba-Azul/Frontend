@@ -4,6 +4,7 @@ import { CARDS_MAP } from "../generalMaps.js";
 import DiscardButton from "./DiscardButton/DiscardButton";
 import NoActionButton from "./NoActionButton/NoActionButton";
 import DrawRegularCardButton from "./DrawRegularCardButton/DrawRegularCardButton.jsx";
+import PlayCardsButton from "./PlayButton/PlayCardsButton.jsx";
 
 export default function OwnCards({
   cards = [],
@@ -12,15 +13,9 @@ export default function OwnCards({
 }) {
   const [selectedIds, setSelectedIds] = useState(new Set());
 
-  // keep selected set trimmed if cards prop changes
   useEffect(() => {
-    setSelectedIds((prev) => {
-      const next = new Set(
-        [...prev].filter((id) => cards.some((card) => card.id === id))
-      );
-      return next;
-    });
-  }, [cards]);
+    setSelectedIds(new Set());
+  }, [cards, turnStatus]);
 
   const canSelect = turnStatus === "playing" || turnStatus === "discarding";
 
@@ -68,16 +63,18 @@ export default function OwnCards({
         })}
       </div>
 
-      {/* Action placeholders — no functionality */}
+      {/* Action Buttons */}
       <div className="owncards-actions">
-        {turnStatus === "playing" &&
-          (selectedArray.length === 0 ? (
-            <NoActionButton />
-          ) : (
-            <button className="owncards-action">
-              Play ({selectedArray.length})
-            </button>
-          ))}
+      {turnStatus === "playing" &&
+        (selectedArray.length === 0 ? (
+          <NoActionButton />
+        ) : (
+          <PlayCardsButton
+            selectedCards={selectedArray}
+            onPlaySuccess={() => setSelectedIds(new Set())}
+          />
+        ))}
+
 
         {turnStatus === "discarding" && (
           <DiscardButton

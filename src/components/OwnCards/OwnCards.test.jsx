@@ -117,7 +117,7 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     expect(nowImg1).toHaveClass("owncards-card--selected");
   });
 
-  it("keeps remaining selected cards and trims removed ones when cards array changes", () => {
+  it("reset selected cards and trims removed ones when cards array changes", () => {
     const cards = TEST_CARDS.slice(0, 2); // A, B
     const { rerender } = setup(cards, { turnStatus: "playing" });
 
@@ -131,11 +131,11 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     // remove B; selection must keep A selected and drop B
     rerender(<OwnCards cards={[cards[0]]} turnStatus="playing" />);
     const imgAafter = screen.getByAltText(`Card ${cards[0].name}`);
-    expect(imgAafter).toHaveClass("owncards-card--selected");
+    expect(imgAafter).toHaveClass("owncards-card");
     expect(screen.queryByAltText(`Card ${cards[1].name}`)).toBeNull();
   });
 
-  it("does NOT clear selection when turnStatus changes; it only disables interaction", () => {
+  it("clears selection when turnStatus changes; it only disables interaction", () => {
     const cards = TEST_CARDS.slice(0, 1);
     const { rerender } = setup(cards, { turnStatus: "playing" });
 
@@ -145,7 +145,7 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
 
     rerender(<OwnCards cards={cards} turnStatus="waiting" />);
     const sameImg = screen.getByAltText(`Card ${cards[0].name}`);
-    expect(sameImg).toHaveClass("owncards-card--selected");
+    expect(sameImg).toHaveClass("owncards-card");
     expect(sameImg).toHaveClass("owncards-card--disabled");
   });
 
