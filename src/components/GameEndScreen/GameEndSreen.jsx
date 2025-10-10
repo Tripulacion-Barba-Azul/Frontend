@@ -14,7 +14,7 @@ export default function GameEndScreen({ websocket }) {
       try {
         const data = JSON.parse(event.data);
 
-        if (data.type === "Match Ended") {
+        if (data.event === "matchEnded") {
           console.log("🏁 Game end detected");
           setGameEndData({
             players: data.players,

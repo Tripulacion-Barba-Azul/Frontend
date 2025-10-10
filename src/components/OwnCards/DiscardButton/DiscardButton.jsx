@@ -46,6 +46,7 @@ export default function DiscardButton({selectedCards, handSize, onDiscardSuccess
     } catch (err) {
       console.error(err);
       setError("Failed to discard");
+      onDiscardSuccess();
     } finally {
       setLoading(false);
     }

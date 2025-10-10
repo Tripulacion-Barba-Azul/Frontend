@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
-import "./DrawRegularCardButton.css";
 
 export default function DrawRegularCardButton({
   isDrawCardPhase = false,
