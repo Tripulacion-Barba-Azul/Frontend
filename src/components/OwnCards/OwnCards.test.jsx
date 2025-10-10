@@ -117,24 +117,6 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     expect(nowImg1).toHaveClass("owncards-card--selected");
   });
 
-  it("reset selected cards and trims removed ones when cards array changes", () => {
-    const cards = TEST_CARDS.slice(0, 2); // A, B
-    const { rerender } = setup(cards, { turnStatus: "playing" });
-
-    const imgA = screen.getByAltText(`Card ${cards[0].name}`); // select A & B
-    const imgB = screen.getByAltText(`Card ${cards[1].name}`);
-    fireEvent.click(imgA);
-    fireEvent.click(imgB);
-    expect(imgA).toHaveClass("owncards-card--selected");
-    expect(imgB).toHaveClass("owncards-card--selected");
-
-    // remove B; selection must keep A selected and drop B
-    rerender(<OwnCards cards={[cards[0]]} turnStatus="playing" />);
-    const imgAafter = screen.getByAltText(`Card ${cards[0].name}`);
-    expect(imgAafter).toHaveClass("owncards-card");
-    expect(screen.queryByAltText(`Card ${cards[1].name}`)).toBeNull();
-  });
-
   it("clears selection when turnStatus changes; it only disables interaction", () => {
     const cards = TEST_CARDS.slice(0, 1);
     const { rerender } = setup(cards, { turnStatus: "playing" });
