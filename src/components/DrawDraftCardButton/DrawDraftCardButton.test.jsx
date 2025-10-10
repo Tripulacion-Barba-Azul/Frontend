@@ -164,22 +164,6 @@ describe("DrawDraftCardButton", () => {
     });
   });
 
-  test("warns about missing card mapping in console", () => {
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    
-    const cardsWithUnknown = [
-      { id: 1, name: "Unknown Card" }
-    ];
-
-    render(<DrawDraftCardButton cards={cardsWithUnknown} turnStatus="drawing" />);
-    
-    expect(consoleSpy).toHaveBeenCalledWith(
-      '⚠️ Missing entry in CARDS_MAP for name: "Unknown Card"'
-    );
-
-    consoleSpy.mockRestore();
-  });
-
   test("renders error message when API fails", async () => {
     fetch.mockResolvedValueOnce({
       ok: false,

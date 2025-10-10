@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useSearchParams } from "react-router-dom";
 import "./DrawDraftCardButton.css";
 import { CARDS_MAP } from "../generalMaps.js";
@@ -42,31 +43,42 @@ export default function DrawDraftCardButton({
 
   // No renderizar nada si no hay cartas
   if (!cards || cards.length === 0) {
-	console.log(`Empty draftCard: ${cards}`);
+    console.log(`Empty draftCard: ${cards}`);
     return null;
   }
 
   return (
     <div className="draw-draft-card-container">
-      <div className="draft-cards-row">
-        {cards.map((card) => {
-          const imgSrc = CARDS_MAP[card.name];
-          if (!imgSrc) {
-            console.warn(`⚠️ Missing entry in CARDS_MAP for name: "${card.name}"`);
-          }
-
-          return (
+    <div className="draft-cards-row">
+      {cards.map((card, index) => (
+        <AnimatePresence key={index} mode="wait">
+          <motion.div
+            key={card.id}
+            layout
+            initial={{ opacity: 0, y: -60, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 60, scale: 0.9 }}
+            transition={{
+              type: "spring",
+              stiffness: 400,
+              damping: 28,
+            }}
+          >
             <img
-              key={card.id}
-              src={imgSrc || ""}
+              src={CARDS_MAP[card.name] || ""}
               alt={`Draft Card ${card.name}`}
-              className={`draft-card ${canDraw ? "draft-card--enabled" : "draft-card--disabled"}`}
+              className={`draft-card ${
+                turnStatus === "drawing" && !loading
+                  ? "draft-card--enabled"
+                  : "draft-card--disabled"
+              }`}
               onClick={() => handleCardClick(card.id)}
               draggable={false}
             />
-          );
-        })}
-      </div>
+          </motion.div>
+        </AnimatePresence>
+      ))}
+    </div>
       {error && <div className="draft-card-error">{error}</div>}
     </div>
   );
