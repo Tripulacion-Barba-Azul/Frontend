@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import Lobby from "../Lobby/Lobby";
 import SyncOrchestrator from "../Sync/SyncOrchestrator";
 import GameEndScreen from "../GameEndScreen/GameEndSreen";
+import EffectManager from "../EffectManager/EffectManager";
 
 export default function GameScreen() {
   const { gameId } = useParams();
@@ -23,30 +24,38 @@ export default function GameScreen() {
 
   useEffect(() => {
     if (!gameId) return;
-  
-    const websocket = new WebSocket(wsEndpoint);
 
-    websocket.onopen = () => {
-      console.log("✅ WebSocket conectado");
-      setIsConnected(true);
+    let retryTimeout = null;
+    let websocket = null;
+
+    const connect = () => {
+      websocket = new WebSocket(wsEndpoint);
+
+      websocket.onopen = () => {
+        console.log("✅ WebSocket conectado");
+        setIsConnected(true);
+      };
+
+      websocket.onclose = () => {
+        console.warn("🔌 WebSocket desconectado, intentando reconectar...");
+        setIsConnected(false);
+
+        retryTimeout = setTimeout(connect, 1500); // 🔁 Reintenta en 3s
+      };
+
+      websocket.onerror = (error) => {
+        console.error("⚠️ Error en WebSocket:", error);
+        websocket.close(); // fuerza cierre → disparará onclose → reconecta
+      };
+
+      wsRef.current = websocket;
     };
 
-    websocket.onclose = () => {
-      console.log("❌ WebSocket desconectado");
-      setIsConnected(false);
-    };
-
-    websocket.onerror = (error) => {
-      console.error("⚠️ Error en WebSocket:", error);
-      setIsConnected(false);
-    };
-
-    wsRef.current = websocket;
+    connect();
 
     return () => {
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
+      if (retryTimeout) clearTimeout(retryTimeout);
+      if (websocket) websocket.close();
     };
   }, [gameId]);
 
@@ -59,18 +68,17 @@ export default function GameScreen() {
       try {
         const data = JSON.parse(event.data);
 
-
         switch (data.event) {
           case "publicUpdate":
             setPublicData(data.payload);
-            if (data.payload?.gameStatus === "in_progress") setStarted(true);
+            if (data.payload?.gameStatus === "inProgress") setStarted(true);
             break;
 
           case "privateUpdate":
             setPrivateData(data.payload);
             break;
 
-          case "player_joined":
+          case "playerJoined":
             handlePlayerJoined();
             break;
 
@@ -79,7 +87,7 @@ export default function GameScreen() {
             break;
 
           default:
-            console.warn("Evento no manejado:", data);
+            console.warn("Evento no manejado:", data.event);
         }
       } catch (err) {
         console.warn("⚠️ Mensaje no JSON:", event.data);
@@ -108,7 +116,7 @@ export default function GameScreen() {
           refreshTrigger={refreshLobby}
         />
       )}
-
+      <EffectManager websocket={wsRef.current} />
       <GameEndScreen websocket={wsRef.current} />
     </>
   );
@@ -168,4 +176,3 @@ export default function GameScreen() {
 //               }]
 //           }]
 //       }
-

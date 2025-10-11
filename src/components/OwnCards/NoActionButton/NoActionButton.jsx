@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import "./NoActionButton.css";
 
 export default function NoActionButton() {
   const [searchParams] = useSearchParams();
@@ -17,12 +18,12 @@ export default function NoActionButton() {
     setLoading(true);
 
     try {
-      const response = await fetch(`http://localhost:8000/play/${gameId}/actions/play-card`, {
+      const response = await fetch(`/play/${gameId}/actions/play-card`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cards: [],
-          playerId: playerId
+          actualPlayerID: playerId,
         }),
       });
 
@@ -40,15 +41,15 @@ export default function NoActionButton() {
   };
 
   return (
-    <div>
+    <div className="no-action-button-container">
       <button
-        className="owncards-action"
+        className="owncards-action no-action-button"
         onClick={handleNoAction}
         disabled={loading}
       >
         {loading ? "Processing..." : "Play nothing"}
       </button>
-      {error && <div style={{ color: "#f4e1a3", fontSize: "12px" }}>{error}</div>}
-      </div>
+      {error && <div className="no-action-error">{error}</div>}
+    </div>
   );
 }

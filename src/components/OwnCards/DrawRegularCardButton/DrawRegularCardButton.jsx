@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import "./DrawRegularCardButton.css";
 
 export default function DrawRegularCardButton({
   isDrawCardPhase = false,
   playerCardCount = 0,
+  onCardDrawn,
 }) {
   const [searchParams] = useSearchParams();
   const { gameId } = useParams();
@@ -20,16 +22,22 @@ export default function DrawRegularCardButton({
     if (!canDraw) return;
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8000/play/${gameId}/actions/draw-card`, {
+      const response = await fetch(`/games/${gameId}/actions/draw-card`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playerId: Number(playerId) }),
+        body: JSON.stringify({ actualPlayerID: Number(playerId) }),
       });
 
       if (!response.ok) {
         throw new Error(`Draw failed with status ${response.status}`);
       }
 
+      const data = await response.json();
+
+      // only keep a console.log of the received card
+      console.log("Carta recibida:", data.card);
+
+      if (onCardDrawn) onCardDrawn(data);
     } catch (err) {
       console.error(err);
       setError("Failed to draw");
