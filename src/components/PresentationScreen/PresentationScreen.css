@@ -1,0 +1,127 @@
+@import "@fontsource/cinzel/600.css"; /* títulos */
+@import "@fontsource/inter/400.css"; /* cuerpo */
+@import "@fontsource/inter/600.css"; /* énfasis en cuerpo */
+@import "@fontsource/special-elite/400.css"; /* notas/pistas */
+
+/* ====== TUNING POR VARIABLES (editá valores acá) ====== */
+.root {
+  /* Tamaños y proporciones */
+  --panel-max-w: 1060px;
+  --panel-padding: 0.75rem;
+  --card-max-w: 180px;
+
+  --text-row-gap: 0.75rem;
+  --big-col: 1.5fr; /* ancho caja izquierda */
+  --small-col: 1fr; /* ancho caja derecha */
+
+  --box-min-h: 400px; /* alto mínimo de las textBox */
+  --box-h: auto; /* poné un valor p.ej. 140px para fijar altura */
+
+  /* Estética/contraste */
+  --overlay-color: rgba(48, 45, 45, 0.78); /* oscuridad del fondo */
+  --panel-bg: rgba(12, 12, 14, 0.62); /* fondo del recuadro */
+  --panel-border: rgba(255, 255, 255, 0.18);
+  --panel-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+
+  /* Familias */
+  --font-heading: "Cinzel", serif;
+  --font-body: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --font-note: "Special Elite", "Courier Prime", ui-monospace, SFMono-Regular,
+    Menlo, monospace;
+
+  /* Tamaños responsivos (ajustá a gusto) */
+  --fs-title: clamp(1rem, 1.2vw + 0.6rem, 1.25rem);
+  --fs-text: clamp(0.9rem, 1vw + 0.4rem, 1.05rem);
+  --fs-note: clamp(0.85rem, 0.8vw + 0.35rem, 0.95rem);
+}
+
+/* ====== LAYOUT ====== */
+.root {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: #0e0e0e center/cover no-repeat; /* la imagen viene inline */
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+/* Overlay para oscurecer el background */
+.root::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+      ellipse at center,
+      rgba(0, 0, 0, 0.35) 0%,
+      rgba(0, 0, 0, 0.75) 55%,
+      rgba(0, 0, 0, 0.9) 100%
+    ),
+    var(--overlay-color);
+  z-index: 0;
+}
+
+/* Panel por encima del overlay */
+.panel {
+  font-family: var(--font-body);
+  position: relative;
+  z-index: 1;
+  width: min(var(--panel-max-w), 92%);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: var(--text-row-gap);
+  background: var(--panel-bg);
+  border: 1.5px solid var(--panel-border);
+  border-radius: 14px;
+  padding: var(--panel-padding);
+  box-shadow: var(--panel-shadow);
+  backdrop-filter: blur(2px) saturate(110%);
+}
+
+/* Carta arriba */
+.cardSlot {
+  display: grid;
+  place-items: center;
+  padding: 0.25rem;
+}
+
+.cardImage {
+  width: 100%;
+  max-width: var(--card-max-w);
+  aspect-ratio: 63/88;
+  object-fit: contain;
+  display: block;
+}
+
+/* Textos abajo (izq. más ancho) */
+.textRow {
+  display: grid;
+  grid-template-columns: var(--big-col) var(--small-col);
+  gap: var(--text-row-gap);
+  align-items: stretch;
+}
+
+.textBox {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-size: clamp(1rem, 1.2vw + 0.6rem, 1.3rem);
+  display: flex;
+  align-items: flex-start;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+
+  min-height: var(--box-min-h);
+  height: var(--box-h); /* auto por defecto; fijalo si querés */
+  line-height: 1.35;
+
+  white-space: normal;
+  word-break: break-word;
+  hyphens: auto;
+
+  overflow: auto; /* permite scroll si fijas height */
+  resize: none; /* cambiá a 'vertical' o 'both' si querés redimensionar manualmente */
+}
