@@ -35,11 +35,12 @@ export const CARDS_MAP = {
 };
 
 export const SETS_MAP = {
-  "Hercule Poirot": "/Icons/seticons_beresford.png",
+  "Hercule Poirot": "/Icons/seticons_poirot.png",
   "Miss Marple": "/Icons/seticons_missmarple.png",
   "Mr Satterthwaite": "/Icons/seticons_mrsatterthwaite.png",
   "Parker Pyne": "/Icons/seticons_parkerpyne.png",
   "Lady Eileen Brent": "/Icons/seticons_brent.png",
   "Tommy Beresford": "/Icons/seticons_beresford.png",
   "Tuppence Beresford": "/Icons/seticons_beresford.png",
+  "The Beresfords": "/Icons/seticons_beresford.png",
 }
