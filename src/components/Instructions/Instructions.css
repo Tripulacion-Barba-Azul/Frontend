@@ -1,0 +1,230 @@
+/* Launcher (image only, hover zoom) */
+.ins-launcher {
+  position: fixed;
+  bottom: 30px;
+  left: 30px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  z-index: 40;
+}
+.ins-launcherImg {
+  width: 48px;
+  height: 48px;
+  display: block;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+  transition: transform 0.15s ease;
+}
+.ins-launcher:hover .ins-launcherImg,
+.ins-launcher:focus-visible .ins-launcherImg {
+  transform: scale(1.08);
+}
+
+/* Overlay */
+.ins-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.72);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+/* Modal
+   Width is computed from frame height * aspect-ratio + side paddings.
+   Frame height fits viewport (stable across slides). */
+.ins-modal {
+  width: min(
+    calc(min(78vh, 880px, calc(92vw * 2048 / 1378)) * 1378 / 2048 + 32px),
+    96vw
+  );
+  display: grid;
+  grid-template-rows: 56px 1fr;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  background: #2b2b2f;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.7);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Header */
+.ins-header {
+  position: relative;
+  background: linear-gradient(#2b2b2f, #26262a);
+  display: grid;
+  align-items: center;
+  padding: 0 52px; /* keeps the title visually centered even with the close button */
+}
+.ins-title {
+  margin: 0 auto;
+  color: #e6d7a6;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: center;
+  font-size: 1.45rem;
+  font-family: "Metropolis";
+}
+
+/* Close: red cross centered via pseudo-elements */
+.ins-close {
+  position: absolute;
+  top: 40%;
+  right: 10px;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgb(163, 34, 34); /* keeps your current red box look */
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.ins-close::before,
+.ins-close::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 2px;
+  background: #e6d7a6; /* cross color */
+  border-radius: 1px;
+  transform-origin: center;
+}
+.ins-close::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.ins-close::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+.ins-close:hover {
+  filter: brightness(1.08);
+}
+
+/* Body: stage + optional counter */
+.ins-body {
+  padding: 10px 16px 14px;
+  display: grid;
+  grid-template-rows: 1fr 26px; /* "preGame": stage + counter; "inGame": counter hidden */
+  gap: 8px;
+  box-sizing: border-box;
+}
+
+/* Stage (fixed height; width by aspect ratio) */
+.ins-stage {
+  position: relative;
+  height: min(78vh, 880px, calc(92vw * 2048 / 1378));
+  aspect-ratio: 1378 / 2048; /* your normalized images ratio */
+  width: auto;
+  margin: 0 auto;
+  display: grid;
+  place-items: center;
+}
+
+/* Frame */
+.ins-frame {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: #1f1f22;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Image: always contained (no crop) */
+.ins-image {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* Counter (only visible in preGame because JSX skips it in inGame) */
+.ins-counter {
+  text-align: right;
+  color: #e6d7a6;
+  line-height: 26px;
+  font-family: "Metropolis";
+  font-size: 0.95rem;
+  padding-right: 4px;
+  box-sizing: border-box;
+}
+
+/* Adjust if viewport height is too small */
+@media (max-height: 680px) {
+  .ins-stage {
+    height: min(70vh, calc(92vw * 2048 / 1378));
+  }
+}
+
+/* Side arrows
+   Drawn with pseudo-elements: the visible circle is ::after, chevron is ::before. */
+.ins-arrow {
+  /* actual button box is minimal; visible size is handled by pseudo-elements */
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: auto;
+  height: auto;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  z-index: 2;
+  padding: 0;
+  line-height: 0;
+}
+.ins-left {
+  left: 18px;
+  right: auto;
+}
+.ins-right {
+  right: 18px;
+  left: auto;
+}
+
+/* Visible circular button */
+.ins-arrow::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 28px; /* circle size */
+  height: 28px; /* circle size */
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(34, 34, 34, 0.95);
+  box-sizing: border-box;
+}
+
+/* Chevron centered inside the circle */
+.ins-arrow::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px; /* chevron size */
+  height: 9px;
+  border-top: 2px solid #e6d7a6; /* chevron color */
+  border-right: 2px solid #e6d7a6; /* chevron color */
+  transform-origin: center;
+  z-index: 3;
+}
+.ins-left::before {
+  transform: translate(-30%, -50%) rotate(225deg);
+} /* < */
+.ins-right::before {
+  transform: translate(-70%, -50%) rotate(45deg);
+} /* > */
+.ins-arrow:hover::after {
+  filter: brightness(1.08);
+}
