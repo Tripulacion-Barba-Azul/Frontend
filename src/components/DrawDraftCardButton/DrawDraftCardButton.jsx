@@ -21,12 +21,19 @@ export default function DrawDraftCardButton({
     setError("");
     if (!canDraw) return;
     
+    // Encontrar el orden de la carta seleccionada (1-indexed)
+    const cardOrder = cards.findIndex(card => card.id === cardId) + 1;
+    
     setLoading(true);
     try {
       const response = await fetch(`http://localhost:8000/play/${gameId}/actions/draw-card`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playerId: Number(playerId) }),
+        body: JSON.stringify({ 
+          actualPlayerID: Number(playerId),
+          deck: "draft",
+          order: cardOrder
+        }),
       });
 
       if (!response.ok) {
@@ -65,7 +72,13 @@ export default function DrawDraftCardButton({
             }}
           >
             <img
-              src={CARDS_MAP[card.name] || ""}
+              src={(() => {
+                const imgSrc = CARDS_MAP[card.name];
+                if (!imgSrc) {
+                  console.warn(`⚠️ Missing entry in CARDS_MAP for name: "${card.name}"`);
+                }
+                return imgSrc || "";
+              })()}
               alt={`Draft Card ${card.name}`}
               className={`draft-card ${
                 turnStatus === "drawing" && !loading

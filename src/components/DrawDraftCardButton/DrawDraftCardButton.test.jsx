@@ -94,12 +94,8 @@ describe("DrawDraftCardButton", () => {
         "http://localhost:8000/play/123/actions/draw-card",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            playerId: 1,
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ actualPlayerID: 1, deck: "draft", order: 1 }),
         }
       );
     });
