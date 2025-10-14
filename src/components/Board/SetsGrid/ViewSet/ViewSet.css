@@ -1,0 +1,106 @@
+/* Lock background scroll */
+body.active-viewset {
+  overflow-y: hidden;
+}
+
+/* Button (same layering as before) */
+.btn-viewset {
+  position: relative;
+  padding: 0;
+  display: block;
+  margin: 100px auto 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  width: 45px;
+  height: 45px;
+  overflow: visible;
+  z-index: 2;
+}
+
+.btn-viewset img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  position: relative;
+  z-index: 100000;
+}
+
+/* Modal container + overlay */
+.viewset,
+.overlay {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+}
+
+.overlay {
+  background: rgba(49, 49, 49, 0.8);
+  z-index: 100000;
+}
+
+/* Flex container for centered, wrapped cards */
+.cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  padding: 20px;
+  max-width: 100%;
+  overflow-x: auto;
+  z-index: 100000;
+}
+
+/* Each card — same size and styling as ViewMyCards */
+.card {
+  width: 100%;
+  max-width: 250px;
+  aspect-ratio: 2 / 3;
+  z-index: 100000;
+}
+
+.card img {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  object-fit: fill;
+}
+
+/* Close button */
+.close-viewset {
+  position: absolute;
+  top: 0px;
+  right: 10px;
+  padding: 5px 7px;
+  width: 40px;
+  height: 40px;
+  z-index: 100000;
+  background-color: red;
+  border-color: black;
+}
+
+/* Responsiveness */
+@media (max-width: 1200px) {
+  .card {
+    max-width: 250px;
+  }
+}
+
+@media (max-width: 900px) {
+  .card {
+    max-width: 200px;
+  }
+}
+
+@media (max-width: 600px) {
+  .card {
+    max-width: 150px;
+  }
+}

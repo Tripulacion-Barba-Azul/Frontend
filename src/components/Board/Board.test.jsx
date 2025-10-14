@@ -8,6 +8,7 @@ vi.mock("./Seats/seatsLogic.js", () => ({
   buildSeatedPlayersFromOrders: vi.fn(),
 }));
 
+// Mock PlayerBadge to capture the props Board forwards
 vi.mock("./PlayerBadge/PlayerBadge.jsx", () => ({
   default: ({
     name,
@@ -15,9 +16,10 @@ vi.mock("./PlayerBadge/PlayerBadge.jsx", () => ({
     size,
     ringColor,
     nameBgColor,
-    turn,
+    position,
     numCards,
     secrets,
+    sets,
   }) => (
     <div
       data-testid="badge"
@@ -26,8 +28,8 @@ vi.mock("./PlayerBadge/PlayerBadge.jsx", () => ({
       data-size={size}
       data-ring={ringColor}
       data-namebg={nameBgColor}
-      data-turn={String(turn)}
-      data-numcards={numCards === null ? "null" : String(numCards)}
+      data-position={position}
+      data-numcards={numCards === null ? "null" : String(numCards ?? 0)}
       data-secretslen={
         secrets === null
           ? "null"
@@ -35,6 +37,7 @@ vi.mock("./PlayerBadge/PlayerBadge.jsx", () => ({
           ? String(secrets.length)
           : "NaN"
       }
+      data-setscount={Array.isArray(sets) ? String(sets.length) : "NaN"}
     >
       {name}
     </div>
@@ -44,6 +47,7 @@ vi.mock("./PlayerBadge/PlayerBadge.jsx", () => ({
 import Board from "./Board.jsx";
 import { buildSeatedPlayersFromOrders } from "./Seats/seatsLogic.js";
 
+// Helper: seated player factory with sensible defaults
 const seated = (overrides) => ({
   id: "p1",
   name: "Player",
@@ -51,22 +55,23 @@ const seated = (overrides) => ({
   size: "small",
   ringColor: "black",
   nameBgColor: "white",
-  turn: false,
+  position: "up",
   numCards: 0,
   secrets: [],
+  sets: [],
   meta: { actualPlayer: false },
   style: { bottom: "0%", left: "0%" },
   ...overrides,
 });
 
-describe("Board.jsx", () => {
+describe("Board.jsx (updated)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("renders an element with an inline background-image with valid players", () => {
+  it("renders a background image when players are valid (>=2)", () => {
     buildSeatedPlayersFromOrders.mockReturnValueOnce([]);
-    render(<Board players={[{ name: "Player1" }, { name: "Player2" }]} />);
+    render(<Board players={[{ name: "P1" }, { name: "P2" }]} />);
 
     const bgDiv = document.querySelector('[style*="background-image"]');
     expect(bgDiv).toBeInTheDocument();
@@ -74,27 +79,27 @@ describe("Board.jsx", () => {
     expect(bgDiv.style.backgroundImage).toMatch(/backgroundBoard\.png/i);
   });
 
-  it("renders background when players array is empty (early validation)", () => {
+  it("renders only the background when players array is empty (early validation)", () => {
     render(<Board players={[]} />);
     const bgDiv = document.querySelector('[style*="background-image"]');
     expect(bgDiv).toBeInTheDocument();
     expect(screen.queryAllByTestId("badge")).toHaveLength(0);
   });
 
-  it("renders background when players array has only 1 player (early validation)", () => {
-    render(<Board players={[{ name: "Player1" }]} />);
+  it("renders only the background when there is a single player (early validation)", () => {
+    render(<Board players={[{ name: "P1" }]} />);
     const bgDiv = document.querySelector('[style*="background-image"]');
     expect(bgDiv).toBeInTheDocument();
     expect(screen.queryAllByTestId("badge")).toHaveLength(0);
   });
 
-  it("renders zero badges when no seated players are returned with valid player count", () => {
+  it("renders zero badges when seat builder returns empty with valid players", () => {
     buildSeatedPlayersFromOrders.mockReturnValueOnce([]);
-    render(<Board players={[{ name: "Player1" }, { name: "Player2" }]} />);
+    render(<Board players={[{ name: "P1" }, { name: "P2" }]} />);
     expect(screen.queryAllByTestId("badge")).toHaveLength(0);
   });
 
-  it("renders 2 badges with correct props and positions", () => {
+  it("renders badges with correct props (including position and sets) and preserves absolute styles", () => {
     buildSeatedPlayersFromOrders.mockReturnValueOnce([
       seated({
         id: "p1",
@@ -103,9 +108,12 @@ describe("Board.jsx", () => {
         size: "big",
         ringColor: "purple",
         nameBgColor: "white",
-        turn: true,
+        position: "down",
         numCards: 4,
-        secrets: [{ secretName: "S1", revealed: true }],
+        secrets: [{ id: 1, name: "S1", revealed: true }],
+        sets: [
+          { setName: "Tommy Beresford", cards: [{ id: 100, name: "Tommy" }] },
+        ],
         style: { bottom: "5%", left: "20%" },
       }),
       seated({
@@ -115,83 +123,90 @@ describe("Board.jsx", () => {
         size: "small",
         ringColor: "red",
         nameBgColor: "orange",
-        turn: false,
+        position: "right",
         numCards: 2,
         secrets: [],
+        sets: [],
         style: { top: "10%", right: "15%" },
       }),
     ]);
 
-    render(<Board players={[{ name: "Player1" }, { name: "Player2" }]} />);
+    render(<Board players={[{ name: "P1" }, { name: "P2" }]} />);
 
     const badges = screen.getAllByTestId("badge");
     expect(badges).toHaveLength(2);
 
+    // Alice
     expect(badges[0]).toHaveAttribute("data-name", "Alice");
     expect(badges[0]).toHaveAttribute("data-avatar", "default1");
     expect(badges[0]).toHaveAttribute("data-size", "big");
     expect(badges[0]).toHaveAttribute("data-ring", "purple");
     expect(badges[0]).toHaveAttribute("data-namebg", "white");
-    expect(badges[0]).toHaveAttribute("data-turn", "true");
+    expect(badges[0]).toHaveAttribute("data-position", "down");
     expect(badges[0]).toHaveAttribute("data-numcards", "4");
     expect(badges[0]).toHaveAttribute("data-secretslen", "1");
+    expect(badges[0]).toHaveAttribute("data-setscount", "1");
     const wrapper1 = badges[0].parentElement;
     expect(wrapper1).toHaveStyle({ bottom: "5%", left: "20%" });
 
+    // Bob
     expect(badges[1]).toHaveAttribute("data-name", "Bob");
     expect(badges[1]).toHaveAttribute("data-avatar", "default2");
     expect(badges[1]).toHaveAttribute("data-size", "small");
     expect(badges[1]).toHaveAttribute("data-ring", "red");
     expect(badges[1]).toHaveAttribute("data-namebg", "orange");
-    expect(badges[1]).toHaveAttribute("data-turn", "false");
+    expect(badges[1]).toHaveAttribute("data-position", "right");
     expect(badges[1]).toHaveAttribute("data-numcards", "2");
     expect(badges[1]).toHaveAttribute("data-secretslen", "0");
+    expect(badges[1]).toHaveAttribute("data-setscount", "0");
     const wrapper2 = badges[1].parentElement;
     expect(wrapper2).toHaveStyle({ top: "10%", right: "15%" });
   });
 
-  it("hides numCards and secrets for the actual player; forwards values for others", () => {
+  it("hides numCards and secrets for the actual player; forwards values for others; defaults sets to []", () => {
     buildSeatedPlayersFromOrders.mockReturnValueOnce([
       seated({
         id: "p1",
         name: "Me",
-        meta: { actualPlayer: true },
+        position: "down",
+        meta: { actualPlayer: true }, // Board should send numCards=null, secrets=null
         numCards: 7,
-        secrets: [{ secretName: "S1", revealed: false }],
+        secrets: [{ id: 9, name: "Hidden", revealed: false }],
+        sets: [{ setName: "Set1", cards: [] }],
         style: { bottom: "0%", left: "45%" },
       }),
       seated({
         id: "p2",
-        name: "Opp",
+        name: "Opponent",
+        position: "right",
         meta: { actualPlayer: false },
         numCards: 3,
         secrets: [
-          { secretName: "Sx", revealed: true },
-          { secretName: "Sy", revealed: false },
+          { id: 1, name: "Sx", revealed: true },
+          { id: 2, name: "Sy", revealed: false },
         ],
+        // sets intentionally omitted -> Board should pass []
         style: { top: "5%", right: "10%" },
-      }),
-      seated({
-        id: "p3",
-        name: "Opp2",
-        style: { top: "10%", left: "5%" },
       }),
     ]);
 
-    render(<Board players={[{ n: 1 }, { n: 2 }, { n: 3 }]} />);
-    const [me, opp, opp2] = screen.getAllByTestId("badge");
+    render(<Board players={[{ n: 1 }, { n: 2 }]} />);
 
+    const [me, opp] = screen.getAllByTestId("badge");
+
+    // Actual player: numCards and secrets hidden (null), sets still forwarded
     expect(me).toHaveAttribute("data-name", "Me");
+    expect(me).toHaveAttribute("data-position", "down");
     expect(me).toHaveAttribute("data-numcards", "null");
     expect(me).toHaveAttribute("data-secretslen", "null");
+    expect(me).toHaveAttribute("data-setscount", "1");
 
-    expect(opp).toHaveAttribute("data-name", "Opp");
+    // Opponent: values forwarded; sets defaulted to []
+    expect(opp).toHaveAttribute("data-name", "Opponent");
+    expect(opp).toHaveAttribute("data-position", "right");
     expect(opp).toHaveAttribute("data-numcards", "3");
     expect(opp).toHaveAttribute("data-secretslen", "2");
-
-    expect(opp2).toHaveAttribute("data-name", "Opp2");
-    expect(opp2).toHaveAttribute("data-numcards", "0");
-    expect(opp2).toHaveAttribute("data-secretslen", "0");
+    expect(opp).toHaveAttribute("data-setscount", "0");
   });
 
   it("renders 4 badges and preserves each player's absolute positioning", () => {
@@ -232,9 +247,9 @@ describe("Board.jsx", () => {
     expect(l1.parentElement).toHaveStyle({ bottom: "25%", left: "5%" });
   });
 
-  it("keeps the overlay container for badges (absolute, inset, z-index) with valid players", () => {
+  it("keeps the overlay container for badges (absolute, inset, z-index) when players are valid", () => {
     buildSeatedPlayersFromOrders.mockReturnValueOnce([]);
-    render(<Board players={[{ name: "Player1" }, { name: "Player2" }]} />);
+    render(<Board players={[{ name: "P1" }, { name: "P2" }]} />);
 
     const overlay = document.querySelector(
       ".absolute.inset-0.z-10.pointer-events-auto"
