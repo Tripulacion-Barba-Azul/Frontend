@@ -53,12 +53,12 @@ describe("NoActionButton", () => {
     await user.click(button);
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith("http://localhost:8000/play/123/actions/play-card", {
+      expect(fetch).toHaveBeenCalledWith("/play/123/actions/play-card", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cards: [],
-          playerId: "1",
+          actualPlayerID: "1",
         }),
       });
     });

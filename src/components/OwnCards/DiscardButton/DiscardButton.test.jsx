@@ -68,10 +68,10 @@ describe("DiscardButton.jsx", () => {
       expect(mockSuccess).toHaveBeenCalled();
     });
 
-    expect(global.fetch).toHaveBeenCalledWith("http://localhost:8000/play/123/actions/discard", expect.objectContaining({
+    expect(global.fetch).toHaveBeenCalledWith("/play/123/actions/discard", expect.objectContaining({
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({playerId: 7, cards: [10]}),
+      body: JSON.stringify({ cards: [{ cardId: 10 }], actualPlayerID: 7 }),
     }));
   });
 
