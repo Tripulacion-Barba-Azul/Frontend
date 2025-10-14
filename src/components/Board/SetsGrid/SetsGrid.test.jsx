@@ -78,7 +78,7 @@ describe("SetsGrid component", () => {
 
     render(<SetsGrid sets={manySets} position="horizontal" />);
     const rows = screen.getAllByRole("list");
-    expect(rows.length).toBe(5);
+    expect(rows.length).toBe(6);
   });
 
   it("renders vertical columns correctly", () => {
@@ -123,7 +123,7 @@ describe("SetsGrid component", () => {
     }));
     render(<SetsGrid sets={tenSets} position="horizontal" />);
     const rows = screen.getAllByRole("list");
-    expect(rows.length).toBe(2);
+    expect(rows.length).toBe(3);
     const items = screen.getAllByTestId("mock-viewset");
     expect(items.length).toBe(10);
   });

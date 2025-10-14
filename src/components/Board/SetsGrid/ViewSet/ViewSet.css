@@ -12,8 +12,8 @@ body.active-viewset {
   border: none;
   background: none;
   cursor: pointer;
-  width: 35px;
-  height: 35px;
+  width: 45px;
+  height: 45px;
   overflow: visible;
   z-index: 2;
 }

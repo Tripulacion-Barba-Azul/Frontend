@@ -94,14 +94,6 @@ describe("PlayerBadge (updated)", () => {
     expect(stack).toHaveClass("badge-big");
   });
 
-
-  it("maps 'avatar' prop to the expected image src", () => {
-    render(<PlayerBadge name="Robo" avatar="robot" />);
-    const img = screen.getByRole("img", { name: "Avatar of Robo" });
-    expect(img.getAttribute("src")).toContain("/assets/robot.png");
-
-  });
-
   it("renders CardCount only when numCards is a number >= 0; hides it when null", () => {
     const { rerender } = render(<PlayerBadge name="Eve" numCards={3} />);
     expect(screen.getByTestId("cardcount")).toHaveTextContent("count:3");

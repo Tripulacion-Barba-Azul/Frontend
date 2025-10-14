@@ -51,9 +51,9 @@ export default function SetsGrid({ sets = [], position = "horizontal" }) {
     );
   }
 
-  // horizontal -> rows of up to 5
+  // horizontal -> rows of up to 4
   if (pos === "horizontal") {
-    const rows = chunkArray(sets, 5);
+    const rows = chunkArray(sets, 4);
     return (
       <div className="sets-grid sets-horizontal" data-position={pos}>
         {rows.map((row, rowIndex) => (
@@ -73,9 +73,9 @@ export default function SetsGrid({ sets = [], position = "horizontal" }) {
     );
   }
 
-  // vertical -> columns of up to 5 (columns are centered as a group)
+  // vertical -> columns of up to 4 (columns are centered as a group)
   if (pos === "vertical") {
-    const cols = chunkArray(sets, 5);
+    const cols = chunkArray(sets, 4);
     return (
       <div className="sets-grid sets-vertical" data-position={pos}>
         {cols.map((col, colIndex) => (

@@ -41,7 +41,7 @@
   --tw-ring-color: rgb(51 65 85 / 0.7);
 
   /* Ring thickness (requested = 8px) */
-  --ring-width: 8px;
+  --ring-width: 5px;
 
   /* Thin black inner edge between the image and the ring */
   border: 1px solid #000;
@@ -120,8 +120,8 @@
   --sec-top: -70px;
 
   /* SetsGrid: to the right side of the avatar */
-  --sets-left: calc(100% - 225px);
-  --sets-top: -40px;
+  --sets-left: calc(100% - 252px);
+  --sets-top: -50px;
 }
 
 .avatar-stack.badge-small.position-left {
@@ -134,8 +134,8 @@
   --sec-top: -70px;
 
   /* SetsGrid: to the left side of the avatar */
-  --sets-right: calc(100% - 225px);
-  --sets-top: -40px;
+  --sets-right: calc(100% - 252px);
+  --sets-top: -50px;
 }
 
 .avatar-stack.badge-small.position-up {
@@ -148,11 +148,11 @@
   --sec-top: -70px;
 
   /* SetsGrid: above the avatar (left-aligned) */
-  --sets-left: -40px;
-  --sets-bottom: calc(100% - 210px);
+  --sets-left: -55px;
+  --sets-bottom: calc(100% - 230px);
 }
 
 .avatar-stack.badge-big.position-down {
-  --sets-left: 500px;
-  --sets-top: calc(100% - 250px);
+  --sets-left: 480px;
+  --sets-top: calc(100% - 260px);
 }

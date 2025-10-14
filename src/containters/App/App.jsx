@@ -27,7 +27,7 @@ function App() {
         name: "Player A",
         avatar: 1,
         turnOrder: 1,
-        turnStatus: "discarding",
+        turnStatus: "playing",
         cardCount: 3,
         // Public secrets: keep name null unless revealed === true
         secrets: [{ id: 201, revealed: false, name: null }],
@@ -65,14 +65,6 @@ function App() {
             setName: "Hercule Poirot",
             cards: [{ id: 105, name: "Hercule Poirot" }],
           },
-          {
-            setName: "Hercule Poirot",
-            cards: [{ id: 105, name: "Hercule Poirot" }],
-          },
-          {
-            setName: "Hercule Poirot",
-            cards: [{ id: 105, name: "Hercule Poirot" }],
-          },
         ],
       },
       {
@@ -80,7 +72,7 @@ function App() {
         name: "Player B",
         avatar: 2,
         turnOrder: 2,
-        turnStatus: "playing",
+        turnStatus: "drawing",
         cardCount: 4,
         // Publicly revealed secret to test UI
         secrets: [
@@ -108,14 +100,6 @@ function App() {
           {
             setName: "Lady Eileen Brent",
             cards: [{ id: 104, name: "Lady Eileen Brent" }],
-          },
-          {
-            setName: "Hercule Poirot",
-            cards: [{ id: 105, name: "Hercule Poirot" }],
-          },
-          {
-            setName: "Hercule Poirot",
-            cards: [{ id: 105, name: "Hercule Poirot" }],
           },
           {
             setName: "Hercule Poirot",
@@ -180,14 +164,6 @@ function App() {
             setName: "Hercule Poirot",
             cards: [{ id: 105, name: "Hercule Poirot" }],
           },
-          {
-            setName: "Hercule Poirot",
-            cards: [{ id: 105, name: "Hercule Poirot" }],
-          },
-          {
-            setName: "Hercule Poirot",
-            cards: [{ id: 105, name: "Hercule Poirot" }],
-          },
         ],
       },
       {
@@ -231,14 +207,6 @@ function App() {
             setName: "Hercule Poirot",
             cards: [{ id: 105, name: "Hercule Poirot" }],
           },
-          {
-            setName: "Hercule Poirot",
-            cards: [{ id: 105, name: "Hercule Poirot" }],
-          },
-          {
-            setName: "Hercule Poirot",
-            cards: [{ id: 105, name: "Hercule Poirot" }],
-          },
         ],
       },
       {
@@ -251,7 +219,7 @@ function App() {
         secrets: [
           { id: 201, revealed: false, name: null },
           { id: 901, revealed: false, name: "You are the accomplice" },
-          { id: 902, revealed: false, name: "Prankster" },
+          { id: 902, revealed: true, name: "Prankster" },
           { id: 903, revealed: false, name: "Prankster" },
           { id: 904, revealed: false, name: "Prankster" },
           { id: 905, revealed: false, name: "Prankster" },
@@ -273,14 +241,6 @@ function App() {
           {
             setName: "Lady Eileen Brent",
             cards: [{ id: 104, name: "Lady Eileen Brent" }],
-          },
-          {
-            setName: "Hercule Poirot",
-            cards: [{ id: 105, name: "Hercule Poirot" }],
-          },
-          {
-            setName: "Hercule Poirot",
-            cards: [{ id: 105, name: "Hercule Poirot" }],
           },
           {
             setName: "Hercule Poirot",
@@ -336,14 +296,6 @@ function App() {
           {
             setName: "Lady Eileen Brent",
             cards: [{ id: 104, name: "Lady Eileen Brent" }],
-          },
-          {
-            setName: "Hercule Poirot",
-            cards: [{ id: 105, name: "Hercule Poirot" }],
-          },
-          {
-            setName: "Hercule Poirot",
-            cards: [{ id: 105, name: "Hercule Poirot" }],
           },
           {
             setName: "Hercule Poirot",
