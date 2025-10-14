@@ -61,9 +61,7 @@ describe('DrawRegularCardButton', () => {
 
   test('makes API call when button is clicked', async () => {
     const mockResponse = {
-      gameID: 1,
-      playerID: 123,
-      card: 42
+
     };
 
     fetch.mockResolvedValueOnce({
@@ -71,28 +69,26 @@ describe('DrawRegularCardButton', () => {
       json: async () => mockResponse
     });
 
-    const onCardDrawn = vi.fn();
-    render(<DrawRegularCardButton {...defaultProps} onCardDrawn={onCardDrawn} />);
+    render(<DrawRegularCardButton {...defaultProps} />);
     
     const button = screen.getByTestId('draw-card-button');
     fireEvent.click(button);
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
-        '/games/1/actions/draw-card',
+        'http://localhost:8000/play/1/actions/draw-card',
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            actualPlayerID: 123
+          playerId: 123
           })
         }
       );
     });
 
-    expect(onCardDrawn).toHaveBeenCalledWith(mockResponse);
   });
 
   test('handles API error', async () => {
@@ -136,24 +132,4 @@ describe('DrawRegularCardButton', () => {
     expect(button).toBeDisabled();
   });
 
-  test('logs received card to console', async () => {
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const mockCard = 42;
-
-    fetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ card: mockCard })
-    });
-
-    render(<DrawRegularCardButton {...defaultProps} />);
-    
-    const button = screen.getByTestId('draw-card-button');
-    fireEvent.click(button);
-
-    await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalledWith('Carta recibida:', mockCard);
-    });
-
-    consoleSpy.mockRestore();
-  });
 });

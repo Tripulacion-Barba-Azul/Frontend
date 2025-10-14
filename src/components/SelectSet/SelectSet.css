@@ -1,0 +1,282 @@
+/* Overlay for selecting a set */
+.selectset-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999; /* Very high z-index */
+}
+
+/* Main modal content */
+.selectset-content {
+  background: #1e1e1e;
+  color: white;
+  border-radius: 18px;
+  padding: 40px 40px;
+  max-width: 1600px;            
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 0 35px rgba(0, 0, 0, 0.6);
+  font-family: "Metropolis", sans-serif;
+  width: auto; /* Change from fixed width to auto */
+  margin: 0 20px; /* Add some margin on small screens */
+}
+
+/* Title text */
+.selectset-text {
+  margin-bottom: 24px;
+  color: #f4e1a3;
+  text-align: center;
+  font-size: 2rem;
+  font-family: "Metropolis";
+}
+
+/* Grid of available sets */
+.selectset-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+/* Each set item */
+.selectset-item {
+  background: #2a2a2a;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  width: 200px;
+  transition: background 0.15s, transform 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  
+}
+
+.selectset-item:hover {
+  background: #3a3a3a;
+  transform: scale(1.15);
+}
+
+.selectset-item.selected {
+  outline: 3px solid #f4e1a3;
+  background: #333;
+  transform: scale(1.15);
+}
+
+/* Set icon */
+.selectset-avatar {
+  width: 80px;              /* keep size or adjust */
+  height: 80px;
+  border-radius: 0;          /* remove the circle */
+  background: none;          /* no background */
+  overflow: visible;         /* so PNG edges show freely */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;   
+}
+
+/* Info below each set icon */
+.selectset-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #f4e1a3;
+  width: 100%;
+}
+
+.selectset-name {
+  font-size: 1rem;
+  font-weight: bold;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.selectset-card-count {
+  font-size: 0.85rem;
+  color: #d1caa0;
+  margin-bottom: 10px;
+}
+
+/* “View Cards” button */
+.selectset-view-btn {
+  background: rgb(163, 34, 34);
+  border: none;
+  color: #f4e1a3;
+  padding: 6px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: background 0.25s;
+  pointer-events: auto;
+}
+
+.selectset-view-btn:hover {
+  background: rgb(115, 23, 23);
+}
+
+/* Bottom buttons (Confirm / Back) */
+.selectset-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  width: 100%;
+  max-width: 280px;
+}
+
+.selectset-confirm,
+.selectset-back {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-family: "Metropolis";
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+  flex: 1;
+}
+
+.selectset-confirm {
+  background-color: rgb(163, 34, 34);
+  color: #f4e1a3;
+}
+
+.selectset-confirm:hover:not(:disabled) {
+  background: rgb(115, 23, 23);
+}
+
+.selectset-confirm:disabled {
+  background-color: rgba(163, 34, 34, 0.35);
+  color: rgba(244, 225, 163, 0.3);
+  cursor: not-allowed;
+}
+
+.selectset-back {
+  background-color: #2a2a2a;
+  color: #f4e1a3;
+}
+
+.selectset-back:hover {
+  background: #3a3a3a;
+}
+
+/* ===================================================================
+   VIEWSET MODAL — same layout as ViewSet.css but styled consistently
+   =================================================================== */
+
+/* Lock background scroll */
+body.active-viewset {
+  overflow-y: hidden;
+}
+
+/* Giant transparent overlay div */
+.viewset-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 100000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.7); /* 70% transparent overlay */
+}
+
+/* Cards container - no background, no border */
+.cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  padding: 20px;
+  max-width: 100%;
+  max-height: 100vh;
+  overflow: auto;
+  /* Remove all background/border styles */
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* Each card */
+.card {
+  width: 100%;
+  max-width: 230px;
+  aspect-ratio: 2 / 3;
+}
+
+.card img {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  animation: fadeIn 0.1s ease-out;
+  object-fit: fill;
+}
+
+/* Close button */
+.close-viewset {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  padding: 5px 7px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background-color: rgb(163, 34, 34);
+  color: #f4e1a3;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 100001;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.close-viewset:hover {
+  background: rgb(115, 23, 23);
+  transform: scale(1.1);
+}
+
+/* Smooth fade-in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive card sizes */
+@media (max-width: 1200px) {
+  .card {
+    max-width: 220px;
+  }
+}
+
+@media (max-width: 900px) {
+  .card {
+    max-width: 180px;
+  }
+}
+
+@media (max-width: 600px) {
+  .card {
+    max-width: 140px;
+  }
+}

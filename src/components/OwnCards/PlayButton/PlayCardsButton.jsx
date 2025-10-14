@@ -1,39 +1,45 @@
 import React, { useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 
-export default function NoActionButton() {
+export default function PlayCardsButton({ selectedCards = [], onPlaySuccess }) {
   const [searchParams] = useSearchParams();
   const { gameId } = useParams();
-  const playerId = searchParams.get("playerId");
+  const playerId = Number(searchParams.get("playerId"));
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleNoAction = async () => {
+  const handlePlayCards = async () => {
     setError("");
 
     if (loading) return;
 
+    if (selectedCards.length > 6) {
+      setError("Something went wrong with your selection");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await fetch(`http://localhost:8000/play/${gameId}/actions/play-card`, {
+      const response = await fetch(`/play/${gameId}/actions/play-card`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          cards: [],
-          playerId: playerId
+          cards: selectedCards.map((id) => ({ cardId: id })),
+          actualPlayerID: playerId,
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`No action failed with status ${response.status}`);
+        throw new Error(`Play failed with status ${response.status}`);
       }
 
-      // Request sent successfully - no additional actions needed
+      if (onPlaySuccess) onPlaySuccess(); 
     } catch (err) {
       console.error(err);
-      setError("Failed to perform no action");
+      setError("Failed to play cards");
+      if (onPlaySuccess) onPlaySuccess(); 
     } finally {
       setLoading(false);
     }
@@ -43,12 +49,12 @@ export default function NoActionButton() {
     <div>
       <button
         className="owncards-action"
-        onClick={handleNoAction}
+        onClick={handlePlayCards}
         disabled={loading}
       >
-        {loading ? "Processing..." : "Play nothing"}
+        {loading ? "Playing..." : `Play (${selectedCards.length})`}
       </button>
       {error && <div style={{ color: "#f4e1a3", fontSize: "12px" }}>{error}</div>}
-      </div>
+    </div>
   );
 }

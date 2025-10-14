@@ -28,12 +28,12 @@ export default function DiscardButton({selectedCards, handSize, onDiscardSuccess
     setLoading(true);
    
     try {
-      const response = await fetch(`/play/${gameId}/actions/discard`, {
+      const response = await fetch(`http://localhost:8000/play/${gameId}/actions/discard`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          cards: selectedCards.map((id) => ({ cardId: id })),
-          actualPlayerID: Number(playerId),
+          playerId: Number(playerId),
+          cards: selectedCards.map((id) => ( id )),
         }),
       });
 
@@ -46,6 +46,7 @@ export default function DiscardButton({selectedCards, handSize, onDiscardSuccess
     } catch (err) {
       console.error(err);
       setError("Failed to discard");
+      onDiscardSuccess();
     } finally {
       setLoading(false);
     }
