@@ -21,7 +21,6 @@
   }
   
   .CreateGameButton:hover {
-    background-color: rgb(140, 29, 29);
     transform: scale(1.05); /* gentle grow */
     box-shadow: 0 0px 50px  #f4e1a3cc;
   }

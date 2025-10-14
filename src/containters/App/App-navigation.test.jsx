@@ -76,7 +76,7 @@ describe("Routing Test", () => {
     );
 
     const joinButtons = await screen.findAllByRole("button", {
-      name: /unirse a la partida/i,
+      name: /join game/i,
     });
     await userEvent.click(joinButtons[0]);
 
