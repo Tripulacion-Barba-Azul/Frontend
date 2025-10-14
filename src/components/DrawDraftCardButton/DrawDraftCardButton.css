@@ -1,6 +1,6 @@
 .draw-draft-card-container {
   position: absolute;
-  bottom: 40%; /* Same height as RegularDeck */
+  bottom: 43%; /* Same height as RegularDeck */
   left: 50%; /* Moved slightly to the right */
   transform: translateX(-50%);
   z-index: 15;
@@ -45,7 +45,7 @@
 
 .draft-card-error {
   position: absolute;
-  top: -35px;
+  top: -45px;
   left: 50%;
   transform: translateX(-50%);
   color: #ff6b6b;
