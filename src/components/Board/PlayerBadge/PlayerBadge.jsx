@@ -4,8 +4,8 @@ import {
   SIZES,
   RING_COLORS,
   NAME_BG_COLORS,
-  AVATAR_MAP,
 } from "./playerBadgeConstants.js";
+import { AVATAR_MAP } from "../../generalMaps";
 import CardCount from "../CardCount/CardCount.jsx";
 import ViewSecrets from "../ViewSecrets/ViewSecrets.jsx";
 
