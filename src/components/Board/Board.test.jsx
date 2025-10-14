@@ -1,6 +1,7 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import "@testing-library/jest-dom";
 
 vi.mock("./Seats/seatsLogic.js", () => ({
@@ -247,5 +248,45 @@ describe("Board.jsx", () => {
       ".absolute.inset-0.z-10.pointer-events-auto"
     );
     expect(overlay).not.toBeInTheDocument();
+  });
+
+  // ===== New tests for Instructions integration on the Board =====
+
+  it("renders the Instructions launcher when players are valid", () => {
+    buildSeatedPlayersFromOrders.mockReturnValueOnce([]);
+    render(<Board players={[{ name: "P1" }, { name: "P2" }]} />);
+    // The launcher is a button with aria-label="Open instructions"
+    expect(screen.getByLabelText(/open instructions/i)).toBeInTheDocument();
+  });
+
+  it("does not render the Instructions launcher on early validation", () => {
+    render(<Board players={[{ name: "OnlyOne" }]} />); // triggers early return
+    expect(
+      screen.queryByLabelText(/open instructions/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens the in-game instructions (no arrows, no counter) when clicking the launcher", async () => {
+    const user = userEvent.setup();
+    buildSeatedPlayersFromOrders.mockReturnValueOnce([]);
+    render(<Board players={[{ name: "P1" }, { name: "P2" }]} />);
+
+    // Open modal
+    await user.click(screen.getByLabelText(/open instructions/i));
+
+    // Dialog appears with title
+    const dialog = screen.getByRole("dialog", { name: /how to play/i });
+    expect(dialog).toBeInTheDocument();
+    expect(screen.getByText(/how to play/i)).toBeInTheDocument();
+
+    // In Board.jsx we pass mode="game" (treated as inGame): no arrows, no counter
+    expect(screen.queryByLabelText(/previous image/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/next image/i)).not.toBeInTheDocument();
+    // Counter should not be present
+    expect(screen.queryByText(/\d+\s*\/\s*\d+/i)).not.toBeInTheDocument();
+
+    // The in-game help image should be present (alt contains "help")
+    const img = screen.getByRole("img", { name: /help/i });
+    expect(img).toBeInTheDocument();
   });
 });
