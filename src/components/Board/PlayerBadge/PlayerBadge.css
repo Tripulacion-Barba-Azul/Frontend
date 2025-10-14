@@ -1,102 +1,158 @@
 @import "tailwindcss";
 
-/* Main container */
+/* Root container for the badge */
 .player-badge {
-  @apply flex flex-col items-center gap-1;
+  /* Extra vertical separation to avoid overlay shadow overlap */
+  @apply flex flex-col items-center gap-3;
 }
 
-/* Name box */
+/* Name plate displayed above the avatar */
 .player-name-box {
-  @apply font-medium leading-none text-slate-800;
-  @apply px-3 py-1 rounded-lg;
-
+  @apply font-medium leading-none text-slate-800 px-3 py-1 rounded-lg;
   background-color: var(--name-bg, #ffffff);
-  border: 1px solid rgb(0, 0, 0);
+  font-family: "Metropolis";
+  border: 1px solid #000;
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.06), 0 1px 1px -1px rgb(0 0 0 / 0.08);
+
+  /* Keep this above the avatar ring/shadows */
+  position: relative;
+  z-index: 10;
+  top: 7px;
 }
 
-/* Text on top of avatar */
 .player-name {
   @apply px-2 py-1 rounded-md text-white font-medium leading-none;
   background-color: rgb(0 0 0 / 0.5);
 }
 
-/* Avatar circle */
-.avatar-circle {
-  @apply rounded-full overflow-hidden ring-2 shadow bg-slate-300 grid place-items-center;
-
-  /* To position the turn indicator */
-  position: relative;
-
-  --tw-ring-color: rgb(51 65 85 / 0.7);
-  --ring-width: 5px;
-  box-shadow: 0 0 0 var(--ring-width) var(--tw-ring-color),
-    0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+/* ===== Avatar + overlays stack ===== */
+.avatar-stack {
+  position: relative; /* Absolute overlays will anchor here */
+  display: inline-block;
 }
 
-/* Sizes for the avatar circle */
+/* Circular avatar with colored ring and thin black inner/outer edges */
+.avatar-circle {
+  @apply rounded-full overflow-hidden bg-slate-300 grid place-items-center w-full h-full;
+  position: relative;
+  z-index: 0;
+
+  /* Ring color is set inline via style={ ["--tw-ring-color"]: ringCol } */
+  --tw-ring-color: rgb(51 65 85 / 0.7);
+
+  /* Ring thickness (requested = 8px) */
+  --ring-width: 8px;
+
+  /* Thin black inner edge between the image and the ring */
+  border: 1px solid #000;
+
+  /* Colored ring + thin black outer edge + soft shadowing */
+  box-shadow: 0 0 0 var(--ring-width) var(--tw-ring-color),
+    /* colored ring (8px) */ 0 0 0 calc(var(--ring-width) + 1px) #000,
+    /* outer black edge (1px) */ 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    /* soft shadows */ 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* Sizes applied to .avatar-stack wrapper */
 .badge-small {
   @apply w-28 h-28 text-lg;
-}
+} /* 112x112 */
 .badge-big {
   @apply w-38 h-38 text-lg;
-}
+} /* 152x152 */
 
-/* Image of avatar */
+/* Avatar image fills the circle */
 .avatar-img {
   @apply w-full h-full object-cover;
 }
 
-/* Placeholder (shown when no src) */
+/* Placeholder style (when no image source is provided) */
 .avatar-placeholder {
   @apply select-none;
   color: rgb(51 65 85 / 0.8);
 }
 
-/* Turn indicator */
-/* Base */
-.turn-indicator {
-  width: 10px;
-  height: 10px;
-  border-radius: 9999px;
-  /* Position */
-  display: block;
-  margin-top: 6px;
-
-  /* Default visuals */
-  background: #334155;
-  box-shadow: 0 0 0 2px #ffffff;
-  opacity: 0.6;
-
-  /* Smooth transitions */
-  transition: background-color 160ms ease, box-shadow 160ms ease,
-    opacity 160ms ease;
-}
-
-/* "Player's turn" indicator */
-.turn-indicator.on {
-  background: #22c55e;
-  box-shadow: 0 0 0 2px #ffffff, 0 0 8px 2px rgba(34, 197, 94, 0.55);
-  opacity: 1;
-}
-
-/* "Not player's turn" indicator */
-.turn-indicator.off {
-  background: #334155;
-  opacity: 0.6;
-}
-
-/* Overlay del contador sobre el avatar */
+/* ===== Overlays controlled by CSS variables ===== */
+/* CardCount overlay */
 .badge-cardcount {
-  position: relative;
-  right: -10px;
-  bottom: -10px;
+  position: absolute;
+  left: var(--cc-left, auto);
+  right: var(--cc-right, auto);
+  top: var(--cc-top, auto);
+  bottom: var(--cc-bottom, auto);
   pointer-events: none;
 }
-.badge-secrets-fixed {
-  position: relative;
-  left: 105px;
-  bottom: 250px;
+
+/* ViewSecrets overlay */
+.badge-secrets {
+  position: absolute;
+  left: var(--sec-left, auto);
+  right: var(--sec-right, auto);
+  top: var(--sec-top, auto);
+  bottom: var(--sec-bottom, auto);
   pointer-events: auto;
-  z-index: 2;
+  z-index: 2; /* Above sets by default */
+}
+
+/* SetsGrid overlay */
+.badge-sets {
+  position: absolute;
+  left: var(--sets-left, auto);
+  right: var(--sets-right, auto);
+  top: var(--sets-top, auto);
+  bottom: var(--sets-bottom, auto);
+  pointer-events: auto;
+  z-index: 1; /* Below secrets by default */
+}
+
+/* ===== POSITION PRESETS (hardcoded offsets) =====
+   Tune the pixel values to match your layout needs.
+*/
+
+/* ----- SMALL (112x112) ----- */
+.avatar-stack.badge-small.position-right {
+  /* CardCount: bottom-right (slightly outside) */
+  --cc-right: 20px;
+  --cc-bottom: -75px;
+
+  /* Secrets: top-right */
+  --sec-right: -73px;
+  --sec-top: -70px;
+
+  /* SetsGrid: to the right side of the avatar */
+  --sets-left: calc(100% - 225px);
+  --sets-top: -40px;
+}
+
+.avatar-stack.badge-small.position-left {
+  /* CardCount: bottom-left */
+  --cc-left: 40px;
+  --cc-bottom: -72px;
+
+  /* Secrets: top-left */
+  --sec-left: -73px;
+  --sec-top: -70px;
+
+  /* SetsGrid: to the left side of the avatar */
+  --sets-right: calc(100% - 225px);
+  --sets-top: -40px;
+}
+
+.avatar-stack.badge-small.position-up {
+  /* CardCount: centered above (approx) */
+  --cc-left: 125px;
+  --cc-top: 25px;
+
+  /* Secrets: top-right to avoid overlap */
+  --sec-right: 135px;
+  --sec-top: -70px;
+
+  /* SetsGrid: above the avatar (left-aligned) */
+  --sets-left: -40px;
+  --sets-bottom: calc(100% - 210px);
+}
+
+.avatar-stack.badge-big.position-down {
+  --sets-left: 500px;
+  --sets-top: calc(100% - 250px);
 }

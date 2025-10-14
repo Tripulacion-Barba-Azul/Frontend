@@ -38,7 +38,11 @@ export default function SetsGrid({ sets = [], position = "horizontal" }) {
       <div className="sets-grid sets-double-horizontal" data-position={pos}>
         <div className="sets-single-row" role="list">
           {sets.map((s, idx) => (
-            <div key={s.setId ?? s.setName ?? idx} className="sets-item" role="listitem">
+            <div
+              key={s.setId ?? s.setName ?? idx}
+              className="sets-item"
+              role="listitem"
+            >
               <ViewSet cards={s.cards} setName={s.setName} />
             </div>
           ))}
@@ -47,15 +51,19 @@ export default function SetsGrid({ sets = [], position = "horizontal" }) {
     );
   }
 
-  // horizontal -> rows of up to 10
+  // horizontal -> rows of up to 5
   if (pos === "horizontal") {
-    const rows = chunkArray(sets, 10);
+    const rows = chunkArray(sets, 5);
     return (
       <div className="sets-grid sets-horizontal" data-position={pos}>
         {rows.map((row, rowIndex) => (
           <div key={rowIndex} className="sets-row" role="list">
             {row.map((s, idx) => (
-              <div key={s.setId ?? s.setName ?? `${rowIndex}-${idx}`} className="sets-item" role="listitem">
+              <div
+                key={s.setId ?? s.setName ?? `${rowIndex}-${idx}`}
+                className="sets-item"
+                role="listitem"
+              >
                 <ViewSet cards={s.cards} setName={s.setName} />
               </div>
             ))}
@@ -65,15 +73,19 @@ export default function SetsGrid({ sets = [], position = "horizontal" }) {
     );
   }
 
-  // vertical -> columns of up to 10 (columns are centered as a group)
+  // vertical -> columns of up to 5 (columns are centered as a group)
   if (pos === "vertical") {
-    const cols = chunkArray(sets, 10);
+    const cols = chunkArray(sets, 5);
     return (
       <div className="sets-grid sets-vertical" data-position={pos}>
         {cols.map((col, colIndex) => (
           <div key={colIndex} className="sets-column" role="list">
             {col.map((s, idx) => (
-              <div key={s.setId ?? s.setName ?? `${colIndex}-${idx}`} className="sets-item" role="listitem">
+              <div
+                key={s.setId ?? s.setName ?? `${colIndex}-${idx}`}
+                className="sets-item"
+                role="listitem"
+              >
                 <ViewSet cards={s.cards} setName={s.setName} />
               </div>
             ))}

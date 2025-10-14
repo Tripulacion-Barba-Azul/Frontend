@@ -8,70 +8,83 @@ import {
 } from "./playerBadgeConstants.js";
 import CardCount from "../CardCount/CardCount.jsx";
 import ViewSecrets from "../ViewSecrets/ViewSecrets.jsx";
+import SetsGrid from "../SetsGrid/SetsGrid.jsx";
 
 /**
- * Input:
- * - Array[{
- *     name: string //Length [1,20]
- *     avatar: string,          // key in AVATAR_MAP
- *     size: string "big"|"small"
- *     ringColor: string "black"|"blue"|"pink"|"red"|"purple"|"yellow"
- *     nameBgColor: string "white"|"red"|"orange"
- *     turn: bool,
- *     numCards: int,
- *     secrets: Array:[{secretName: string,
- *                      revealed: Bool}]
- *   }>
+ * Props:
+ * - name: string
+ * - avatar: key from AVATAR_MAP
+ * - size: "big" | "small"                      // maps to CSS size classes
+ * - ringColor: "green" | "yellow" | "red" | "gray"
+ * - nameBgColor: "white" | "red" | "orange"
+ * - position: "up" | "left" | "right" | "down" // drives overlay presets
+ * - numCards: number | null                    // show CardCount if number
+ * - secrets: array | null                      // show ViewSecrets if array
+ * - sets: array | null                         // show SetsGrid if non-empty
  */
-
 export default function PlayerBadge({
-  name = "Jugador",
+  name = "Player",
   avatar = 1,
   size = "small",
-  ringColor = "black",
+  ringColor = "gray",
   nameBgColor = "white",
-  turn = false,
-  numCards = 0, // null to hide for (actualPlayer)
-  secrets = null, // null to hide for (actualPlayer)
+  position = "right",
+  numCards = 0,
+  secrets = null,
+  sets = null,
 }) {
-  const circleSize = SIZES[size] ?? SIZES.small;
-  const ringCol = RING_COLORS[ringColor] ?? RING_COLORS.black;
+  const sizeClass = SIZES[size] ?? SIZES.small;
+  const ringCol = RING_COLORS[ringColor] ?? RING_COLORS.gray;
   const nameBgCol = NAME_BG_COLORS[nameBgColor] ?? NAME_BG_COLORS.white;
   const avatarSrc = AVATAR_MAP[avatar] ?? AVATAR_MAP[1];
+
   const showCount = typeof numCards === "number" && numCards >= 0;
-  const showSecrets = Array.isArray(secrets) && secrets.length >= 0;
+  const showSecrets = Array.isArray(secrets);
+  const showSets = Array.isArray(sets) && sets.length > 0;
+
+  // Map PlayerBadge.position -> SetsGrid.position
+  const setsLayout =
+    position === "up"
+      ? "horizontal"
+      : position === "down"
+      ? "doubleHorizontal"
+      : "vertical"; // for "left" or "right"
 
   return (
     <div className="player-badge">
-      {/* Turn indicator */}
-      <span className={`turn-indicator ${turn ? "on" : "off"}`} />
-
-      {/* Name */}
+      {/* Name badge above the avatar */}
       <span className="player-name-box" style={{ ["--name-bg"]: nameBgCol }}>
         {name}
       </span>
 
-      {/* Avatar */}
-      <div
-        className={`avatar-circle ${circleSize}`}
-        style={{ ["--tw-ring-color"]: ringCol }}
-      >
-        <img src={avatarSrc} alt={`Avatar of ${name}`} className="avatar-img" />
+      {/* Avatar stack: avatar + positioned overlays (CardCount / Secrets / Sets) */}
+      <div className={`avatar-stack ${sizeClass} position-${position}`}>
+        <div className="avatar-circle" style={{ ["--tw-ring-color"]: ringCol }}>
+          <img
+            src={avatarSrc}
+            alt={`Avatar of ${name}`}
+            className="avatar-img"
+          />
+        </div>
+
+        {showCount && (
+          <div className="badge-cardcount">
+            <CardCount number={numCards} />
+          </div>
+        )}
+
+        {showSecrets && (
+          <div className="badge-secrets">
+            <ViewSecrets secrets={secrets} />
+          </div>
+        )}
+
+        {showSets && (
+          <div className="badge-sets">
+            <SetsGrid sets={sets} position={setsLayout} />
+          </div>
+        )}
       </div>
-
-      {/* Card count */}
-      {showCount && (
-        <div className="badge-cardcount">
-          <CardCount number={numCards} />
-        </div>
-      )}
-
-      {/* Secrets */}
-      {showSecrets && (
-        <div className="badge-secrets-fixed">
-          <ViewSecrets secrets={secrets} />
-        </div>
-      )}
     </div>
   );
 }

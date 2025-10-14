@@ -84,11 +84,12 @@ export default function Board({
                 size={p.size}
                 ringColor={p.ringColor}
                 nameBgColor={p.nameBgColor}
-                turn={p.turn}
+                position={p.position}
                 numCards={
                   p.meta?.actualPlayer ? null : p.numCards ?? p.numCards ?? 0
                 }
                 secrets={p.meta?.actualPlayer ? null : p.secrets ?? []}
+                sets={p.sets ?? []}
               />
             </div>
           ))}

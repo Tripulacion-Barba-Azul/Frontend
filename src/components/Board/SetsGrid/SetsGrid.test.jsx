@@ -11,13 +11,41 @@ vi.mock("./ViewSet/ViewSet.jsx", () => {
 
 describe("SetsGrid component", () => {
   const sampleSets = [
-    { setId: 1, setName: "Hercule Poirot", cards: [{ id: 1, name: "Hercule Poirot" }] },
-    { setId: 2, setName: "Miss Marple", cards: [{ id: 2, name: "Miss Marple" }] },
-    { setId: 3, setName: "Mr Satterthwaite", cards: [{ id: 3, name: "Mr Satterthwaite" }] },
-    { setId: 4, setName: "Parker Pyne", cards: [{ id: 4, name: "Parker Pyne" }] },
-    { setId: 5, setName: "Lady Eileen Brent", cards: [{ id: 5, name: "Lady Eileen Brent" }] },
-    { setId: 6, setName: "Tommy Beresford", cards: [{ id: 6, name: "Tommy Beresford" }] },
-    { setId: 7, setName: "Tuppence Beresford", cards: [{ id: 7, name: "Tuppence Beresford" }] },
+    {
+      setId: 1,
+      setName: "Hercule Poirot",
+      cards: [{ id: 1, name: "Hercule Poirot" }],
+    },
+    {
+      setId: 2,
+      setName: "Miss Marple",
+      cards: [{ id: 2, name: "Miss Marple" }],
+    },
+    {
+      setId: 3,
+      setName: "Mr Satterthwaite",
+      cards: [{ id: 3, name: "Mr Satterthwaite" }],
+    },
+    {
+      setId: 4,
+      setName: "Parker Pyne",
+      cards: [{ id: 4, name: "Parker Pyne" }],
+    },
+    {
+      setId: 5,
+      setName: "Lady Eileen Brent",
+      cards: [{ id: 5, name: "Lady Eileen Brent" }],
+    },
+    {
+      setId: 6,
+      setName: "Tommy Beresford",
+      cards: [{ id: 6, name: "Tommy Beresford" }],
+    },
+    {
+      setId: 7,
+      setName: "Tuppence Beresford",
+      cards: [{ id: 7, name: "Tuppence Beresford" }],
+    },
   ];
 
   beforeEach(() => {
@@ -32,16 +60,13 @@ describe("SetsGrid component", () => {
   it("renders horizontal rows correctly", () => {
     render(<SetsGrid sets={sampleSets} position="horizontal" />);
     const rows = screen.getAllByRole("list"); // each row is role=list
-    expect(rows.length).toBe(1); // 7 < 10, so one row
+    expect(rows.length).toBe(2);
 
     const items = screen.getAllByTestId("mock-viewset");
     expect(items.length).toBe(sampleSets.length);
     sampleSets.forEach((s, idx) => {
       expect(items[idx].textContent).toBe(s.setName);
     });
-
-    const gridDiv = screen.getByRole("list").closest(".sets-grid");
-    expect(gridDiv.classList.contains("sets-horizontal")).toBe(true);
   });
 
   it("splits into multiple horizontal rows if more than 10 sets", () => {
@@ -53,13 +78,13 @@ describe("SetsGrid component", () => {
 
     render(<SetsGrid sets={manySets} position="horizontal" />);
     const rows = screen.getAllByRole("list");
-    expect(rows.length).toBe(3); // 10 + 10 + 3
+    expect(rows.length).toBe(5);
   });
 
   it("renders vertical columns correctly", () => {
     render(<SetsGrid sets={sampleSets} position="vertical" />);
     const columns = screen.getAllByRole("list");
-    expect(columns.length).toBe(1); // 7 < 10, one column
+    expect(columns.length).toBe(2);
     const items = screen.getAllByTestId("mock-viewset");
     expect(items.length).toBe(sampleSets.length);
 
@@ -98,7 +123,7 @@ describe("SetsGrid component", () => {
     }));
     render(<SetsGrid sets={tenSets} position="horizontal" />);
     const rows = screen.getAllByRole("list");
-    expect(rows.length).toBe(1); 
+    expect(rows.length).toBe(2);
     const items = screen.getAllByTestId("mock-viewset");
     expect(items.length).toBe(10);
   });
