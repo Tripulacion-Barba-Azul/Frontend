@@ -10,6 +10,6 @@ export default function JoinGameButton () {
       };
 
     return(<div> 
-        <button onClick={handleClick} className="JoinGameButton">Join <br /> Game</button>
+        <button onClick={handleClick} className="JoinGameButton">Join Game</button>
     </div>);
 }
