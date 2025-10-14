@@ -1,0 +1,116 @@
+.notifier-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100000;
+    cursor: pointer;
+    animation: fadeIn 0.15s ease;
+  }
+  
+  .notifier-content {
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 20px;
+    padding: 39px;
+    max-width: 780px;
+    max-height: 80vh;
+    text-align: center;
+    cursor: default;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.15s ease;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideIn {
+    from { 
+      opacity: 0;
+      transform: translateY(-20px) scale(0.95);
+    }
+    to { 
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  
+  .notifier-text {
+    color: #f4e1a3;
+    font-size: 1.82rem; /* 1.4rem * 1.3 = 1.82rem */
+    font-weight: bold;
+    margin-bottom: 26px; /* 20px * 1.3 = 26px */
+    font-family: "Metropolis", sans-serif;
+    line-height: 1.4;
+  }
+  
+  .notifier-set {
+    margin-bottom: 26px; /* 20px * 1.3 = 26px */
+    justify-content: center;
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  .notifier-set img {
+    width: 104px; /* 80px * 1.3 = 104px */
+    height: 104px; /* 80px * 1.3 = 104px */
+    border-radius: 10px; /* 8px * 1.3 ≈ 10px */
+    object-fit: cover;
+  }
+  
+  .notifier-cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 19.5px; /* 15px * 1.3 = 19.5px */
+    margin-bottom: 26px; /* 20px * 1.3 = 26px */
+  }
+  
+  .notifier-card {
+    width: 156px; /* 120px * 1.3 = 156px */
+    aspect-ratio: 2 / 3;
+  }
+  
+  .notifier-card img {
+    width: 100%;
+    height: 100%;
+    border-radius: 10px; /* 8px * 1.3 ≈ 10px */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    object-fit: cover;
+  }
+  
+  .notifier-hint {
+    color: #d1caa0;
+    font-size: 0.78rem; /* 0.6rem * 1.3 = 0.78rem */
+    font-style: italic;
+    opacity: 0.8;
+  }
+  
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .notifier-content {
+      margin: 26px; /* 20px * 1.3 = 26px */
+      padding: 26px; /* 20px * 1.3 = 26px */
+    }
+    
+    .notifier-text {
+      font-size: 1.56rem; /* 1.2rem * 1.3 = 1.56rem */
+    }
+    
+    .notifier-card {
+      width: 130px; /* 100px * 1.3 = 130px */
+    }
+    
+    .notifier-set img {
+      width: 78px; /* 60px * 1.3 = 78px */
+      height: 78px; /* 60px * 1.3 = 78px */
+    }
+  }
+  
+ 

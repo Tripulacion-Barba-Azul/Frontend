@@ -32,3 +32,24 @@ export const CARDS_MAP = {
   "Blackmailed!": "/Cards/26-devious_blackmailed.png",
   "Social Faux Pas": "/Cards/27-devious_fauxpas.png",
 };
+
+export const SETS_MAP = {
+  "Hercule Poirot": "/Icons/seticons_poirot.png",
+  "Miss Marple": "/Icons/seticons_missmarple.png",
+  "Mr Satterthwaite": "/Icons/seticons_mrsatterthwaite.png",
+  "Parker Pyne": "/Icons/seticons_parkerpyne.png",
+  "Lady Eileen Brent": "/Icons/seticons_brent.png",
+  "Tommy Beresford": "/Icons/seticons_beresford.png",
+  "Tuppence Beresford": "/Icons/seticons_beresford.png",
+  "The Beresfords": "/Icons/seticons_beresford.png",
+}
+
+export const AVATAR_MAP = {
+  1: "/Board/Avatars/avatar_barba-azul.png",
+  2: "/Board/Avatars/avatar_robotito.png",
+  3: "/Board/Avatars/avatar_duran.png",
+  4: "/Board/Avatars/avatar_wolovick.png",
+  5: "/Board/Avatars/avatar_penazzi.png",
+  6: "/Board/Avatars/avatar_colorado-guri.png",
+};
+

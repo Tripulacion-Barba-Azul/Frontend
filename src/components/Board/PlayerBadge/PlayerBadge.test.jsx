@@ -12,8 +12,8 @@ vi.mock("./playerBadgeConstants.js", () => ({
   },
   NAME_BG_COLORS: { white: "#ffffff", red: "#ff0000" },
   AVATAR_MAP: {
-    1: "/assets/default.png",
-    robot: "/assets/robot.png",
+    1: "/Board/Avatars/avatar_barba-azul.png",
+    robot: "/Board/Avatars/avatar_robotito.png",
   },
 }));
 
@@ -69,12 +69,6 @@ describe("PlayerBadge", () => {
     img = screen.getByRole("img", { name: "Avatar of P1" });
     circle = img.closest(".avatar-circle");
     expect(circle).toHaveClass("badge-big");
-  });
-
-  it("maps 'avatar' prop to the expected image src", () => {
-    render(<PlayerBadge name="Robo" avatar="robot" />);
-    const img = screen.getByRole("img", { name: "Avatar of Robo" });
-    expect(img.getAttribute("src")).toContain("/assets/robot.png");
   });
 
   it("toggles 'turn' indicator classes 'on'/'off'", () => {

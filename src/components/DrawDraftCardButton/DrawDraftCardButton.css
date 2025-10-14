@@ -1,0 +1,60 @@
+.draw-draft-card-container {
+  position: absolute;
+  bottom: 43%; /* Same height as RegularDeck */
+  left: 50%; /* Moved slightly to the right */
+  transform: translateX(-50%);
+  z-index: 15;
+}
+
+.draft-cards-row {
+  display: flex;
+  gap: 8px; /* Small gap between cards */
+  justify-content: center;
+  align-items: center;
+}
+
+.draft-card {
+  width: 120px; /* Appropriate size for 3 cards side by side */
+  height: auto; /* Maintain aspect ratio */
+  border-radius: 8px;
+  border: 2px solid rgba(244, 225, 163, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  object-fit: cover;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.draft-card--enabled {
+  cursor: pointer;
+  opacity: 1;
+  border-color: rgba(244, 225, 163, 0.6);
+}
+
+.draft-card--enabled:hover {
+  transform: translateY(-8px) scale(1.05);
+  border-color: #f4e1a3;
+  box-shadow: 0 8px 20px rgba(244, 225, 163, 0.5);
+}
+
+.draft-card--disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  filter: grayscale(0.4);
+  border-color: rgba(244, 225, 163, 0.2);
+}
+
+.draft-card-error {
+  position: absolute;
+  top: -45px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ff6b6b;
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.8);
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  border: 1px solid #ff6b6b;
+}
