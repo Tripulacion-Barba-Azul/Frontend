@@ -3,6 +3,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import Lobby from "../Lobby/Lobby";
 import SyncOrchestrator from "../Sync/SyncOrchestrator";
 import GameEndScreen from "../GameEndScreen/GameEndSreen";
+import Notifier from "../Notifier/Notifier";
 
 export default function GameScreen() {
   const { gameId } = useParams();
@@ -108,6 +109,12 @@ export default function GameScreen() {
           refreshTrigger={refreshLobby}
         />
       )}
+      
+      <Notifier
+        publicData={publicData}
+        actualPlayerId={parseInt(playerId)} 
+        wsRef={wsRef.current}
+      />
 
       <GameEndScreen websocket={wsRef.current} />
     </>
@@ -116,56 +123,60 @@ export default function GameScreen() {
 
 // event: "privateUpdate"
 // payload:  {
-// 	        cards: [{
-//           		id: int
-//           		name: string
-//           		type: enum(string)
+//          cards: [{
+//              id: int
+//              name: string
+//              type: enum(string)
 //           }]
-// 	        secrets: [{
-// 		          id: int
-// 		          reveled: bool
-// 		          name: String <NOT NULL>
+//          secrets: [{
+//              id: int
+//              reveled: bool
+//              name: String <NOT NULL>
 //           }]
-// 	        role: enum(string) # "murderer" | "accomplice" | "detective"
-// 	        ally: {
-// 		          id: int
-// 		          role: enum(String) # "murderer" | "accomplice"
+//          role: enum(string) # "murderer" | "accomplice" | "detective"
+//          ally: {
+//              id: int
+//              role: enum(String) # "murderer" | "accomplice"
 //               } | null
 // }
 
+
 // event: "publicUpdate"
-// payload:	{
-//         	actionStatus: enum(string) # ”blocked” | “unblocked”
-//         	gameStatus: enum(string) # “waiting” | “inProgress” | “finished”
-//         	regularDeckCount: int
-//         	discardPileTop: {
-//         			id: int
-//         			name: String
+// payload: {
+//          actionStatus: enum(string) # ”blocked” | “unblocked”
+//          gameStatus: enum(string) # “waiting” | “inProgress” | “finished”
+//          regularDeckCount: int
+//          discardPileTop: {
+//              id: int
+//              name: String
 //           }
-//         	draftCards: [{
-//         			id: int
-//         			name: String
+//          draftCards: [{
+//              id: int
+//              name: String
 //           }]
-//         	discardPileCount: int
+//          discardPileCount: int
 //           players: [{
-//         	    id: int
-//         	    name: String
-//         	    avatar: int
-//         	    turnOrder: int
-//         	    turnStatus: enum(string) # “waiting” | “playing” | “discarding” | “discardingOpt” | “Drawing”
-//         	    cardCount: int
-//         	    secrets: [{
-//         		      id: int
-//         		      revealed: bool
-//         		      name: String #default null
+//              id: int
+//              name: String
+//              avatar: int
+//              socialDisgrace: bool
+//              turnOrder: int
+//              turnStatus: enum(string) # “waiting” | “playing” | “discarding” | “discardingOpt”						“drawing”
+//              cardCount: int
+//              secrets: [{
+//                  id: int
+//                  revealed: bool
+//                  name: String #default null
 //               }]
-//         	    sets: [{
-//         			    setName: enum(string)
-//         			    cards: [{
-//         			        id: int
-//         			        name: enum(string)
+//              sets: [{
+//			   setId: int
+//                  setName: enum(string)
+//                  cards: [{
+//                      id: int
+//                      name: enum(string)
 //                   }]
 //               }]
 //           }]
 //       }
+
 

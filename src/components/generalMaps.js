@@ -42,4 +42,5 @@ export const SETS_MAP = {
   "Lady Eileen Brent": "/Icons/seticons_brent.png",
   "Tommy Beresford": "/Icons/seticons_beresford.png",
   "Tuppence Beresford": "/Icons/seticons_beresford.png",
+  "The Beresfords": "/Icons/seticons_beresford.png",
 }

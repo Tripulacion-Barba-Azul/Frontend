@@ -1,5 +1,6 @@
 import PlayerBadge from "./PlayerBadge/PlayerBadge.jsx";
 import { buildSeatedPlayersFromOrders } from "./Seats/seatsLogic.js";
+import Instructions from "../Instructions/Instructions.jsx";
 
 /**
  * Input:
@@ -68,6 +69,9 @@ export default function Board({
         }}
         className="w-full h-screen bg-black"
       ></div>
+
+      {/* Instructions */}
+      <Instructions mode="game" />
 
       {/* Foreground: badges */}
       <div className="absolute inset-0 z-10 pointer-events-auto">
