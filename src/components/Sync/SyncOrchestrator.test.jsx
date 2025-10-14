@@ -3,13 +3,16 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, cleanup } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
+// Capture last props passed to each child
 let lastBoardProps = null;
 let lastDeckProps = null;
 let lastDiscardProps = null;
 let lastOwnCardsProps = null;
 let lastViewMyCardsProps = null;
 let lastViewMySecretsProps = null;
+let lastDrawDraftProps = null;
 
+// Component mocks
 const BoardMock = vi.fn((props) => {
   lastBoardProps = props;
   return <div data-testid="BoardMock" />;
@@ -34,7 +37,12 @@ const ViewMySecretsMock = vi.fn((props) => {
   lastViewMySecretsProps = props;
   return <div data-testid="ViewMySecretsMock" />;
 });
+const DrawDraftCardButtonMock = vi.fn((props) => {
+  lastDrawDraftProps = props;
+  return <div data-testid="DrawDraftCardButtonMock" />;
+});
 
+// Wire mocks to the same import paths used by SyncOrchestrator.jsx
 vi.mock("../Board/Board.jsx", () => ({ default: (p) => BoardMock(p) }));
 vi.mock("../RegularDeck/RegularDeck.jsx", () => ({
   default: (p) => RegularDeckMock(p),
@@ -51,9 +59,13 @@ vi.mock("../ViewMyCards/ViewMyCards.jsx", () => ({
 vi.mock("../ViewMySecrets/ViewMySecrets.jsx", () => ({
   default: (p) => ViewMySecretsMock(p),
 }));
+vi.mock("../DrawDraftCardButton/DrawDraftCardButton.jsx", () => ({
+  default: (p) => DrawDraftCardButtonMock(p),
+}));
 
 import SyncOrchestrator from "./SyncOrchestrator.jsx";
 
+// --- Test data helpers
 function makePublicPlayers() {
   return [
     {
@@ -98,7 +110,7 @@ function makePublicData() {
     gameStatus: "inProgress",
     regularDeckCount: 10,
     discardPileTop: { id: "C-3", name: "instant_notsofast" },
-    draftCards: [],
+    draftCards: [], // starts empty
     discardPileCount: 2,
     players: makePublicPlayers(),
   };
@@ -116,17 +128,19 @@ function makePrivateData() {
 beforeEach(() => {
   cleanup();
   lastBoardProps = lastDeckProps = lastDiscardProps = lastOwnCardsProps = null;
-  lastViewMyCardsProps = lastViewMySecretsProps = null;
+  lastViewMyCardsProps = lastViewMySecretsProps = lastDrawDraftProps = null;
+
   BoardMock.mockClear();
   RegularDeckMock.mockClear();
   DiscardPileMock.mockClear();
   OwnCardsMock.mockClear();
   ViewMyCardsMock.mockClear();
   ViewMySecretsMock.mockClear();
+  DrawDraftCardButtonMock.mockClear();
 });
 
-describe("SyncOrchestrator (new props: publicData/privateData)", () => {
-  it("passes correct props to all children and derives OwnCards.turnStatus from public players", () => {
+describe("SyncOrchestrator (children props & draft draw button)", () => {
+  it("passes correct props to all children including DrawDraftCardButton, deriving turnStatus from public players", () => {
     const CURRENT_PLAYER_ID = 1;
     const publicData = makePublicData();
     const privateData = makePrivateData();
@@ -139,6 +153,7 @@ describe("SyncOrchestrator (new props: publicData/privateData)", () => {
       />
     );
 
+    // Board
     expect(BoardMock).toHaveBeenCalledTimes(1);
     expect(Array.isArray(lastBoardProps.players)).toBe(true);
     expect(lastBoardProps.players).toHaveLength(3);
@@ -146,25 +161,34 @@ describe("SyncOrchestrator (new props: publicData/privateData)", () => {
     expect(lastBoardProps.currentPlayerRole).toBe(privateData.role);
     expect(lastBoardProps.currentPlayerAlly).toBe(privateData.ally);
 
+    // Regular deck
     expect(RegularDeckMock).toHaveBeenCalledTimes(1);
     expect(lastDeckProps.number).toBe(publicData.regularDeckCount);
 
+    // Discard pile
     expect(DiscardPileMock).toHaveBeenCalledTimes(1);
     expect(lastDiscardProps.number).toBe(publicData.discardPileCount);
     expect(lastDiscardProps.card).toEqual(publicData.discardPileTop);
 
+    // Own cards (turnStatus derived from CURRENT_PLAYER_ID in public players)
     expect(OwnCardsMock).toHaveBeenCalledTimes(1);
     expect(lastOwnCardsProps.cards).toEqual(privateData.cards);
     expect(lastOwnCardsProps.turnStatus).toBe("playing");
 
+    // Quick views
     expect(ViewMyCardsMock).toHaveBeenCalledTimes(1);
     expect(lastViewMyCardsProps.cards).toEqual(privateData.cards);
 
     expect(ViewMySecretsMock).toHaveBeenCalledTimes(1);
     expect(lastViewMySecretsProps.secrets).toEqual(privateData.secrets);
+
+    // DrawDraftCardButton (new)
+    expect(DrawDraftCardButtonMock).toHaveBeenCalledTimes(1);
+    expect(lastDrawDraftProps.cards).toEqual(publicData.draftCards); // empty at start
+    expect(lastDrawDraftProps.turnStatus).toBe("playing");
   });
 
-  it("updates children when upstream props change (smoke)", () => {
+  it("updates children (including DrawDraftCardButton) when upstream props change", () => {
     const CURRENT_PLAYER_ID = 1;
 
     const initialPublic = makePublicData();
@@ -183,6 +207,10 @@ describe("SyncOrchestrator (new props: publicData/privateData)", () => {
       regularDeckCount: 9,
       discardPileCount: 3,
       discardPileTop: { id: "C-99", name: "event_cardsonthetable" },
+      draftCards: [
+        { id: "D-1", name: "instant_notsofast" },
+        { id: "D-2", name: "event_cardsonthetable" },
+      ],
       players: initialPublic.players.map((p) =>
         p.id === CURRENT_PLAYER_ID ? { ...p, turnStatus: "discarding" } : p
       ),
@@ -207,13 +235,16 @@ describe("SyncOrchestrator (new props: publicData/privateData)", () => {
       />
     );
 
+    // Called twice after rerender
     expect(BoardMock).toHaveBeenCalledTimes(2);
     expect(RegularDeckMock).toHaveBeenCalledTimes(2);
     expect(DiscardPileMock).toHaveBeenCalledTimes(2);
     expect(OwnCardsMock).toHaveBeenCalledTimes(2);
     expect(ViewMyCardsMock).toHaveBeenCalledTimes(2);
     expect(ViewMySecretsMock).toHaveBeenCalledTimes(2);
+    expect(DrawDraftCardButtonMock).toHaveBeenCalledTimes(2);
 
+    // Deck & discard updates
     expect(lastDeckProps.number).toBe(9);
     expect(lastDiscardProps.number).toBe(3);
     expect(lastDiscardProps.card).toEqual({
@@ -221,22 +252,30 @@ describe("SyncOrchestrator (new props: publicData/privateData)", () => {
       name: "event_cardsonthetable",
     });
 
+    // Board role/ally
     expect(lastBoardProps.currentPlayerRole).toBe("murderer");
     expect(lastBoardProps.currentPlayerAlly).toEqual({
       id: 2,
       role: "accomplice",
     });
 
+    // OwnCards & Quick views data
     expect(lastOwnCardsProps.cards.map((c) => c.id).sort()).toEqual(
       ["C-2", "C-77"].sort()
     );
     expect(lastOwnCardsProps.turnStatus).toBe("discarding");
-
     expect(lastViewMyCardsProps.cards.map((c) => c.id).sort()).toEqual(
       ["C-2", "C-77"].sort()
     );
     expect(lastViewMySecretsProps.secrets).toEqual([
       { id: 2000, name: "murderer", revealed: true },
     ]);
+
+    // DrawDraftCardButton props after update
+    expect(lastDrawDraftProps.cards).toEqual([
+      { id: "D-1", name: "instant_notsofast" },
+      { id: "D-2", name: "event_cardsonthetable" },
+    ]);
+    expect(lastDrawDraftProps.turnStatus).toBe("discarding");
   });
 });
