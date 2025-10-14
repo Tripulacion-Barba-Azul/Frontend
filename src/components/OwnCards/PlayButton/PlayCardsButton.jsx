@@ -22,24 +22,27 @@ export default function PlayCardsButton({ selectedCards = [], onPlaySuccess }) {
     setLoading(true);
 
     try {
-      const response = await fetch(`/play/${gameId}/actions/play-card`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          cards: selectedCards.map((id) => ({ cardId: id })),
-          actualPlayerID: playerId,
-        }),
-      });
+      const response = await fetch(
+        `http://localhost:8000/play/${gameId}/actions/play-card`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            playerId: playerId,
+            cards: selectedCards.map((id) => id),
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`Play failed with status ${response.status}`);
       }
 
-      if (onPlaySuccess) onPlaySuccess(); 
+      if (onPlaySuccess) onPlaySuccess();
     } catch (err) {
       console.error(err);
       setError("Failed to play cards");
-      if (onPlaySuccess) onPlaySuccess(); 
+      if (onPlaySuccess) onPlaySuccess();
     } finally {
       setLoading(false);
     }
@@ -54,7 +57,9 @@ export default function PlayCardsButton({ selectedCards = [], onPlaySuccess }) {
       >
         {loading ? "Playing..." : `Play (${selectedCards.length})`}
       </button>
-      {error && <div style={{ color: "#f4e1a3", fontSize: "12px" }}>{error}</div>}
+      {error && (
+        <div style={{ color: "#f4e1a3", fontSize: "12px" }}>{error}</div>
+      )}
     </div>
   );
 }

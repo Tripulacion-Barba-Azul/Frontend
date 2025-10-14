@@ -1,8 +1,4 @@
-import {
-  SEAT_POSITIONS,
-  SEATING_BY_COUNT,
-  RING_COLORS,
-} from "./seatsConstants";
+import { SEAT_POSITIONS, SEATING_BY_COUNT } from "./seatsConstants";
 import validatePlayersOrThrow from "./seatsValidations.js";
 
 function normalizeRole(role) {
@@ -90,21 +86,41 @@ export function buildSeatedPlayersFromOrders(
 
     // Normalize turn boolean (anything not strictly "waiting" is considered "in turn")
     const turnStatusNorm = (p.turnStatus || "").toLowerCase();
-    const isTurning = turnStatusNorm !== "waiting";
+
+    // Ringcolor logic
+    const ringColor =
+      turnStatusNorm === "playing"
+        ? "green"
+        : turnStatusNorm === "discarding"
+        ? "yellow"
+        : turnStatusNorm === "drawing"
+        ? "red"
+        : "gray";
 
     // Compute visual metadata
     const visibleRole = visibleRoleOf(p);
+
+    // Position logic
+    const position =
+      seatId === "p1"
+        ? "down"
+        : seatId === "p2"
+        ? "right"
+        : seatId === "p6"
+        ? "left"
+        : "up";
 
     return {
       id: seatId, // seat id ("p1".."p6") keeps seats stable around the board
       name: p.name,
       avatar: p.avatar,
       size: idx === 0 ? "big" : "small", // anchor is larger by convention
-      ringColor: RING_COLORS[idx % RING_COLORS.length],
+      ringColor: ringColor,
+      position: position,
       nameBgColor: resolveNameBg(visibleRole), // "red"/"orange" only if actual is hidden-team
-      turn: isTurning,
       numCards: p.cardCount ?? 0,
       secrets: Array.isArray(p.secrets) ? p.secrets : [],
+      sets: Array.isArray(p.sets) ? p.sets : [],
       style: seat.style,
       meta: {
         order: p.turnOrder,
