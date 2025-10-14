@@ -44,3 +44,12 @@ export const SETS_MAP = {
   "Tuppence Beresford": "/Icons/seticons_beresford.png",
   "The Beresfords": "/Icons/seticons_beresford.png",
 }
+
+export const AVATAR_MAP = {
+  1: "/Board/Avatars/avatar_barba-azul.png",
+  2: "/Board/Avatars/avatar_robotito.png",
+  3: "/Board/Avatars/avatar_duran.png",
+  4: "/Board/Avatars/avatar_wolovick.png",
+  5: "/Board/Avatars/avatar_penazzi.png",
+  6: "/Board/Avatars/avatar_colorado-guri.png",
+};
