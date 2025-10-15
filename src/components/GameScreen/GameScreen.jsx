@@ -7,7 +7,6 @@ import GameEndScreen from "../GameEndScreen/GameEndSreen";
 import Notifier from "../Notifier/Notifier";
 import EffectManager from "../EffectManager/EffectManager";
 
-
 export default function GameScreen() {
   const { gameId } = useParams();
   const [searchParams] = useSearchParams();
@@ -120,10 +119,9 @@ export default function GameScreen() {
         />
       )}
 
-      
       <Notifier
         publicData={publicData}
-        actualPlayerId={parseInt(playerId)} 
+        actualPlayerId={parseInt(playerId)}
         wsRef={wsRef.current}
       />
 
@@ -134,7 +132,7 @@ export default function GameScreen() {
   );
 }
 
-// event: "privateUpdate"
+// event: "privateData"
 // payload:  {
 //          cards: [{
 //              id: int
@@ -153,8 +151,7 @@ export default function GameScreen() {
 //               } | null
 // }
 
-
-// event: "publicUpdate"
+// event: "publicData"
 // payload: {
 //          actionStatus: enum(string) # ”blocked” | “unblocked”
 //          gameStatus: enum(string) # “waiting” | “inProgress” | “finished”
@@ -191,4 +188,3 @@ export default function GameScreen() {
 //               }]
 //           }]
 //       }
-

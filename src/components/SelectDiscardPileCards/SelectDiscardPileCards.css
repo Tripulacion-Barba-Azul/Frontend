@@ -73,9 +73,9 @@
 .sdp-card {
   position: relative;
   background: #2f2f2f;
-  border: 1px solid #3c3c3c;
+  border: 3px solid #3c3c3c;
   border-radius: 14px;
-  padding: 8px;
+  padding: 0px;
   cursor: pointer;
   transform: scale(1);
   transform-origin: center;
@@ -87,7 +87,7 @@
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
 }
 .sdp-card.selected {
-  border-color: #d6b16a; /* dorado */
+  border-color: #d6b16a;
   box-shadow: 0 0 0 2px rgba(214, 177, 106, 0.45) inset,
     0 10px 22px rgba(214, 177, 106, 0.18);
   transform: scale(1.08);
@@ -123,7 +123,7 @@
   font-weight: 600;
   font-size: 1.1rem; /* tamaño del botón similar a la captura */
   cursor: pointer;
-  color: #eadfc7; /* texto claro cálido */
+  color: #e6d7a6; /* texto claro cálido */
   background: rgb(163, 34, 34); /* burdeos */
   box-shadow: 0 6px 16px rgba(90, 44, 44, 0.45);
 }

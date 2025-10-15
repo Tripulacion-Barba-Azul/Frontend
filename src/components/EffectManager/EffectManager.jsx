@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
-import SelectPlayer from "../SelectPlayer";
-import SelectSet from "../SelectSet";
-import SelectSecret from "../SelectSecret";
-import SelectDiscardPileCards from "../SelectDiscardPileCards";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import SelectPlayer from "../SelectPlayer/SelectPlayer";
+import SelectSet from "../SelectSet/SelectSet";
+import SelectSecret from "../SelectSecret/SelectSecret";
+import SelectDiscardPileCards from "../SelectDiscardPileCards/SelectDiscardPileCards";
 
 export default function EffectManager({
   publicData,
@@ -24,6 +24,9 @@ export default function EffectManager({
 
   // Back navigation flag (children can request going one step back)
   const [backRequested, setBackRequested] = useState(false);
+
+  // Back navigation request handler
+  const requestBack = useCallback(() => setBackRequested(true), []);
 
   // Small reset helper to clear the flow state
   const resetFlow = () => {
@@ -146,26 +149,15 @@ export default function EffectManager({
   );
 
   // Resolve hidden / revealed secrets depending on target and ownership
-  const hiddenSecretsOfTarget = useMemo(() => {
+  const secretsOfTarget = useMemo(() => {
     if (!selPlayer1) return [];
     const isMe = String(selPlayer1) === String(actualPlayerId);
     if (isMe) return privateData?.secrets ?? [];
     const target = playersAll.find((p) => String(p.id) === String(selPlayer1));
-    return (target?.secrets ?? []).filter((s) => s?.revealed === false);
+    return target?.secrets ?? [];
   }, [selPlayer1, actualPlayerId, privateData, playersAll]);
 
-  const revealedSecretsOfTarget = useMemo(() => {
-    if (!selPlayer1) return [];
-    const isMe = String(selPlayer1) === String(actualPlayerId);
-    if (isMe) return privateData?.secrets ?? [];
-    const target = playersAll.find((p) => String(p.id) === String(selPlayer1));
-    return (target?.secrets ?? []).filter((s) => s?.revealed === true);
-  }, [selPlayer1, actualPlayerId, privateData, playersAll]);
-
-  const ownHiddenSecrets = useMemo(
-    () => (privateData?.secrets ?? []).filter((s) => s?.revealed === false),
-    [privateData]
-  );
+  const ownSecrets = useMemo(() => privateData?.secrets ?? [], [privateData]);
 
   const discardTopFive = useMemo(() => payload?.cards ?? [], [payload]);
 
@@ -175,39 +167,49 @@ export default function EffectManager({
 
     // --- Back navigation handling (child requested goBack) ---
     if (backRequested) {
-      // decide where to go back from each step/event
-      if (step === "selectSecret") {
-        // For these events, going back from "selectSecret" returns to "selectPlayer"
-        if (
-          currentEvent === "revealSecret" ||
+      // From selectSet -> back to selectPlayer (stealSet)
+      if (step === "selectSet" && currentEvent === "stealSet") {
+        setSelSet(null); // clear current step selection
+        setSelPlayer1(null); // clear the trigger of forward from "selectPlayer"
+        setBackRequested(false);
+        setStep("selectPlayer");
+        return;
+      }
+
+      // From selectSecret -> back to selectPlayer
+      if (
+        step === "selectSecret" &&
+        (currentEvent === "revealSecret" ||
           currentEvent === "satterthwaiteWild" ||
           currentEvent === "andThenThereWasOneMore" ||
-          currentEvent === "hideSecret"
-        ) {
-          setSelSecret(null);
-          setBackRequested(false);
-          setStep("selectPlayer");
-          return; // stop further forward logic in this tick
-        }
-        // For "revealOwnSecret" there is no previous "selectPlayer" (we started at secrets),
-        // so just clear the flag and stay (or you could resetFlow if desired).
-        if (currentEvent === "revealOwnSecret") {
-          setBackRequested(false);
-          return;
-        }
+          currentEvent === "hideSecret")
+      ) {
+        setSelSecret(null); // clear current step selection
+        setSelPlayer1(null); // prevent auto-forward from "selectPlayer"
+        setBackRequested(false);
+        setStep("selectPlayer");
+        return;
       }
 
-      if (step === "selectSet") {
-        // For stealSet, going back from "selectSet" returns to "selectPlayer"
-        if (currentEvent === "stealSet") {
-          setSelSet(null);
-          setBackRequested(false);
-          setStep("selectPlayer");
-          return;
-        }
+      // From selectPlayer2 -> back to selectSecret (andThenThereWasOneMore)
+      if (
+        step === "selectPlayer2" &&
+        currentEvent === "andThenThereWasOneMore"
+      ) {
+        setSelPlayer2(null); // clear current step selection
+        setSelSecret(null); // prevent auto-forward from "selectSecret"
+        setBackRequested(false);
+        setStep("selectSecret");
+        return;
       }
 
-      // If none matched, just clear the flag
+      // From selectSecret in revealOwnSecret: nothing to go back to
+      if (step === "selectSecret" && currentEvent === "revealOwnSecret") {
+        setBackRequested(false);
+        return;
+      }
+
+      // Fallback
       setBackRequested(false);
     }
 
@@ -404,26 +406,35 @@ export default function EffectManager({
     }
   }, [currentEvent, playersAll, playersExceptMe]);
 
+  const revealedForThisStep = useMemo(() => {
+    switch (currentEvent) {
+      case "andThenThereWasOneMore": // needs revealed secret
+      case "hideSecret": // needs revealed secret
+        return true;
+      case "satterthwaiteWild": // needs hidden secret
+      case "revealSecret": // needs hidden secret
+      case "revealOwnSecret": // needs hidden secret
+        return false;
+      default:
+        return undefined; // not used in other steps
+    }
+  }, [currentEvent]);
+
   const secretsForThisStep = useMemo(() => {
     switch (currentEvent) {
       case "andThenThereWasOneMore":
-        return revealedSecretsOfTarget;
+        return secretsOfTarget;
       case "satterthwaiteWild":
       case "revealSecret":
-        return hiddenSecretsOfTarget;
+        return secretsOfTarget;
       case "revealOwnSecret":
-        return ownHiddenSecrets;
+        return ownSecrets;
       case "hideSecret":
-        return revealedSecretsOfTarget;
+        return secretsOfTarget;
       default:
         return [];
     }
-  }, [
-    currentEvent,
-    revealedSecretsOfTarget,
-    hiddenSecretsOfTarget,
-    ownHiddenSecrets,
-  ]);
+  }, [currentEvent, secretsOfTarget, ownSecrets]);
 
   const setsForThisStep = setsOfPlayer1;
   const discardForThisStep = discardTopFive;
@@ -454,8 +465,9 @@ export default function EffectManager({
           actualPlayerId={actualPlayerId}
           secrets={secretsForThisStep}
           playerId={selPlayer1 ?? actualPlayerId}
-          selectedSecretId={setSelSecret} // child must call with chosen id
-          goBack={setBackRequested} // child may call goBack(true) to go back one step
+          revealed={revealedForThisStep}
+          selectedSecretId={setSelSecret}
+          goBack={currentEvent === "revealOwnSecret" ? null : requestBack}
           text={promptText}
         />
       )}
@@ -465,7 +477,7 @@ export default function EffectManager({
           actualPlayerId={actualPlayerId}
           sets={setsForThisStep}
           selectedSetId={setSelSet} // child must call with chosen id
-          goBack={setBackRequested} // child may call goBack(true) to go back one step
+          goBack={requestBack} // child may call goBack(true) to go back one step
           text={promptText}
         />
       )}

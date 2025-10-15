@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { AVATAR_MAP } from "../Board/PlayerBadge/playerBadgeConstants";
-import "./SelectPlayer.css"
+import { AVATAR_MAP } from "../generalMaps";
+import "./SelectPlayer.css";
 
 export default function SelectPlayer({
   actualPlayerId,

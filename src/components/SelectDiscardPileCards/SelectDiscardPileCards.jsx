@@ -8,6 +8,7 @@ export default function SelectDiscardPileCards({
   selectedCardId,
   text = "Select a card",
 }) {
+  console.log("SelectDiscardPileCards render", { cards, text });
   // Always-open modal
   const [pickedId, setPickedId] = useState(null);
 
