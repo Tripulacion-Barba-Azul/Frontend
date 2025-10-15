@@ -15,7 +15,7 @@
 /* Move title higher */
 .title-image {
   width: 100%;
-  max-width: 900px;
+  max-width: 750px;
   margin-bottom: -100px; /* space between title and characters */
   transform: translateY(-6vh); /* pushes title up relative to screen */
 }
@@ -23,7 +23,7 @@
 /* Center characters vertically overall */
 .characters-image {
   width: 100%;
-  max-width: 550px;
+  max-width: 450px;
   position: relative;
   z-index: 1;
   filter: brightness(0.95);

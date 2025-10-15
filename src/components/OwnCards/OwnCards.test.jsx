@@ -131,7 +131,7 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     expect(sameImg).toHaveClass("owncards-card--disabled");
   });
 
-  it("renders DiscardButton in 'discarding' and DrawRegularCardButton in 'drawing'", () => {
+  it("renders DiscardButton in 'discarding'", () => {
     const cards = TEST_CARDS.slice(0, 2);
 
     // discarding -> DiscardButton visible (button text includes count)
@@ -140,9 +140,6 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
       screen.getByRole("button", { name: /Discard \(\d+\)/i })
     ).toBeInTheDocument();
 
-    // drawing -> DrawRegularCardButton visible (has data-testid)
-    rerender(<OwnCards cards={cards} turnStatus="drawing" />);
-    expect(screen.getByTestId("draw-card-button")).toBeInTheDocument();
   });
 
   it("in 'playing' shows NoActionButton when nothing is selected and 'Play (n)' when there is a selection", () => {

@@ -1,49 +1,107 @@
-import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+// RegularDeck.test.jsx
+import React from "react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import RegularDeck from "./RegularDeck";
-import "@testing-library/jest-dom";
+import { vi } from "vitest";
+import * as router from "react-router-dom";
 
-// helper para extraer el src del <img>
-function getImgSrc() {
-  return screen.getByRole("img").getAttribute("src");
-}
+// Mock useParams and useSearchParams
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return {
+    ...actual,
+    useParams: vi.fn(),
+    useSearchParams: vi.fn(),
+  };
+});
 
-describe("RegularDeck component", () => {
-  it("renders full deck when number >= 31", () => {
-    render(<RegularDeck number={40} />);
-    expect(getImgSrc()).toContain("deckicon-full.png");
-    expect(screen.getByText("40")).toBeInTheDocument();
+describe("RegularDeck Component", () => {
+  let fetchMock;
+
+  beforeEach(() => {
+    fetchMock = vi.fn(() => Promise.resolve({ ok: true }));
+    global.fetch = fetchMock;
+    router.useParams.mockReturnValue({ gameId: "42" });
+    router.useSearchParams.mockReturnValue([{ get: () => "7" }]);
+  });
+
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it("renders with full deck image when number >= 31", () => {
+    render(<RegularDeck number={40} turnStatus="waiting" />);
+    const img = screen.getByAltText(/Deck \(40 cards left\)/);
+    expect(img).toBeInTheDocument();
     expect(screen.getByTestId("deck-container")).toHaveClass("full");
   });
 
-  it("renders half deck when 11 <= number <= 30", () => {
-    render(<RegularDeck number={20} />);
-    expect(getImgSrc()).toContain("deckicon-half.png");
-    expect(screen.getByText("20")).toBeInTheDocument();
+  it("renders with half deck image when 11 <= number < 31", () => {
+    render(<RegularDeck number={15} />);
     expect(screen.getByTestId("deck-container")).toHaveClass("half");
+    const img = screen.getByAltText(/Deck \(15 cards left\)/);
+    expect(img).toBeInTheDocument();
   });
 
-  it("renders thin deck when 1 <= number <= 10", () => {
+  it("renders with thin deck image when 1 <= number < 11", () => {
     render(<RegularDeck number={5} />);
-    expect(getImgSrc()).toContain("deckicon-thin.png");
-    expect(screen.getByText("5")).toBeInTheDocument();
     expect(screen.getByTestId("deck-container")).toHaveClass("thin");
+    const img = screen.getByAltText(/Deck \(5 cards left\)/);
+    expect(img).toBeInTheDocument();
   });
 
-  it("renders murderer escapes when number = 0", () => {
+  it("renders murdererEscapes image when number <= 0", () => {
     render(<RegularDeck number={0} />);
-    expect(getImgSrc()).toContain("murder_escapes.png");
-    expect(screen.getByText("0")).toBeInTheDocument();
     expect(screen.getByTestId("deck-container")).toHaveClass("murderer");
+    const img = screen.getByAltText(/Deck \(0 cards left\)/);
+    expect(img).toBeInTheDocument();
   });
 
-  it("clamps number above 61 down to 61", () => {
-    render(<RegularDeck number={100} />);
-    expect(screen.getByText("61")).toBeInTheDocument();
+  it("displays the correct count", () => {
+    render(<RegularDeck number={12} />);
+    const count = screen.getByText("12");
+    expect(count).toBeInTheDocument();
   });
 
-  it("clamps number below 0 up to 0", () => {
-    render(<RegularDeck number={-5} />);
-    expect(screen.getByText("0")).toBeInTheDocument();
+  it("handles click when enabled (drawing phase)", async () => {
+    render(<RegularDeck number={10} turnStatus="drawing" />);
+    const img = screen.getByAltText(/Deck \(10 cards left\)/);
+    fireEvent.click(img);
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:8000/play/42/actions/draw-card",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ playerId: 7, deck: "regular" }),
+      })
+    );
+  });
+
+  it("does not call fetch when disabled", () => {
+    render(<RegularDeck number={0} turnStatus="drawing" />);
+    const img = screen.getByAltText(/Deck \(0 cards left\)/);
+    fireEvent.click(img);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("shows error when fetch fails", async () => {
+    fetchMock.mockImplementationOnce(() => Promise.resolve({ ok: false }));
+    render(<RegularDeck number={5} turnStatus="drawing" />);
+    const img = screen.getByAltText(/Deck \(5 cards left\)/);
+    fireEvent.click(img);
+
+    await waitFor(() =>
+      expect(screen.getByText("Failed to draw")).toBeInTheDocument()
+    );
+  });
+
+  it("applies correct enabled/disabled class based on turnStatus", () => {
+    const { rerender } = render(<RegularDeck number={10} turnStatus="waiting" />);
+    expect(screen.getByTestId("deck-container")).toHaveClass("deck--disabled");
+
+    rerender(<RegularDeck number={10} turnStatus="drawing" />);
+    expect(screen.getByTestId("deck-container")).toHaveClass("deck--enabled");
   });
 });

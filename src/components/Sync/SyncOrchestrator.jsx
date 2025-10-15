@@ -28,15 +28,8 @@ export default function SyncOrchestrator({
 
       <div className="absolute inset-0">
         {/* Regular Deck */}
-        <div
-          className="absolute"
-          style={{
-            bottom: "40%",
-            left: "32.2%",
-            transform: "translateX(-50%)",
-          }}
-        >
-          <RegularDeck number={publicData.regularDeckCount} />
+        <div className="absolute inset-0">
+          <RegularDeck number={publicData.regularDeckCount} turnStatus={turnStatus} />
         </div>
 
         {/* Discard Pile */}
