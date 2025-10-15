@@ -23,12 +23,11 @@ describe('SelectSecret Component', () => {
     actualPlayerId: 1,
     secrets: [
       { id: 1, revealed: true, name: 'You are the murderer' },
-      { id: 2, revealed: false, name: null },
+      { id: 2, revealed: false, name: 'Prankster' },
       { id: 3, revealed: true, name: 'You are the acomplice' },
     ],
-    revealed: true,
     playerId: 2,
-    text: 'Select a secret to hide',
+    text: 'Select a secret card',
     selectedSecretId: vi.fn(),
     goBack: vi.fn(),
   };
@@ -36,90 +35,87 @@ describe('SelectSecret Component', () => {
   it('renders the modal with correct title', () => {
     render(<SelectSecret {...defaultProps} />);
     
-    expect(screen.getByText('Select a secret to hide')).toBeInTheDocument();
+    expect(screen.getByText('Select a secret card')).toBeInTheDocument();
   });
 
-  it('displays player information correctly', () => {
+  it('renders Go Back and Confirm buttons', () => {
     render(<SelectSecret {...defaultProps} />);
     
-    // Component doesn't display these texts, so removing invalid assertions
+    expect(screen.getByText('Go Back')).toBeInTheDocument();
+    expect(screen.getByText('Confirm')).toBeInTheDocument();
   });
 
-  it('filters secrets based on revealed parameter', () => {
+  it('displays all secrets without filtering', () => {
     render(<SelectSecret {...defaultProps} />);
     
-    // Should show revealed secrets (ids 1 and 3) 
-    // Count the actual secret cards, not individual images
+    // Should show all secrets (no filtering by revealed parameter)
     const secretCards = document.querySelectorAll('.selectable-secret-card');
     
-    expect(secretCards).toHaveLength(2);
+    expect(secretCards).toHaveLength(3);
   });
 
-  it('shows hidden secrets when revealed is false', () => {
-    const propsForHidden = {
-      ...defaultProps,
-      revealed: false,
-      text: 'Select a secret to reveal',
-    };
+  it('handles card selection correctly', () => {
+    render(<SelectSecret {...defaultProps} />);
     
-    render(<SelectSecret {...propsForHidden} />);
+    const secretCard = document.querySelector('.selectable-secret-card');
+    fireEvent.click(secretCard);
     
-    // Should show only the hidden secret (id 2)
-    // Count the actual secret cards, not individual images
-    const secretCards = document.querySelectorAll('.selectable-secret-card');
-    
-    expect(secretCards).toHaveLength(1);
+    // Should add selected class
+    expect(secretCard).toHaveClass('selected');
   });
 
-  it('calls selectedSecretId and goBack when a card is clicked', async () => {
+  it('calls selectedSecretId when confirm button is clicked', async () => {
     vi.useFakeTimers();
     
     render(<SelectSecret {...defaultProps} />);
     
-    // Click on the first secret card directly
+    // First select a card
     const secretCard = document.querySelector('.selectable-secret-card');
     fireEvent.click(secretCard);
     
-    // Fast-forward time to simulate animation completion
-    vi.advanceTimersByTime(700); // Add a bit more time
+    // Then click confirm
+    const confirmButton = screen.getByText('Confirm');
+    fireEvent.click(confirmButton);
     
-    // Check that the functions are called after timeout
+    // Fast-forward time to simulate animation completion
+    vi.advanceTimersByTime(700);
+    
+    // Check that selectedSecretId is called with the card ID
     expect(defaultProps.selectedSecretId).toHaveBeenCalledWith(1);
-    expect(defaultProps.goBack).toHaveBeenCalled();
     
     vi.useRealTimers();
-  }, 10000); // Increase test timeout
+  });
 
-  it('closes modal when overlay is clicked', () => {
+  it('calls goBack when Go Back button is clicked', () => {
     render(<SelectSecret {...defaultProps} />);
     
-    const overlay = document.querySelector('.overlay');
-    fireEvent.click(overlay);
+    const goBackButton = screen.getByText('Go Back');
+    fireEvent.click(goBackButton);
     
     expect(defaultProps.goBack).toHaveBeenCalled();
   });
 
-  it('closes modal when X button is clicked', () => {
+  it('disables confirm button when no card is selected', () => {
     render(<SelectSecret {...defaultProps} />);
     
-    const closeButton = screen.getByText('X');
-    fireEvent.click(closeButton);
-    
-    expect(defaultProps.goBack).toHaveBeenCalled();
+    const confirmButton = screen.getByText('Confirm');
+    expect(confirmButton).toBeDisabled();
   });
 
-  it('shows no secrets message when no matching secrets exist', () => {
-    const propsWithNoSecrets = {
-      ...defaultProps,
-      secrets: [
-        { id: 1, revealed: false, name: null },
-      ],
-      revealed: true, // Looking for revealed secrets but none exist
-    };
+  it('enables confirm button when card is selected', () => {
+    render(<SelectSecret {...defaultProps} />);
     
-    render(<SelectSecret {...propsWithNoSecrets} />);
+    const secretCard = document.querySelector('.selectable-secret-card');
+    const confirmButton = screen.getByText('Confirm');
     
-    expect(screen.getByText('No secrets available to hide!')).toBeInTheDocument();
+    // Initially disabled
+    expect(confirmButton).toBeDisabled();
+    
+    // Click card to select it
+    fireEvent.click(secretCard);
+    
+    // Should be enabled now
+    expect(confirmButton).not.toBeDisabled();
   });
 
   it('handles empty secrets array', () => {
@@ -130,7 +126,7 @@ describe('SelectSecret Component', () => {
     
     render(<SelectSecret {...propsWithEmptySecrets} />);
     
-    expect(screen.getByText('No secrets available to hide!')).toBeInTheDocument();
+    expect(screen.getByText('No secrets available!')).toBeInTheDocument();
   });
 
   it('handles null secrets', () => {
@@ -141,20 +137,21 @@ describe('SelectSecret Component', () => {
     
     render(<SelectSecret {...propsWithNullSecrets} />);
     
-    expect(screen.getByText('No secrets available to hide!')).toBeInTheDocument();
+    expect(screen.getByText('No secrets available!')).toBeInTheDocument();
   });
 
-  it('applies correct CSS classes for card selection and animation', () => {
+  it('applies correct CSS classes for card selection', () => {
     render(<SelectSecret {...defaultProps} />);
     
     const secretCard = document.querySelector('.selectable-secret-card');
     expect(secretCard).toBeInTheDocument();
     
-    // Click the card to trigger selection and animation
+    // Click the card to trigger selection (but not animation yet)
     fireEvent.click(secretCard);
     
     expect(secretCard).toHaveClass('selected');
-    expect(secretCard.querySelector('.card-flip-container')).toHaveClass('flipping');
+    // Animation only starts when confirm is clicked
+    expect(secretCard.querySelector('.card-flip-container')).not.toHaveClass('flipping');
   });
 
   it('displays correct secret images based on revealed status and name', () => {
@@ -172,21 +169,23 @@ describe('SelectSecret Component', () => {
     expect(accompliceSecret).toBeInTheDocument();
   });
 
-  it('updates text correctly for reveal vs hide actions', () => {
-    // Test hide action
+  it('triggers animation when confirm button is clicked', () => {
+    vi.useFakeTimers();
+    
     render(<SelectSecret {...defaultProps} />);
-    expect(screen.getByText('Select a secret to hide')).toBeInTheDocument();
     
-    // Re-render for reveal action
-    const revealProps = {
-      ...defaultProps,
-      revealed: false,
-      text: 'Select a secret to reveal',
-    };
+    const secretCard = document.querySelector('.selectable-secret-card');
+    const confirmButton = screen.getByText('Confirm');
     
-    const { rerender } = render(<SelectSecret {...defaultProps} />);
-    rerender(<SelectSecret {...revealProps} />);
+    // Select a card first
+    fireEvent.click(secretCard);
     
-    expect(screen.getByText('Select a secret to reveal')).toBeInTheDocument();
+    // Click confirm to trigger animation
+    fireEvent.click(confirmButton);
+    
+    // Check that animation class is applied
+    expect(secretCard.querySelector('.card-flip-container')).toHaveClass('flipping');
+    
+    vi.useRealTimers();
   });
 });
