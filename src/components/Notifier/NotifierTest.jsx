@@ -267,6 +267,16 @@ export default function NotifierTest() {
         selectedPlayerId: 1 // Alice
       }
     },
+    delayTheMurderersEscape: {
+      event: "notifierDelayTheMurderersEscape",
+      payload: {
+        playerID: 2, // Bob uses Delay the Murderer's Escape
+      }
+    },
+    noEffect: {
+      event: "notifierNoEffect",
+      payload: {} // No payload needed for noEffect
+    },
     cardsPlayedSet: {
       event: "cardsPlayed",
       payload: {
@@ -413,6 +423,11 @@ export default function NotifierTest() {
           <li>Check the message log to see all sent events</li>
           <li><strong>All events now use valid player and secret IDs</strong></li>
         </ol>
+        <p><strong>New Events Added:</strong></p>
+        <ul>
+          <li><strong>delayTheMurderersEscape</strong> - Shows when a player uses "Delay the Murderer's Escape"</li>
+          <li><strong>noEffect</strong> - Shows "Nothing happened" notification</li>
+        </ul>
         <p><strong>Note:</strong> The Notifier overlay will appear above this test panel when an event is triggered.</p>
       </div>
     </div>
