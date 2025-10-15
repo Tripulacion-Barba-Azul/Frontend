@@ -9,7 +9,7 @@ export default function AvatarPicker({
   ids,
   selectedId,
   title = "Choose your avatar",
-}) {
+}) {  
   if (!isOpen) return null;
 
   const handleBackdrop = (e) => {
