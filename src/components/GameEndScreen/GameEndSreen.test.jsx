@@ -66,7 +66,7 @@ describe("GameEndScreen", () => {
     // Simular mensaje de fin de partida
     const gameEndMessage = {
       data: JSON.stringify({
-        event: "matchEnded",
+        event: "gameEnded",
         players: [
           { Name: "Player1", Role: "Detective" },
           { Name: "Player2", Role: "Detective" },
@@ -89,7 +89,7 @@ describe("GameEndScreen", () => {
     const messageCallback = mockWebSocket.addEventListener.mock.calls[0][1];
     const gameEndMessage = {
       data: JSON.stringify({
-        event: "matchEnded",
+        event: "gameEnded",
         players: [
           { Name: "Alice", Role: "Detective" },
           { Name: "Bob", Role: "Detective" },
@@ -115,7 +115,7 @@ describe("GameEndScreen", () => {
     const messageCallback = mockWebSocket.addEventListener.mock.calls[0][1];
     const gameEndMessage = {
       data: JSON.stringify({
-        event: "matchEnded",
+        event: "gameEnded",
         players: [{ Name: "Player1", Role: "Murderer" }],
       }),
     };
@@ -135,7 +135,7 @@ describe("GameEndScreen", () => {
     const messageCallback = mockWebSocket.addEventListener.mock.calls[0][1];
     const gameEndMessage = {
       data: JSON.stringify({
-        event: "matchEnded",
+        event: "gameEnded",
         players: [{ Name: "Player1", Role: "Detective" }],
       }),
     };
@@ -160,7 +160,7 @@ describe("GameEndScreen", () => {
     const messageCallback = mockWebSocket.addEventListener.mock.calls[0][1];
     const gameEndMessage = {
       data: JSON.stringify({
-        event: "matchEnded",
+        event: "gameEnded",
         players: [{ Name: "Player3", Role: "Detective" }],
       }),
     };
@@ -181,7 +181,7 @@ describe("GameEndScreen", () => {
     const messageCallback = mockWebSocket.addEventListener.mock.calls[0][1];
     const gameEndMessage = {
       data: JSON.stringify({
-        event: "matchEnded",
+        event: "gameEnded",
         players: [
           { Name: "Player1", Role: "Detective" },
           { Name: "Player2", Role: "Detective" },
@@ -208,7 +208,7 @@ describe("GameEndScreen", () => {
     const messageCallback = mockWebSocket.addEventListener.mock.calls[0][1];
     const gameEndMessage = {
       data: JSON.stringify({
-        event: "matchEnded",
+        event: "gameEnded",
         players: [
           { Name: "EvilPlayer", Role: "Murderer" },
           { Name: "Helper", Role: "Accomplice" },
@@ -282,7 +282,7 @@ describe("GameEndScreen", () => {
     const messageCallback = mockWebSocket.addEventListener.mock.calls[0][1];
     const gameEndMessage = {
       data: JSON.stringify({
-        event: "matchEnded",
+        event: "gameEnded",
         players: [{ Name: "Player1", Role: "Detective" }],
       }),
     };
@@ -314,7 +314,7 @@ describe("GameEndScreen", () => {
     // Mensaje sin players
     const incompleteMessage1 = {
       data: JSON.stringify({
-        event: "matchEnded",
+        event: "gameEnded",
       }),
     };
 
@@ -326,7 +326,7 @@ describe("GameEndScreen", () => {
     // Mensaje con array vacío
     const incompleteMessage2 = {
       data: JSON.stringify({
-        event: "matchEnded",
+        event: "gameEnded",
         players: [],
       }),
     };
@@ -343,7 +343,7 @@ describe("GameEndScreen", () => {
     const messageCallback = mockWebSocket.addEventListener.mock.calls[0][1];
     const gameEndMessage = {
       data: JSON.stringify({
-        event: "matchEnded",
+        event: "gameEnded",
         players: [{ Name: "Helper", Role: "Accomplice" }],
       }),
     };
@@ -362,7 +362,7 @@ describe("GameEndScreen", () => {
     const messageCallback = mockWebSocket.addEventListener.mock.calls[0][1];
     const gameEndMessage = {
       data: JSON.stringify({
-        event: "matchEnded",
+        event: "gameEnded",
         players: [
           { Name: "Detective1", Role: "Detective" },
           { Name: "Helper", Role: "Accomplice" },

@@ -32,7 +32,7 @@ export default function DrawDraftCardButton({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            actualPlayerID: Number(playerId),
+            playerId: Number(playerId),
             deck: "draft",
             order: cardOrder,
           }),

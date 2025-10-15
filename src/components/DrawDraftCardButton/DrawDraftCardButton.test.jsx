@@ -95,7 +95,7 @@ describe("DrawDraftCardButton", () => {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ actualPlayerID: 1, deck: "draft", order: 1 }),
+          body: JSON.stringify({ playerId: 1, deck: "draft", order: 1 }),
         }
       );
     });
