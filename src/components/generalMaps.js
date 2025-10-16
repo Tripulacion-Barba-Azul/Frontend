@@ -1,12 +1,13 @@
 export const SECRETS_MAP = {
   "You are the murderer": "/Cards/03-secret_murderer.png",
-  "You are the acomplice": "/Cards/04-secret_accomplice.png",
+  "You are the accomplice": "/Cards/04-secret_accomplice.png",
   Prankster: "/Cards/06-secret_back.png",
   "Just a Fantasy": "/Cards/06-secret_back.png",
   Untouched: "/Cards/06-secret_back.png",
   "Secret Hate": "/Cards/06-secret_back.png",
   "Faked Dead": "/Cards/06-secret_back.png",
   Impostor: "/Cards/06-secret_back.png",
+  "Gambling Problem": "/Cards/06-secret_back.png"
 };
 
 export const CARDS_MAP = {
