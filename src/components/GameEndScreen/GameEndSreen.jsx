@@ -14,10 +14,10 @@ export default function GameEndScreen({ websocket }) {
       try {
         const data = JSON.parse(event.data);
 
-        if (data.type === "Match Ended") {
+        if (data.event === "gameEnded") {
           console.log("🏁 Game end detected");
           setGameEndData({
-            players: data.players,
+            players: data.payload,
           });
         }
       } catch (error) {
@@ -38,20 +38,25 @@ export default function GameEndScreen({ websocket }) {
   };
 
   // if didnt get any data, dont show anything
-  if (!gameEndData || !gameEndData.players || gameEndData.players.length === 0)
+  if (
+    !gameEndData ||
+    !gameEndData.players ||
+    gameEndData.players.length === 0
+  ) {
     return null;
+  }
 
   // Define booleans to define title
   const players = gameEndData.players;
 
   const hasmurderer = players.some(
-    (player) => player.Role && player.Role.toLowerCase() === "murderer"
+    (player) => player.role && player.role.toLowerCase() === "murderer"
   );
   const hasAccomplice = players.some(
-    (player) => player.Role && player.Role.toLowerCase() === "accomplice"
+    (player) => player.role && player.role.toLowerCase() === "accomplice"
   );
   const detectiveCount = players.filter(
-    (player) => player.Role && player.Role.toLowerCase() === "detective"
+    (player) => player.role && player.role.toLowerCase() === "detective"
   ).length;
 
   // Define title
@@ -111,22 +116,22 @@ export default function GameEndScreen({ websocket }) {
                 <li key={index} className="winner-item">
                   <span
                     className="winner-name"
-                    style={{ color: getRoleColor(player.Role) }}
+                    style={{ color: getRoleColor(player.role) }}
                   >
-                    {player.Name}
+                    {player.name}
                   </span>
-                  {player.Role && (
+                  {player.role && (
                     <span
                       className="role-badge"
                       style={{
-                        backgroundColor: getRoleColor(player.Role),
+                        backgroundColor: getRoleColor(player.role),
                         color:
-                          player.Role.toLowerCase() === "detective"
+                          player.role.toLowerCase() === "detective"
                             ? "#000000"
                             : "#ffffff",
                       }}
                     >
-                      {getRoleBadge(player.Role)}
+                      {getRoleBadge(player.role)}
                     </span>
                   )}
                 </li>

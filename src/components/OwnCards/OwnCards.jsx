@@ -13,7 +13,7 @@ export default function OwnCards({
   turnStatus = "waiting",
 }) {
   const [selectedIds, setSelectedIds] = useState(new Set());
-  console.log("OwnCards render", { turnStatus });
+
   useEffect(() => {
     setSelectedIds(new Set());
   }, [cards, turnStatus]);
@@ -93,14 +93,13 @@ export default function OwnCards({
             />
           ))}
 
-        {turnStatus === "discarding" ||
-          (turnStatus === "discardingOpt" && (
-            <DiscardButton
-              selectedCards={selectedArray}
-              handSize={cards.length}
-              onDiscardSuccess={() => setSelectedIds(new Set())}
-            />
-          ))}
+        {(turnStatus === "discarding" || turnStatus === "discardingOpt") && (
+          <DiscardButton
+            selectedCards={selectedArray}
+            handSize={cards.length}
+            onDiscardSuccess={() => setSelectedIds(new Set())}
+          />
+        )}
 
         {turnStatus === "drawing" && (
           <DrawRegularCardButton
