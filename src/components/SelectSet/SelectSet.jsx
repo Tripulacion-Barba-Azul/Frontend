@@ -18,10 +18,7 @@ function ViewSetModal({ cards, onClose }) {
       <div className="cards-container" onClick={(e) => e.stopPropagation()}>
         {cards.map((card) => (
           <div key={card.id} className="card">
-            <img
-              src={CARDS_MAP[card.name]}
-              alt={`card ${card.name}`}
-            />
+            <img src={CARDS_MAP[card.name]} alt={`card ${card.name}`} />
           </div>
         ))}
       </div>
@@ -32,7 +29,7 @@ function ViewSetModal({ cards, onClose }) {
     </div>,
     document.body
   );
-};
+}
 
 export function nameMap({ name }) {
   if (name === "Tommy Beresford" || name === "Tuppence Beresford") {
@@ -45,7 +42,7 @@ export default function SelectSet({
   sets = [],
   selectedSetId,
   goBack,
-  text = "Choose a Set"
+  text = "Choose a Set",
 }) {
   const [selectedSet, setSelectedSet] = useState(null);
   const [viewingSet, setViewingSet] = useState(false);
@@ -106,7 +103,9 @@ export default function SelectSet({
                   className="selectset-avatar"
                 />
                 <div className="selectset-info">
-                  <div className="selectset-name">{nameMap({name: set.setName})}</div>
+                  <div className="selectset-name">
+                    {nameMap({ name: set.setName })}
+                  </div>
                   <div className="selectset-card-count">
                     {set.cards.length} cards
                   </div>
@@ -127,10 +126,7 @@ export default function SelectSet({
 
         <div className="selectset-actions">
           {goBack && (
-            <button
-              className="selectset-back"
-              onClick={goBack}
-            >
+            <button className="selectset-back" onClick={goBack}>
               Go Back
             </button>
           )}
@@ -146,10 +142,7 @@ export default function SelectSet({
 
       {/* ViewSet Modal */}
       {viewingSet && selectedSet && (
-        <ViewSetModal
-          cards={selectedSet.cards}
-          onClose={handleCloseViewSet}
-        />
+        <ViewSetModal cards={selectedSet.cards} onClose={handleCloseViewSet} />
       )}
     </div>
   );

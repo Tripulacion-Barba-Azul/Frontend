@@ -10,10 +10,6 @@ function StartGameButton({ disabled, gameId, actualPlayerId, onStartGame}){
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                },
-                body: {
-                    gameId: gameId,
-                    ownerId: actualPlayerId
                 }
             });
 

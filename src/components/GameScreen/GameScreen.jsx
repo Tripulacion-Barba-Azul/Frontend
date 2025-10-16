@@ -4,6 +4,7 @@ import Lobby from "../Lobby/Lobby";
 import SyncOrchestrator from "../Sync/SyncOrchestrator";
 import GameEndScreen from "../GameEndScreen/GameEndSreen";
 import Notifier from "../Notifier/Notifier";
+import EffectManager from "../EffectManager/EffectManager";
 
 export default function GameScreen() {
   const { gameId } = useParams();
@@ -24,7 +25,7 @@ export default function GameScreen() {
 
   useEffect(() => {
     if (!gameId) return;
-  
+
     const websocket = new WebSocket(wsEndpoint);
 
     websocket.onopen = () => {
@@ -59,7 +60,6 @@ export default function GameScreen() {
     websocket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-
 
         switch (data.event) {
           case "publicUpdate":
@@ -109,10 +109,17 @@ export default function GameScreen() {
           refreshTrigger={refreshLobby}
         />
       )}
-      
+
       <Notifier
         publicData={publicData}
-        actualPlayerId={parseInt(playerId)} 
+        actualPlayerId={parseInt(playerId)}
+        wsRef={wsRef.current}
+      />
+
+      <EffectManager
+        publicData={publicData}
+        privateData={privateData}
+        actualPlayerId={parseInt(playerId)}
         wsRef={wsRef.current}
       />
 
@@ -139,7 +146,6 @@ export default function GameScreen() {
 //              role: enum(String) # "murderer" | "accomplice"
 //               } | null
 // }
-
 
 // event: "publicUpdate"
 // payload: {
@@ -178,5 +184,3 @@ export default function GameScreen() {
 //               }]
 //           }]
 //       }
-
-
