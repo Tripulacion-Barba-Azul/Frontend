@@ -23,6 +23,11 @@ body.active-viewmycards {
   z-index: 2;
 }
 
+.btn-viewmycards img:hover {
+  transform: scale(1.05);
+  filter: brightness(1.2);
+}
+
 .btn-viewmycards {
   position: relative;
   padding: 0;
