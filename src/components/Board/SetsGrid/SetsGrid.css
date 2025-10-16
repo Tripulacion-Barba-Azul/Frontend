@@ -33,18 +33,19 @@
    HORIZONTAL (rows stacked vertically)
    -------------------------- */
 .sets-horizontal {
-  flex-direction: column; /* rows stacked */
+  display: flex;
+  flex-direction: column;
+  gap: var(--sets-gap);
+  flex-wrap: wrap;
 }
 
 .sets-row {
   display: flex;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
   gap: var(--sets-gap);
-  flex-wrap: wrap; /* allows items to wrap instead of overflowing */
-  width: 100%;
-  box-sizing: border-box;
-  padding: 2px 4px;
+  padding: 2px 6px;
 }
 
 .sets-row .sets-item {
@@ -80,13 +81,22 @@
 .sets-double-horizontal {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap; /* wrap instead of scrolling */
+  flex-wrap: nowrap; /* force single row */
   justify-content: center;
   align-items: center;
   gap: var(--sets-gap);
   width: 100%;
   padding: 6px;
   box-sizing: border-box;
+  overflow-x: auto; /* allow horizontal scroll if needed */
+}
+
+/* Make the inner wrapper a flex row that doesn't wrap */
+.sets-double-horizontal .sets-single-row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap; /* keep items in a single line */
+  gap: var(--sets-gap);
 }
 
 /* --------------------------

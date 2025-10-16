@@ -1,10 +1,6 @@
 import React from "react";
 import "./PlayerBadge.css";
-import {
-  SIZES,
-  RING_COLORS,
-  NAME_BG_COLORS,
-} from "./playerBadgeConstants.js";
+import { SIZES, RING_COLORS, NAME_BG_COLORS } from "./playerBadgeConstants.js";
 import { AVATAR_MAP } from "../../generalMaps";
 import CardCount from "../CardCount/CardCount.jsx";
 import ViewSecrets from "../ViewSecrets/ViewSecrets.jsx";
@@ -48,7 +44,7 @@ export default function PlayerBadge({
       ? "horizontal"
       : position === "down"
       ? "doubleHorizontal"
-      : "vertical"; // for "left" or "right"
+      : "vertical";
 
   return (
     <div className="player-badge">

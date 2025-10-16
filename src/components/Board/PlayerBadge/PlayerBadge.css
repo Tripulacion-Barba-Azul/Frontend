@@ -134,7 +134,7 @@
   --sec-top: -70px;
 
   /* SetsGrid: to the left side of the avatar */
-  --sets-right: calc(100% - 252px);
+  --sets-right: calc(100% - 310px);
   --sets-top: -50px;
 }
 
@@ -149,10 +149,10 @@
 
   /* SetsGrid: above the avatar (left-aligned) */
   --sets-left: -55px;
-  --sets-bottom: calc(100% - 230px);
+  --sets-bottom: calc(100% - 290px);
 }
 
 .avatar-stack.badge-big.position-down {
-  --sets-left: 480px;
-  --sets-top: calc(100% - 260px);
+  --sets-left: 430px;
+  --sets-top: calc(100% - 270px);
 }
