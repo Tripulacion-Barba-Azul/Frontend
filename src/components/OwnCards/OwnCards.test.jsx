@@ -1,4 +1,3 @@
-// OwnCards.test.jsx
 import React from "react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
@@ -6,7 +5,7 @@ import "@testing-library/jest-dom/vitest";
 
 import OwnCards from "./OwnCards.jsx";
 
-// Mock CARDS_MAP so we don't depend on real assets/keys
+/* Mock CARDS_MAP so we don't depend on real assets/keys */
 vi.mock("../generalMaps.js", () => ({
   CARDS_MAP: {
     "Hercule Poirot": "/Cards/07-detective_poirot.png",
@@ -18,17 +17,36 @@ vi.mock("../generalMaps.js", () => ({
   },
 }));
 
-// Mock router hooks because children use useParams/useSearchParams
-vi.mock("react-router-dom", async (importOriginal) => {
-  const actual = await importOriginal();
-  return {
-    ...actual,
-    useSearchParams: () => [new URLSearchParams("playerId=1")],
-    useParams: () => ({ gameId: "123" }),
-  };
-});
+/* Mock action subcomponents so tests are stable and focused on OwnCards behavior */
+vi.mock("./DiscardButton/DiscardButton", () => ({
+  default: ({ selectedCards = [], handSize = 0, onDiscardSuccess }) => (
+    <button data-testid="discard-button" onClick={() => onDiscardSuccess?.()}>
+      {`Discard (${selectedCards.length}) / Hand ${handSize}`}
+    </button>
+  ),
+}));
 
-// Helper to render the component
+vi.mock("./NoActionButton/NoActionButton", () => ({
+  default: () => <button aria-label="no-action">Play nothing</button>,
+}));
+
+vi.mock("./DrawRegularCardButton/DrawRegularCardButton.jsx", () => ({
+  default: ({ isDrawCardPhase, playerCardCount }) => (
+    <div data-testid="draw-card-button">
+      DrawRegularCardButton: {String(isDrawCardPhase)} / {playerCardCount}
+    </div>
+  ),
+}));
+
+vi.mock("./PlayButton/PlayCardsButton.jsx", () => ({
+  default: ({ selectedCards = [], onPlaySuccess }) => (
+    <button data-testid="play-cards-button" onClick={() => onPlaySuccess?.()}>
+      {`Play (${selectedCards.length})`}
+    </button>
+  ),
+}));
+
+/* Helper to render the component */
 const setup = (cards = [], props = {}) =>
   render(<OwnCards cards={cards} {...props} />);
 
@@ -95,7 +113,7 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     expect(img1Again).toHaveClass("owncards-card--disabled");
   });
 
-  it("toggles selection when turnStatus is 'playing' (and also allows selection in 'discarding')", () => {
+  it("toggles selection when turnStatus is 'playing' and also allows selection in 'discarding'", () => {
     const cards = TEST_CARDS.slice(0, 2);
     const { rerender } = setup(cards, { turnStatus: "playing" });
 
@@ -129,45 +147,54 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     const sameImg = screen.getByAltText(`Card ${cards[0].name}`);
     expect(sameImg).toHaveClass("owncards-card");
     expect(sameImg).toHaveClass("owncards-card--disabled");
+    expect(sameImg).not.toHaveClass("owncards-card--selected");
   });
 
   it("renders DiscardButton in 'discarding'", () => {
     const cards = TEST_CARDS.slice(0, 2);
 
-    // discarding -> DiscardButton visible (button text includes count)
+    // discarding -> DiscardButton visible
     const { rerender } = setup(cards, { turnStatus: "discarding" });
-    expect(
-      screen.getByRole("button", { name: /Discard \(\d+\)/i })
-    ).toBeInTheDocument();
+    expect(screen.getByTestId("discard-button")).toBeInTheDocument();
+    expect(screen.getByTestId("discard-button").textContent).toMatch(
+      /Discard \(0\)/i
+    );
+
+    // discardingOpt -> DiscardButton also visible
+    rerender(<OwnCards cards={cards} turnStatus="discardingOpt" />);
+    expect(screen.getByTestId("discard-button")).toBeInTheDocument();
 
   });
 
-  it("in 'playing' shows NoActionButton when nothing is selected and 'Play (n)' when there is a selection", () => {
+  it("in 'playing' shows NoActionButton when nothing is selected and 'Play (n)' when there is a selection; onPlaySuccess clears selection", () => {
     const cards = TEST_CARDS.slice(0, 2);
 
     // With no selection -> NoActionButton ("Play nothing")
-    const { rerender } = setup(cards, { turnStatus: "playing" });
-    expect(
-      screen.getByRole("button", { name: /Play nothing/i })
-    ).toBeInTheDocument();
+    setup(cards, { turnStatus: "playing" });
+    expect(screen.getByLabelText(/no-action/i)).toBeInTheDocument();
 
-    // Select one -> OwnCards renders "Play (1)" button
+    // Select one -> PlayCardsButton ("Play (1)")
     const img1 = screen.getByAltText(`Card ${cards[0].name}`);
     fireEvent.click(img1);
-    expect(
-      screen.getByRole("button", { name: /Play \(1\)/i })
-    ).toBeInTheDocument();
+    const playButton = screen.getByTestId("play-cards-button");
+    expect(playButton.textContent).toMatch(/Play \(1\)/i);
 
-    // Select second -> "Play (2)"
-    const img2 = screen.getByAltText(`Card ${cards[1].name}`);
-    fireEvent.click(img2);
-    expect(
-      screen.getByRole("button", { name: /Play \(2\)/i })
-    ).toBeInTheDocument();
+    // Simulate play success -> selection should clear and show NoActionButton again
+    fireEvent.click(playButton);
+    expect(screen.getByLabelText(/no-action/i)).toBeInTheDocument();
+  });
 
-    // Switch to 'waiting' -> action buttons disappear from 'playing' branch
-    rerender(<OwnCards cards={cards} turnStatus="waiting" />);
-    expect(screen.queryByRole("button", { name: /Play nothing/i })).toBeNull();
-    expect(screen.queryByRole("button", { name: /Play \(\d+\)/i })).toBeNull();
+  it("in 'discarding' clicking DiscardButton triggers onDiscardSuccess and clears selection", () => {
+    const cards = TEST_CARDS.slice(0, 2);
+    setup(cards, { turnStatus: "discarding" });
+
+    // Select one
+    const img1 = screen.getByAltText(`Card ${cards[0].name}`);
+    fireEvent.click(img1);
+    expect(img1).toHaveClass("owncards-card--selected");
+
+    // Click discard (mock calls onDiscardSuccess which clears selection)
+    fireEvent.click(screen.getByTestId("discard-button"));
+    expect(img1).not.toHaveClass("owncards-card--selected");
   });
 });

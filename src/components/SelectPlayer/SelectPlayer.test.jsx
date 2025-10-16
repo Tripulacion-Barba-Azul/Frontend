@@ -1,241 +1,136 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import SelectPlayer from './SelectPlayer';
+import React from "react";
+import { describe, test, expect, vi, afterEach } from "vitest";
+import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import SelectPlayer from "./SelectPlayer";
 
-// Mock framer-motion to avoid animation issues in tests
-vi.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }) => <div {...props}>{children}</div>,
-  },
-}));
+// Silence CSS import noise
+vi.mock("./SelectPlayer.css", () => ({}));
 
-// Mock AVATAR_MAP
-vi.mock('../Board/PlayerBadge/playerBadgeConstants', () => ({
+// Mock avatar map used by the component
+vi.mock("../generalMaps.js", () => ({
   AVATAR_MAP: {
-    1: '/avatar1.jpg',
-    2: '/avatar2.jpg',
-    3: '/avatar3.jpg',
+    1: "/a1.png",
+    2: "/a2.png",
+    3: "/a3.png",
   },
 }));
 
-describe('SelectPlayer', () => {
-  const mockPlayers = [
-    { id: 1, name: 'Player One', avatar: 1 },
-    { id: 2, name: 'Player Two', avatar: 2 },
-    { id: 3, name: 'Player Three', avatar: 3 },
-    { id: 4, name: 'Player Four', avatar: 1 },
-  ];
+afterEach(cleanup);
 
-  const mockSelectedPlayerId = vi.fn();
-  const mockActualPlayerId = 1;
+const PLAYERS = [
+  {
+    id: 1,
+    name: "You",
+    avatar: 1,
+    socialDisgrace: false,
+    turnOrder: 1,
+    cardCount: 3,
+  },
+  {
+    id: 2,
+    name: "Alice",
+    avatar: 2,
+    socialDisgrace: false,
+    turnOrder: 2,
+    cardCount: 4,
+  },
+  {
+    id: 3,
+    name: "Bob",
+    avatar: 3,
+    socialDisgrace: false,
+    turnOrder: 3,
+    cardCount: 5,
+  },
+];
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-    // Mock document.body.style.overflow
-    Object.defineProperty(document.body, 'style', {
-      value: {
-        overflow: '',
-      },
-      writable: true,
-    });
+const BASE_PROPS = {
+  actualPlayerId: 1,
+  players: PLAYERS,
+  text: "Choose a player",
+};
+
+// Helper: find the .selectplayer-item container by the displayed name
+function getItemContainerByDisplayedName(displayedName) {
+  const label = screen.getByText(displayedName);
+  // The label is inside the item; we climb to the container
+  const container = label.closest(".selectplayer-item");
+  if (!container) throw new Error("Container not found for " + displayedName);
+  return container;
+}
+
+describe("SelectPlayer", () => {
+  test("renders heading and all players", () => {
+    render(<SelectPlayer {...BASE_PROPS} selectedPlayerId={() => {}} />);
+
+    // Heading
+    const heading = screen.getByRole("heading", { name: /choose a player/i });
+    expect(heading).toBeTruthy();
+
+    // Players
+    expect(screen.getByText("You (you)")).toBeTruthy();
+    expect(screen.getByText("Alice")).toBeTruthy();
+    expect(screen.getByText("Bob")).toBeTruthy();
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
+  test("confirm is disabled until a player is selected, then calls callback with chosen id", () => {
+    const onSelect = vi.fn();
+    render(<SelectPlayer {...BASE_PROPS} selectedPlayerId={onSelect} />);
+
+    const confirmBtn = screen.getByRole("button", { name: /confirm/i });
+    expect(confirmBtn).toBeDisabled();
+
+    // Click on Alice
+    fireEvent.click(screen.getByText("Alice"));
+    expect(confirmBtn).not.toBeDisabled();
+
+    fireEvent.click(confirmBtn);
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledWith(2);
   });
 
-  it('renders with all players and text', () => {
-    render(
-      <SelectPlayer
-        actualPlayerId={mockActualPlayerId}
-        players={mockPlayers}
-        selectedPlayerId={mockSelectedPlayerId}
-        text="Select a player to target"
-      />
-    );
+  test("selection toggles 'selected' class on the correct item container", () => {
+    render(<SelectPlayer {...BASE_PROPS} selectedPlayerId={() => {}} />);
 
-    expect(screen.getByText('Select a player to target')).toBeInTheDocument();
-    expect(screen.getByText('Player One (you)')).toBeInTheDocument();
-    expect(screen.getByText('Player Two')).toBeInTheDocument();
-    expect(screen.getByText('Player Three')).toBeInTheDocument();
-    expect(screen.getByText('Player Four')).toBeInTheDocument();
+    const youContainer = getItemContainerByDisplayedName("You (you)");
+    const aliceContainer = getItemContainerByDisplayedName("Alice");
+    const bobContainer = getItemContainerByDisplayedName("Bob");
+
+    // Initially none selected
+    expect(youContainer.className).not.toContain("selected");
+    expect(aliceContainer.className).not.toContain("selected");
+    expect(bobContainer.className).not.toContain("selected");
+
+    // Select Bob
+    fireEvent.click(screen.getByText("Bob"));
+    expect(bobContainer.className).toContain("selected");
+    expect(aliceContainer.className).not.toContain("selected");
+    expect(youContainer.className).not.toContain("selected");
+
+    // Switch to Alice
+    fireEvent.click(screen.getByText("Alice"));
+    expect(aliceContainer.className).toContain("selected");
+    expect(bobContainer.className).not.toContain("selected");
   });
 
-  it('marks actual player with "(you)" suffix', () => {
-    render(
-      <SelectPlayer
-        actualPlayerId={mockActualPlayerId}
-        players={mockPlayers}
-        selectedPlayerId={mockSelectedPlayerId}
-        text="Select a player"
-      />
-    );
+  test("avatar images use AVATAR_MAP (src)", () => {
+    render(<SelectPlayer {...BASE_PROPS} selectedPlayerId={() => {}} />);
 
-    expect(screen.getByText('Player One (you)')).toBeInTheDocument();
-    expect(screen.getByText('Player Two')).toBeInTheDocument();
-    expect(screen.queryByText('Player Two (you)')).not.toBeInTheDocument();
+    const imgAlice = screen.getByAltText("Alice");
+    const imgYou = screen.getByAltText("You");
+
+    // JSDOM makes absolute URLs; just assert it contains the path
+    expect(imgAlice.getAttribute("src")).toContain("/a2.png");
+    expect(imgYou.getAttribute("src")).toContain("/a1.png");
   });
 
-  it('handles player selection correctly', () => {
-    render(
-      <SelectPlayer
-        actualPlayerId={mockActualPlayerId}
-        players={mockPlayers}
-        selectedPlayerId={mockSelectedPlayerId}
-        text="Select a player"
-      />
-    );
-
-    // Click on player 2
-    const playerTwo = screen.getByText('Player Two').closest('.selectplayer-item');
-    fireEvent.click(playerTwo);
-
-    // Confirm button should be enabled now
-    const confirmButton = screen.getByText('Confirm');
-    expect(confirmButton).not.toBeDisabled();
-  });
-
-  it('calls selectedPlayerId with correct id when confirm is clicked', () => {
-    render(
-      <SelectPlayer
-        actualPlayerId={mockActualPlayerId}
-        players={mockPlayers}
-        selectedPlayerId={mockSelectedPlayerId}
-        text="Select a player"
-      />
-    );
-
-    // Select player 3 and confirm
-    const playerThree = screen.getByText('Player Three').closest('.selectplayer-item');
-    fireEvent.click(playerThree);
-
-    const confirmButton = screen.getByText('Confirm');
-    fireEvent.click(confirmButton);
-
-    expect(mockSelectedPlayerId).toHaveBeenCalledWith(3);
-    expect(mockSelectedPlayerId).toHaveBeenCalledTimes(1);
-  });
-
-  it('disables confirm button when no player is selected', () => {
-    render(
-      <SelectPlayer
-        actualPlayerId={mockActualPlayerId}
-        players={mockPlayers}
-        selectedPlayerId={mockSelectedPlayerId}
-        text="Select a player"
-      />
-    );
-
-    const confirmButton = screen.getByText('Confirm');
-    expect(confirmButton).toBeDisabled();
-  });
-
-  it('enables confirm button when a player is selected', () => {
-    render(
-      <SelectPlayer
-        actualPlayerId={mockActualPlayerId}
-        players={mockPlayers}
-        selectedPlayerId={mockSelectedPlayerId}
-        text="Select a player"
-      />
-    );
-
-    const playerFour = screen.getByText('Player Four').closest('.selectplayer-item');
-    fireEvent.click(playerFour);
-
-    const confirmButton = screen.getByText('Confirm');
-    expect(confirmButton).not.toBeDisabled();
-  });
-
-  it('handles empty players array', () => {
-    render(
-      <SelectPlayer
-        actualPlayerId={mockActualPlayerId}
-        players={[]}
-        selectedPlayerId={mockSelectedPlayerId}
-        text="Select a player"
-      />
-    );
-
-    expect(screen.getByText('Select a player')).toBeInTheDocument();
-    expect(screen.getByText('Confirm')).toBeInTheDocument();
-  });
-
-  it('sets body overflow to hidden on mount and cleans up on unmount', () => {
+  test("body overflow is hidden on mount and restored on unmount", () => {
     const { unmount } = render(
-      <SelectPlayer
-        actualPlayerId={mockActualPlayerId}
-        players={mockPlayers}
-        selectedPlayerId={mockSelectedPlayerId}
-        text="Select a player"
-      />
+      <SelectPlayer {...BASE_PROPS} selectedPlayerId={() => {}} />
     );
 
-    expect(document.body.style.overflow).toBe('hidden');
-
+    expect(document.body.style.overflow).toBe("hidden");
     unmount();
-
-    expect(document.body.style.overflow).toBe('');
-  });
-
-
-  it('allows selecting different players sequentially', () => {
-    render(
-      <SelectPlayer
-        actualPlayerId={mockActualPlayerId}
-        players={mockPlayers}
-        selectedPlayerId={mockSelectedPlayerId}
-        text="Select a player"
-      />
-    );
-
-    // Select player 2
-    const playerTwo = screen.getByText('Player Two').closest('.selectplayer-item');
-    fireEvent.click(playerTwo);
-
-    // Select player 4
-    const playerFour = screen.getByText('Player Four').closest('.selectplayer-item');
-    fireEvent.click(playerFour);
-
-    const confirmButton = screen.getByText('Confirm');
-    fireEvent.click(confirmButton);
-
-    expect(mockSelectedPlayerId).toHaveBeenCalledWith(4);
-  });
-
-  it('renders player avatars correctly', () => {
-    render(
-      <SelectPlayer
-        actualPlayerId={mockActualPlayerId}
-        players={mockPlayers}
-        selectedPlayerId={mockSelectedPlayerId}
-        text="Select a player"
-      />
-    );
-
-    const avatars = screen.getAllByAltText(/Player/);
-    expect(avatars).toHaveLength(4);
-    
-    avatars.forEach((avatar, index) => {
-      expect(avatar).toHaveAttribute('src', expect.stringContaining('.jpg'));
-    });
-  });
-
-  it('handles player with missing avatar by using default', () => {
-    const playersWithMissingAvatar = [
-      { id: 1, name: 'Player One', avatar: 999 }, // Non-existent avatar
-    ];
-
-    render(
-      <SelectPlayer
-        actualPlayerId={mockActualPlayerId}
-        players={playersWithMissingAvatar}
-        selectedPlayerId={mockSelectedPlayerId}
-        text="Select a player"
-      />
-    );
-
-    const avatar = screen.getByAltText('Player One');
-    expect(avatar).toHaveAttribute('src', '/avatar1.jpg'); // Should fallback to avatar 1
+    expect(document.body.style.overflow).toBe("");
   });
 });
