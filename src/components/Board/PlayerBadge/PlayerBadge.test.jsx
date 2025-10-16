@@ -154,23 +154,23 @@ describe("PlayerBadge (updated)", () => {
     expect(sg.getAttribute("data-pos")).toBe("horizontal");
     expect(lastSetsProps?.position).toBe("horizontal");
 
-    // position-right → SetsGrid: vertical
+    // position-right → SetsGrid: vertical-left
     rerender(<PlayerBadge name="M1" position="right" sets={sets} />);
     sg = screen.getByTestId("setsgrid");
     img = screen.getByRole("img", { name: "Avatar of M1" });
     stack = img.closest(".avatar-stack");
     expect(stack).toHaveClass("position-right");
-    expect(sg.getAttribute("data-pos")).toBe("vertical");
-    expect(lastSetsProps?.position).toBe("vertical");
+    expect(sg.getAttribute("data-pos")).toBe("vertical-left");
+    expect(lastSetsProps?.position).toBe("vertical-left");
 
-    // position-left → SetsGrid: vertical
+    // position-left → SetsGrid: vertical-right
     rerender(<PlayerBadge name="M1" position="left" sets={sets} />);
     sg = screen.getByTestId("setsgrid");
     img = screen.getByRole("img", { name: "Avatar of M1" });
     stack = img.closest(".avatar-stack");
     expect(stack).toHaveClass("position-left");
-    expect(sg.getAttribute("data-pos")).toBe("vertical");
-    expect(lastSetsProps?.position).toBe("vertical");
+    expect(sg.getAttribute("data-pos")).toBe("vertical-right");
+    expect(lastSetsProps?.position).toBe("vertical-right");
 
     // position-down → SetsGrid: doubleHorizontal
     rerender(<PlayerBadge name="M1" position="down" sets={sets} />);
