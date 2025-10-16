@@ -1,5 +1,5 @@
 // EffectScenarioRunnerAuto.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import EffectManager from "./EffectManager";
 
 /** ─────────────────────────────────────────────────────────────────────────────
@@ -130,16 +130,28 @@ const PRIVATE_DATA = {
 
 /** Optional: event-specific payloads. Edit as you need for your effects. */
 const EVENT_PAYLOADS = {
-  // Example: some flows (e.g., lookIntoTheAshes) expect cards in payload
+  // Example: some flows expect cards in payload
   lookIntoTheAshes: {
     cards: [
       { id: 8001, name: "Hercule Poirot" },
-      { id: 8002, name: "Hercule Poirot" },
-      { id: 8003, name: "Hercule Poirot" },
-      { id: 8004, name: "Hercule Poirot" },
-      { id: 8005, name: "Hercule Poirot" },
+      { id: 8002, name: "Miss Marple" },
+      { id: 8003, name: "Mr Satterthwaite" },
+      { id: 8004, name: "Parker Pyne" },
+      { id: 8005, name: "Lady Eileen Brent" },
     ],
   },
+
+  // NEW: delayTheMurderersEscape also expects payload.cards (same pattern)
+  delayTheMurderersEscape: {
+    cards: [
+      { id: 9001, name: "Hercule Poirot" },
+      { id: 9002, name: "Miss Marple" },
+      { id: 9003, name: "Mr Satterthwaite" },
+      { id: 9004, name: "Parker Pyne" },
+      { id: 9005, name: "Lady Eileen Brent" },
+    ],
+  },
+
   // Add more event payloads here if your EffectManager expects them
 };
 
@@ -199,8 +211,6 @@ export default function EffectScenarioRunnerAuto({ event }) {
     emitScenario(ws, event);
   }, [ws, event, runNonce]);
 
-  // If you need derived playersAll on consumer side, EffectManager can build it;
-  // here we only pass what your EffectManager expects: wsRef, publicData, privateData, actualPlayerId.
   const actualPlayerId = 1;
 
   return (

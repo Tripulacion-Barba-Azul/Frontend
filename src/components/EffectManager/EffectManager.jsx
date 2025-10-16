@@ -1,8 +1,38 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
+import { useParams } from "react-router-dom";
 import SelectPlayer from "../SelectPlayer/SelectPlayer";
 import SelectSet from "../SelectSet/SelectSet";
 import SelectSecret from "../SelectSecret/SelectSecret";
 import SelectDiscardPileCards from "../SelectDiscardPileCards/SelectDiscardPileCards";
+import OrderDiscardPileCards from "../OrderDiscardPileCards/OrderDiscardPileCards";
+
+/** ─────────────────────────────────────────────────────────────────────────────
+ * Para testear sin servidor
+ * Llamar en el punto app a <EffectScenarioRunnerAuto event="eventName" />
+ * con cualquier eventName de los que se manejan en EffectManager
+ * ────────────────────────────────────────────────────────────────────────────*/
+
+/** ─────────────────────────────────────────────────────────────────────────────
+ * Endpoints per-event (rename to real routes)
+ * ────────────────────────────────────────────────────────────────────────────*/
+const EFFECT_ENDPOINTS = {
+  selectAnyPlayer: "http://localhost:8000/play/{id}/actions/select-any-player",
+  andThenThereWasOneMore:
+    "http://localhost:8000/play/{id}/actions/and-then-there-was-one-more",
+  revealSecret: "http://localhost:8000/play/{id}/actions/reveal-secret",
+  revealOwnSecret: "http://localhost:8000/play/{id}/actions/reveal-own-secret",
+  hideSecret: "http://localhost:8000/play/{id}/actions/hide-secret",
+  stealSet: "http://localhost:8000/play/{id}/actions/steal-set",
+  lookIntoTheAshes:
+    "http://localhost:8000/play/{id}/actions/look-into-the-ashes",
+  delayTheMurderersEscape:
+    "http://localhost:8000/play/{id}/actions/delay-the-murderers-escape",
+};
+
+/** Small log helpers (keep console clean) */
+const log = (...a) => console.log("[EffectManager]", ...a);
+const warn = (...a) => console.warn("[EffectManager]", ...a);
+const error = (...a) => console.error("[EffectManager]", ...a);
 
 export default function EffectManager({
   publicData,
@@ -10,26 +40,38 @@ export default function EffectManager({
   actualPlayerId,
   wsRef,
 }) {
-  // Current event and step of the flow
+  /** ───────────────────────────────────────────────────────────────────────────
+   * Flow state
+   * ─────────────────────────────────────────────────────────────────────────*/
   const [currentEvent, setCurrentEvent] = useState(null); // string | null
   const [payload, setPayload] = useState(null);
-  const [step, setStep] = useState(null); // null | 'selectPlayer' | 'selectPlayer2' | 'selectSecret' | 'selectSet' | 'selectDiscard'
+  // steps: 'selectPlayer' | 'selectPlayer2' | 'selectSecret' | 'selectSet' | 'selectDiscard' | 'orderDiscard' | null
+  const [step, setStep] = useState(null);
 
-  // User selections (kept minimal, no error handling)
+  // User selections
   const [selPlayer1, setSelPlayer1] = useState(null);
   const [selPlayer2, setSelPlayer2] = useState(null);
   const [selSecret, setSelSecret] = useState(null);
   const [selSet, setSelSet] = useState(null);
   const [selCard, setSelCard] = useState(null);
+  const [selOrderIds, setSelOrderIds] = useState(null); // NEW: ids from OrderDiscardPileCards confirm
 
-  // Back navigation flag (children can request going one step back)
+  // Back navigation flag (children request going one step back)
   const [backRequested, setBackRequested] = useState(false);
-
-  // Back navigation request handler
   const requestBack = useCallback(() => setBackRequested(true), []);
 
-  // Small reset helper to clear the flow state
-  const resetFlow = () => {
+  // Simple step setter with log
+  const gotoStep = useCallback(
+    (next) => {
+      if (step !== next) log("step ->", next);
+      setStep(next);
+    },
+    [step]
+  );
+
+  // Full flow reset
+  const resetFlow = useCallback(() => {
+    log("reset flow");
     setCurrentEvent(null);
     setStep(null);
     setSelPlayer1(null);
@@ -37,100 +79,151 @@ export default function EffectManager({
     setSelSecret(null);
     setSelSet(null);
     setSelCard(null);
+    setSelOrderIds(null);
     setPayload(null);
     setBackRequested(false);
-  };
+  }, []);
 
-  // Post the effect response to your backend (as requested)
-  const sendEffectResponse = async (responsePayload) => {
-    try {
-      const response = await fetch(`/effectResponse`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ responsePayload }),
-      });
-      if (!response.ok) {
-        throw new Error(
-          `Effect response failed with status ${response.status}`
-        );
+  /** ───────────────────────────────────────────────────────────────────────────
+   * Networking (per-event POST)
+   * ─────────────────────────────────────────────────────────────────────────*/
+  const { gameId } = useParams();
+
+  const sendEffectResponse = useCallback(
+    async (eventName, responsePayload) => {
+      const template = EFFECT_ENDPOINTS[eventName];
+      if (!template) {
+        warn(`No endpoint configured for event "${eventName}". Skipping POST.`);
+        resetFlow();
+        return;
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      resetFlow();
-    }
-  };
 
-  // Listen to server messages: start flows per incoming event
+      const url =
+        typeof template === "string"
+          ? template.replace("{id}", String(gameId ?? "0"))
+          : "";
+
+      if (!url) {
+        warn("Empty URL resolved. Skipping POST.", { eventName, template });
+        resetFlow();
+        return;
+      }
+
+      const body = { event: eventName, ...responsePayload };
+      log("POST", url, body);
+
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!response.ok) {
+          throw new Error(`POST failed (${response.status})`);
+        }
+        log("POST ok:", eventName);
+      } catch (err) {
+        error("POST error:", err?.message ?? err);
+      } finally {
+        resetFlow();
+      }
+    },
+    [gameId, resetFlow]
+  );
+
+  /** ───────────────────────────────────────────────────────────────────────────
+   * WebSocket listener (entry point for effects)
+   * ─────────────────────────────────────────────────────────────────────────*/
   useEffect(() => {
-    if (!wsRef) return;
+    if (!wsRef) {
+      warn("wsRef is not defined; EffectManager idle.");
+      return;
+    }
+
     wsRef.onmessage = (event) => {
       let data;
       try {
         data = JSON.parse(event.data);
       } catch {
+        warn("Ignoring non-JSON WS message");
+        return;
+      }
+      if (!data?.event) {
+        warn("WS message without 'event' field:", data);
         return;
       }
 
-      // Reset all selections for a new flow
+      // Reset selections for a new flow
       setSelPlayer1(null);
       setSelPlayer2(null);
       setSelSecret(null);
       setSelSet(null);
       setSelCard(null);
+      setSelOrderIds(null);
       setPayload(data.payload ?? null);
       setBackRequested(false);
 
       // Initialize step based on event type
       switch (data.event) {
         case "selectAnyPlayer":
+          log("WS event:", data.event);
           setCurrentEvent("selectAnyPlayer");
-          setStep("selectPlayer");
+          gotoStep("selectPlayer");
           break;
 
         case "andThenThereWasOneMore":
+          log("WS event:", data.event);
           setCurrentEvent("andThenThereWasOneMore");
-          setStep("selectPlayer");
-          break;
-
-        case "satterthwaiteWild":
-          setCurrentEvent("satterthwaiteWild");
-          setStep("selectPlayer");
+          gotoStep("selectPlayer");
           break;
 
         case "revealSecret":
+          log("WS event:", data.event);
           setCurrentEvent("revealSecret");
-          setStep("selectPlayer");
+          gotoStep("selectPlayer");
           break;
 
         case "revealOwnSecret":
+          log("WS event:", data.event);
           setCurrentEvent("revealOwnSecret");
-          setStep("selectSecret");
+          gotoStep("selectSecret");
           break;
 
         case "hideSecret":
+          log("WS event:", data.event);
           setCurrentEvent("hideSecret");
-          setStep("selectPlayer");
+          gotoStep("selectPlayer");
           break;
 
         case "stealSet":
+          log("WS event:", data.event);
           setCurrentEvent("stealSet");
-          setStep("selectPlayer");
+          gotoStep("selectPlayer");
           break;
 
         case "lookIntoTheAshes":
+          log("WS event:", data.event);
           setCurrentEvent("lookIntoTheAshes");
-          setStep("selectDiscard");
+          gotoStep("selectDiscard");
+          break;
+
+        case "delayTheMurderersEscape":
+          log("WS event:", data.event);
+          setCurrentEvent("delayTheMurderersEscape");
+          gotoStep("orderDiscard");
           break;
 
         default:
+          warn("Unknown WS event:", data.event);
           setCurrentEvent(null);
           setStep(null);
       }
     };
-  }, [wsRef]);
+  }, [wsRef, gotoStep]);
 
-  // ===== Derived data =====
+  /** ───────────────────────────────────────────────────────────────────────────
+   * Derived data
+   * ─────────────────────────────────────────────────────────────────────────*/
   const playersAll = publicData?.players ?? [];
 
   const playersExceptMe = useMemo(
@@ -148,7 +241,7 @@ export default function EffectManager({
     [selectedPlayer1Obj]
   );
 
-  // Resolve hidden / revealed secrets depending on target and ownership
+  // Secrets of target: if target is me -> privateData.secrets; else -> publicData.players[].secrets
   const secretsOfTarget = useMemo(() => {
     if (!selPlayer1) return [];
     const isMe = String(selPlayer1) === String(actualPlayerId);
@@ -159,20 +252,25 @@ export default function EffectManager({
 
   const ownSecrets = useMemo(() => privateData?.secrets ?? [], [privateData]);
 
+  // For discard-based events: payload.cards
   const discardTopFive = useMemo(() => payload?.cards ?? [], [payload]);
 
-  // ===== Step advancement / back navigation / finish logic per event =====
+  /** ───────────────────────────────────────────────────────────────────────────
+   * Navigation / completion per event
+   * ─────────────────────────────────────────────────────────────────────────*/
   useEffect(() => {
     if (!currentEvent) return;
 
-    // --- Back navigation handling (child requested goBack) ---
+    // Back navigation handling
     if (backRequested) {
+      log("goBack requested from step:", step, "event:", currentEvent);
+
       // From selectSet -> back to selectPlayer (stealSet)
       if (step === "selectSet" && currentEvent === "stealSet") {
-        setSelSet(null); // clear current step selection
-        setSelPlayer1(null); // clear the trigger of forward from "selectPlayer"
+        setSelSet(null);
+        setSelPlayer1(null); // prevent auto-forward from selectPlayer
         setBackRequested(false);
-        setStep("selectPlayer");
+        gotoStep("selectPlayer");
         return;
       }
 
@@ -180,14 +278,13 @@ export default function EffectManager({
       if (
         step === "selectSecret" &&
         (currentEvent === "revealSecret" ||
-          currentEvent === "satterthwaiteWild" ||
           currentEvent === "andThenThereWasOneMore" ||
           currentEvent === "hideSecret")
       ) {
-        setSelSecret(null); // clear current step selection
-        setSelPlayer1(null); // prevent auto-forward from "selectPlayer"
+        setSelSecret(null);
+        setSelPlayer1(null); // prevent auto-forward from selectPlayer
         setBackRequested(false);
-        setStep("selectPlayer");
+        gotoStep("selectPlayer");
         return;
       }
 
@@ -196,14 +293,14 @@ export default function EffectManager({
         step === "selectPlayer2" &&
         currentEvent === "andThenThereWasOneMore"
       ) {
-        setSelPlayer2(null); // clear current step selection
-        setSelSecret(null); // prevent auto-forward from "selectSecret"
+        setSelPlayer2(null);
+        setSelSecret(null); // prevent auto-forward from selectSecret
         setBackRequested(false);
-        setStep("selectSecret");
+        gotoStep("selectSecret");
         return;
       }
 
-      // From selectSecret in revealOwnSecret: nothing to go back to
+      // From selectSecret in revealOwnSecret: there is no back
       if (step === "selectSecret" && currentEvent === "revealOwnSecret") {
         setBackRequested(false);
         return;
@@ -213,14 +310,13 @@ export default function EffectManager({
       setBackRequested(false);
     }
 
-    // --- Forward progression / finish (unchanged semantics) ---
+    // Forward progression / finish
     switch (currentEvent) {
       case "selectAnyPlayer": {
         if (step === "selectPlayer" && selPlayer1 != null) {
-          sendEffectResponse({
-            event: "selectAnyPlayer",
+          sendEffectResponse("selectAnyPlayer", {
             playerId: actualPlayerId,
-            response: { selectedPlayerId: selPlayer1 },
+            selectedPlayerId: selPlayer1,
           });
         }
         break;
@@ -228,34 +324,15 @@ export default function EffectManager({
 
       case "andThenThereWasOneMore": {
         if (step === "selectPlayer" && selPlayer1 != null) {
-          setStep("selectSecret");
+          gotoStep("selectSecret");
         } else if (step === "selectSecret" && selSecret != null) {
-          setStep("selectPlayer2");
+          gotoStep("selectPlayer2");
         } else if (step === "selectPlayer2" && selPlayer2 != null) {
-          sendEffectResponse({
-            event: "andThenThereWasOneMore",
+          sendEffectResponse("andThenThereWasOneMore", {
             playerId: actualPlayerId,
-            response: {
-              secretId: selSecret,
-              selectedPlayerId: selPlayer1, // the player we stole from
-              stolenPlayerId: selPlayer2, // the player we give the hidden secret to
-            },
-          });
-        }
-        break;
-      }
-
-      case "satterthwaiteWild": {
-        if (step === "selectPlayer" && selPlayer1 != null) {
-          setStep("selectSecret");
-        } else if (step === "selectSecret" && selSecret != null) {
-          sendEffectResponse({
-            event: "satterthwaiteWild",
-            playerId: actualPlayerId,
-            response: {
-              secretId: selSecret,
-              stolenPlayerId: selPlayer1,
-            },
+            secretId: selSecret,
+            stolenPlayerId: selPlayer2, // player who receives the hidden secret
+            selectedPlayerId: selPlayer1, // player we stole from
           });
         }
         break;
@@ -263,15 +340,12 @@ export default function EffectManager({
 
       case "revealSecret": {
         if (step === "selectPlayer" && selPlayer1 != null) {
-          setStep("selectSecret");
+          gotoStep("selectSecret");
         } else if (step === "selectSecret" && selSecret != null) {
-          sendEffectResponse({
-            event: "revealSecret",
+          sendEffectResponse("revealSecret", {
             playerId: actualPlayerId,
-            response: {
-              secretId: selSecret,
-              revealedPlayerId: selPlayer1,
-            },
+            secretId: selSecret,
+            revealedPlayerId: selPlayer1,
           });
         }
         break;
@@ -279,10 +353,9 @@ export default function EffectManager({
 
       case "revealOwnSecret": {
         if (step === "selectSecret" && selSecret != null) {
-          sendEffectResponse({
-            event: "revealOwnSecret",
+          sendEffectResponse("revealOwnSecret", {
             playerId: actualPlayerId,
-            response: { secretId: selSecret },
+            secretId: selSecret,
           });
         }
         break;
@@ -290,15 +363,12 @@ export default function EffectManager({
 
       case "hideSecret": {
         if (step === "selectPlayer" && selPlayer1 != null) {
-          setStep("selectSecret");
+          gotoStep("selectSecret");
         } else if (step === "selectSecret" && selSecret != null) {
-          sendEffectResponse({
-            event: "hideSecret",
+          sendEffectResponse("hideSecret", {
             playerId: actualPlayerId,
-            response: {
-              secretId: selSecret,
-              hiddenPlayerId: selPlayer1,
-            },
+            secretId: selSecret,
+            hiddenPlayerId: selPlayer1,
           });
         }
         break;
@@ -306,15 +376,12 @@ export default function EffectManager({
 
       case "stealSet": {
         if (step === "selectPlayer" && selPlayer1 != null) {
-          setStep("selectSet");
+          gotoStep("selectSet");
         } else if (step === "selectSet" && selSet != null) {
-          sendEffectResponse({
-            event: "stealSet",
+          sendEffectResponse("stealSet", {
             playerId: actualPlayerId,
-            response: {
-              setId: selSet,
-              stolenPlayerId: selPlayer1,
-            },
+            setId: selSet,
+            stolenPlayerId: selPlayer1,
           });
         }
         break;
@@ -322,16 +389,26 @@ export default function EffectManager({
 
       case "lookIntoTheAshes": {
         if (step === "selectDiscard" && selCard != null) {
-          sendEffectResponse({
-            event: "lookIntoTheAshes",
+          sendEffectResponse("lookIntoTheAshes", {
             playerId: actualPlayerId,
-            response: { cardId: selCard },
+            cardId: selCard,
+          });
+        }
+        break;
+      }
+
+      case "delayTheMurderersEscape": {
+        if (step === "orderDiscard" && Array.isArray(selOrderIds)) {
+          sendEffectResponse("delayTheMurderersEscape", {
+            playerId: actualPlayerId,
+            cards: selOrderIds,
           });
         }
         break;
       }
 
       default:
+        // Unknown / unsupported (shouldn't happen as we filter at WS handler)
         break;
     }
   }, [
@@ -342,11 +419,16 @@ export default function EffectManager({
     selSecret,
     selSet,
     selCard,
+    selOrderIds,
     backRequested,
     actualPlayerId,
+    gotoStep,
+    sendEffectResponse,
   ]);
 
-  // ===== Prompt text per step (simple guidance) =====
+  /** ───────────────────────────────────────────────────────────────────────────
+   * UI copy per step
+   * ─────────────────────────────────────────────────────────────────────────*/
   const promptText = useMemo(() => {
     switch (currentEvent) {
       case "selectAnyPlayer":
@@ -358,11 +440,6 @@ export default function EffectManager({
           return "Select one revealed secret to steal";
         if (step === "selectPlayer2")
           return "Select one player to give the secret hidden to";
-        return "";
-      case "satterthwaiteWild":
-        if (step === "selectPlayer")
-          return "Select one player to steal a secret from";
-        if (step === "selectSecret") return "Select one hidden secret to steal";
         return "";
       case "revealSecret":
         if (step === "selectPlayer")
@@ -385,19 +462,22 @@ export default function EffectManager({
         return "";
       case "lookIntoTheAshes":
         return "Select one card to steal from the top five cards of the discard pile";
+      case "delayTheMurderersEscape":
+        return "Reorder the cards of the discard pile that are going to the top of the regular deck";
       default:
         return "";
     }
   }, [currentEvent, step]);
 
-  // ===== Collections to feed into each step's UI =====
+  /** ───────────────────────────────────────────────────────────────────────────
+   * Collections for each step
+   * ─────────────────────────────────────────────────────────────────────────*/
   const playersForThisStep = useMemo(() => {
     switch (currentEvent) {
       case "stealSet":
         return playersExceptMe; // cannot target yourself
       case "selectAnyPlayer":
       case "andThenThereWasOneMore":
-      case "satterthwaiteWild":
       case "revealSecret":
       case "hideSecret":
         return playersAll;
@@ -411,7 +491,6 @@ export default function EffectManager({
       case "andThenThereWasOneMore": // needs revealed secret
       case "hideSecret": // needs revealed secret
         return true;
-      case "satterthwaiteWild": // needs hidden secret
       case "revealSecret": // needs hidden secret
       case "revealOwnSecret": // needs hidden secret
         return false;
@@ -423,30 +502,29 @@ export default function EffectManager({
   const secretsForThisStep = useMemo(() => {
     switch (currentEvent) {
       case "andThenThereWasOneMore":
-        return secretsOfTarget;
-      case "satterthwaiteWild":
       case "revealSecret":
+      case "hideSecret":
         return secretsOfTarget;
       case "revealOwnSecret":
         return ownSecrets;
-      case "hideSecret":
-        return secretsOfTarget;
       default:
         return [];
     }
   }, [currentEvent, secretsOfTarget, ownSecrets]);
 
   const setsForThisStep = setsOfPlayer1;
-  const discardForThisStep = discardTopFive;
+  const discardForThisStep = discardTopFive; // used by lookIntoTheAshes and NEW delayTheMurderersEscape
 
-  // ===== Render children (no overlay wrapper as per your change) =====
+  /** ───────────────────────────────────────────────────────────────────────────
+   * Render
+   * ─────────────────────────────────────────────────────────────────────────*/
   return (
     <>
       {step === "selectPlayer" && (
         <SelectPlayer
           actualPlayerId={actualPlayerId}
           players={playersForThisStep}
-          selectedPlayerId={setSelPlayer1} // child must call with chosen id
+          selectedPlayerId={setSelPlayer1}
           text={promptText}
         />
       )}
@@ -455,7 +533,7 @@ export default function EffectManager({
         <SelectPlayer
           actualPlayerId={actualPlayerId}
           players={playersAll}
-          selectedPlayerId={setSelPlayer2} // child must call with chosen id
+          selectedPlayerId={setSelPlayer2}
           text={promptText}
         />
       )}
@@ -467,6 +545,7 @@ export default function EffectManager({
           playerId={selPlayer1 ?? actualPlayerId}
           revealed={revealedForThisStep}
           selectedSecretId={setSelSecret}
+          // goBack active for all except revealOwnSecret
           goBack={currentEvent === "revealOwnSecret" ? null : requestBack}
           text={promptText}
         />
@@ -476,8 +555,8 @@ export default function EffectManager({
         <SelectSet
           actualPlayerId={actualPlayerId}
           sets={setsForThisStep}
-          selectedSetId={setSelSet} // child must call with chosen id
-          goBack={requestBack} // child may call goBack(true) to go back one step
+          selectedSetId={setSelSet}
+          goBack={requestBack}
           text={promptText}
         />
       )}
@@ -485,7 +564,15 @@ export default function EffectManager({
       {step === "selectDiscard" && (
         <SelectDiscardPileCards
           cards={discardForThisStep}
-          selectedCardId={setSelCard} // child must call with chosen id
+          selectedCardId={setSelCard}
+          text={promptText}
+        />
+      )}
+
+      {step === "orderDiscard" && (
+        <OrderDiscardPileCards
+          cards={discardForThisStep}
+          selectedCardsOrder={setSelOrderIds} // returns array of ids
           text={promptText}
         />
       )}

@@ -1,192 +1,171 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createPortal } from 'react-dom';
-import SelectSecret from './SelectSecret.jsx';
+import React from "react";
+import { describe, test, expect, vi, afterEach, beforeEach } from "vitest";
+import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import SelectSecret from "./SelectSecret";
 
-// Mock createPortal to render content directly instead of using a portal
-vi.mock('react-dom', async () => {
-  const actual = await vi.importActual('react-dom');
-  return {
-    ...actual,
-    createPortal: (element) => element,
-  };
+// Silence CSS import
+vi.mock("./SelectSecret.css", () => ({}));
+
+// Provide only the secrets your component will ask images for
+vi.mock("../generalMaps.js", () => ({
+  SECRETS_MAP: {
+    "You are the murderer": "/img/secret_murderer.png",
+    Prankster: "/img/secret_prankster.png",
+    "You are the acomplice": "/img/secret_accomplice.png",
+  },
+}));
+
+afterEach(() => {
+  cleanup();
 });
 
 beforeEach(() => {
-  // Reset all mocks before each test
-  vi.clearAllMocks();
+  vi.useFakeTimers();
 });
 
-describe('SelectSecret Component', () => {
-  const defaultProps = {
-    actualPlayerId: 1,
-    secrets: [
-      { id: 1, revealed: true, name: 'You are the murderer' },
-      { id: 2, revealed: false, name: null },
-      { id: 3, revealed: true, name: 'You are the acomplice' },
-    ],
-    revealed: true,
-    playerId: 2,
-    text: 'Select a secret to hide',
-    selectedSecretId: vi.fn(),
-    goBack: vi.fn(),
-  };
+const BASE_PROPS = {
+  actualPlayerId: 1,
+  playerId: 1,
+  text: "Pick a secret",
+};
 
-  it('renders the modal with correct title', () => {
-    render(<SelectSecret {...defaultProps} />);
-    
-    expect(screen.getByText('Select a secret to hide')).toBeInTheDocument();
-  });
+const SECRETS_SAMPLE = [
+  { id: 1, revealed: true, name: "You are the murderer" },
+  { id: 2, revealed: false, name: "Prankster" },
+  { id: 3, revealed: false, name: null }, // hidden & unknown name in public
+];
 
-  it('displays player information correctly', () => {
-    render(<SelectSecret {...defaultProps} />);
-    
-    // Component doesn't display these texts, so removing invalid assertions
-  });
-
-  it('filters secrets based on revealed parameter', () => {
-    render(<SelectSecret {...defaultProps} />);
-    
-    // Should show revealed secrets (ids 1 and 3) 
-    // Count the actual secret cards, not individual images
-    const secretCards = document.querySelectorAll('.selectable-secret-card');
-    
-    expect(secretCards).toHaveLength(2);
-  });
-
-  it('shows hidden secrets when revealed is false', () => {
-    const propsForHidden = {
-      ...defaultProps,
-      revealed: false,
-      text: 'Select a secret to reveal',
-    };
-    
-    render(<SelectSecret {...propsForHidden} />);
-    
-    // Should show only the hidden secret (id 2)
-    // Count the actual secret cards, not individual images
-    const secretCards = document.querySelectorAll('.selectable-secret-card');
-    
-    expect(secretCards).toHaveLength(1);
-  });
-
-  it('calls selectedSecretId and goBack when a card is clicked', async () => {
-    vi.useFakeTimers();
-    
-    render(<SelectSecret {...defaultProps} />);
-    
-    // Click on the first secret card directly
-    const secretCard = document.querySelector('.selectable-secret-card');
-    fireEvent.click(secretCard);
-    
-    // Fast-forward time to simulate animation completion
-    vi.advanceTimersByTime(700); // Add a bit more time
-    
-    // Check that the functions are called after timeout
-    expect(defaultProps.selectedSecretId).toHaveBeenCalledWith(1);
-    expect(defaultProps.goBack).toHaveBeenCalled();
-    
-    vi.useRealTimers();
-  }, 10000); // Increase test timeout
-
-  it('closes modal when overlay is clicked', () => {
-    render(<SelectSecret {...defaultProps} />);
-    
-    const overlay = document.querySelector('.overlay');
-    fireEvent.click(overlay);
-    
-    expect(defaultProps.goBack).toHaveBeenCalled();
-  });
-
-  it('closes modal when X button is clicked', () => {
-    render(<SelectSecret {...defaultProps} />);
-    
-    const closeButton = screen.getByText('X');
-    fireEvent.click(closeButton);
-    
-    expect(defaultProps.goBack).toHaveBeenCalled();
-  });
-
-  it('shows no secrets message when no matching secrets exist', () => {
-    const propsWithNoSecrets = {
-      ...defaultProps,
-      secrets: [
-        { id: 1, revealed: false, name: null },
-      ],
-      revealed: true, // Looking for revealed secrets but none exist
-    };
-    
-    render(<SelectSecret {...propsWithNoSecrets} />);
-    
-    expect(screen.getByText('No secrets available to hide!')).toBeInTheDocument();
-  });
-
-  it('handles empty secrets array', () => {
-    const propsWithEmptySecrets = {
-      ...defaultProps,
-      secrets: [],
-    };
-    
-    render(<SelectSecret {...propsWithEmptySecrets} />);
-    
-    expect(screen.getByText('No secrets available to hide!')).toBeInTheDocument();
-  });
-
-  it('handles null secrets', () => {
-    const propsWithNullSecrets = {
-      ...defaultProps,
-      secrets: null,
-    };
-    
-    render(<SelectSecret {...propsWithNullSecrets} />);
-    
-    expect(screen.getByText('No secrets available to hide!')).toBeInTheDocument();
-  });
-
-  it('applies correct CSS classes for card selection and animation', () => {
-    render(<SelectSecret {...defaultProps} />);
-    
-    const secretCard = document.querySelector('.selectable-secret-card');
-    expect(secretCard).toBeInTheDocument();
-    
-    // Click the card to trigger selection and animation
-    fireEvent.click(secretCard);
-    
-    expect(secretCard).toHaveClass('selected');
-    expect(secretCard.querySelector('.card-flip-container')).toHaveClass('flipping');
-  });
-
-  it('displays correct secret images based on revealed status and name', () => {
-    render(<SelectSecret {...defaultProps} />);
-    
-    const secretImages = screen.getAllByRole('img');
-    const murdererSecret = secretImages.find(img => 
-      img.alt === 'Secret You are the murderer'
+describe("SelectSecret", () => {
+  test("renders secrets and disables not-selectable ones when revealed=true", () => {
+    render(
+      <SelectSecret
+        {...BASE_PROPS}
+        secrets={SECRETS_SAMPLE}
+        revealed={true}
+        selectedSecretId={() => {}}
+        goBack={() => {}}
+      />
     );
-    const accompliceSecret = secretImages.find(img => 
-      img.alt === 'Secret You are the acomplice'
-    );
-    
-    expect(murdererSecret).toBeInTheDocument();
-    expect(accompliceSecret).toBeInTheDocument();
+
+    // Header text
+    expect(
+      screen.getByRole("heading", { name: /pick a secret/i })
+    ).toBeDefined();
+
+    // Non-selectable secrets have title "Not selectable for this step"
+    const notSelectable = screen.getAllByTitle("Not selectable for this step");
+    // For revealed=true, hidden ones (id 2,3) should be non-selectable
+    expect(notSelectable.length).toBe(2);
+
+    // Confirm must be disabled until a selectable secret is chosen
+    const confirmBtn = screen.getByRole("button", { name: /confirm/i });
+    expect(confirmBtn).toBeDisabled();
+
+    // Clicking a non-selectable secret should not enable confirm
+    fireEvent.click(notSelectable[0]);
+    expect(confirmBtn).toBeDisabled();
+
+    // Click selectable: the revealed one (id 1)
+    // Cards are all role=button; use a safer query: any button without the non-selectable title
+    const allCards = screen.getAllByRole("button");
+    const selectableCard = allCards.find((el) => !el.getAttribute("title"));
+    expect(selectableCard).toBeTruthy();
+
+    fireEvent.click(selectableCard);
+    expect(confirmBtn).not.toBeDisabled();
   });
 
-  it('updates text correctly for reveal vs hide actions', () => {
-    // Test hide action
-    render(<SelectSecret {...defaultProps} />);
-    expect(screen.getByText('Select a secret to hide')).toBeInTheDocument();
-    
-    // Re-render for reveal action
-    const revealProps = {
-      ...defaultProps,
-      revealed: false,
-      text: 'Select a secret to reveal',
-    };
-    
-    const { rerender } = render(<SelectSecret {...defaultProps} />);
-    rerender(<SelectSecret {...revealProps} />);
-    
-    expect(screen.getByText('Select a secret to reveal')).toBeInTheDocument();
+  test("confirm calls selectedSecretId with the chosen id (revealed=true -> id=1)", () => {
+    const onSelect = vi.fn();
+
+    render(
+      <SelectSecret
+        {...BASE_PROPS}
+        secrets={SECRETS_SAMPLE}
+        revealed={true}
+        selectedSecretId={onSelect}
+        goBack={() => {}}
+      />
+    );
+
+    // Pick the only selectable (revealed) card
+    const allCards = screen.getAllByRole("button");
+    const selectable = allCards.find((el) => !el.getAttribute("title"));
+    fireEvent.click(selectable);
+
+    fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+    // The component fires after 600ms
+    vi.advanceTimersByTime(600);
+
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledWith(1);
+  });
+
+  test("when revealed=false only hidden secrets are selectable; confirm returns the picked id", () => {
+    const onSelect = vi.fn();
+
+    render(
+      <SelectSecret
+        {...BASE_PROPS}
+        secrets={SECRETS_SAMPLE}
+        revealed={false}
+        selectedSecretId={onSelect}
+        goBack={() => {}}
+      />
+    );
+
+    // For revealed=false, id 2 and id 3 are selectable (no title attr)
+    const cards = screen.getAllByRole("button");
+    const selectableCards = cards.filter((el) => !el.getAttribute("title"));
+    // There are 3 buttons: (Go Back, Confirm) also have role=button, filter them out by container class
+    const gridCards = selectableCards.filter((el) =>
+      el.className.includes("selectable-secret-card")
+    );
+    // Two hidden cards should be selectable
+    expect(gridCards.length).toBe(2);
+
+    // Click one hidden card (any of the two)
+    fireEvent.click(gridCards[0]);
+    fireEvent.click(screen.getByRole("button", { name: /confirm/i }));
+
+    vi.advanceTimersByTime(600);
+
+    // Should pass the id of the chosen hidden card
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    const calledWith = onSelect.mock.calls[0][0];
+    expect([2, 3]).toContain(calledWith);
+  });
+
+  test("renders Go Back when goBack is provided and calls it", () => {
+    const onBack = vi.fn();
+
+    render(
+      <SelectSecret
+        {...BASE_PROPS}
+        secrets={SECRETS_SAMPLE}
+        revealed={true}
+        selectedSecretId={() => {}}
+        goBack={onBack}
+      />
+    );
+
+    const backBtn = screen.getByRole("button", { name: /go back/i });
+    fireEvent.click(backBtn);
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  test("does not render Go Back when goBack is null", () => {
+    render(
+      <SelectSecret
+        {...BASE_PROPS}
+        secrets={SECRETS_SAMPLE}
+        revealed={true}
+        selectedSecretId={() => {}}
+        goBack={null}
+      />
+    );
+
+    expect(screen.queryByRole("button", { name: /go back/i })).toBeNull();
   });
 });
