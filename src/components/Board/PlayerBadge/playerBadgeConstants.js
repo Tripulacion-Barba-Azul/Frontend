@@ -14,8 +14,8 @@ export const RING_COLORS = {
 
 // Name background colors
 export const NAME_BG_COLORS = {
-  white: "#ffffff",
-  red: "#ef4444",
-  orange: "#f97316",
+  white: "#f4e1a3",
+  red: "#d12222",
+  orange: "#ff5900",
 };
 

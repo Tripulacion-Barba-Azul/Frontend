@@ -196,7 +196,7 @@ function App() {
       },
       {
         id: 6,
-        name: "Player F",
+        name: "12345678901234567890",
         avatar: 6,
         turnOrder: 6,
         turnStatus: "waiting",

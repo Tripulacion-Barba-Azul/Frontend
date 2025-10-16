@@ -7,23 +7,40 @@
 }
 
 /* Name plate displayed above the avatar */
+/* Modern name plate with edge transparency */
 .player-name-box {
-  @apply font-medium leading-none text-slate-800 px-3 py-1 rounded-lg;
-  background-color: var(--name-bg, #ffffff);
+  @apply font-medium leading-none px-4 py-2;
+  background: 
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--name-bg, rgba(255, 255, 255, 0.95)) 15%,
+      var(--name-bg, rgba(255, 255, 255, 0.95)) 85%,
+      transparent 100%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(255, 255, 255, 0.4) 0%,
+      transparent 70%
+    );
+  
   font-family: "Metropolis";
-  border: 1px solid #000;
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.06), 0 1px 1px -1px rgb(0 0 0 / 0.08);
-
-  /* Keep this above the avatar ring/shadows */
+  font-weight: 200;
+  color: #1a1a1a;
+  
   position: relative;
   z-index: 10;
-  top: 7px;
+  top: 2px;
+
+  transition: all 0.2s ease-in-out;
+
+  /* --- Correct text shadows --- */
+  text-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.25),   /* subtle depth */
+    0 2px 4px rgba(0, 0, 0, 0.15),   /* diffuse softness */
+    0 0 6px rgba(78, 26, 21, 0.481); /* your warm glow tone (#f4e1a3) */
 }
 
-.player-name {
-  @apply px-2 py-1 rounded-md text-white font-medium leading-none;
-  background-color: rgb(0 0 0 / 0.5);
-}
 
 /* ===== Avatar + overlays stack ===== */
 .avatar-stack {
@@ -49,7 +66,7 @@
   /* Colored ring + thin black outer edge + soft shadowing */
   box-shadow: 0 0 0 var(--ring-width) var(--tw-ring-color),
     /* colored ring (8px) */ 0 0 0 calc(var(--ring-width) + 1px) #000,
-    /* outer black edge (1px) */ 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    /* outer black edge (1px) */ 0 10px 15px -3px rgb(0, 0, 0),
     /* soft shadows */ 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
