@@ -90,9 +90,13 @@ export function buildSeatedPlayersFromOrders(
     // Ringcolor logic
     const ringColor =
       turnStatusNorm === "playing"
-        ? "green"
+        ? "emerald"
+        : turnStatusNorm === "takingaction"
+        ? "lime"
         : turnStatusNorm === "discarding"
-        ? "yellow"
+        ? "amber"
+        : turnStatusNorm === "discardingopt"
+        ? "lightAmber"
         : turnStatusNorm === "drawing"
         ? "red"
         : "gray";
@@ -115,6 +119,7 @@ export function buildSeatedPlayersFromOrders(
       name: p.name,
       avatar: p.avatar,
       size: idx === 0 ? "big" : "small", // anchor is larger by convention
+      socialDisgrace: p.socialDisgrace ?? false,
       ringColor: ringColor,
       position: position,
       nameBgColor: resolveNameBg(visibleRole), // "red"/"orange" only if actual is hidden-team
