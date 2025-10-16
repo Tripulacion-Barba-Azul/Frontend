@@ -13,12 +13,15 @@ export default function OwnCards({
   turnStatus = "waiting",
 }) {
   const [selectedIds, setSelectedIds] = useState(new Set());
-
+  console.log("OwnCards render", { turnStatus });
   useEffect(() => {
     setSelectedIds(new Set());
   }, [cards, turnStatus]);
 
-  const canSelect = turnStatus === "playing" || turnStatus === "discarding";
+  const canSelect =
+    turnStatus === "playing" ||
+    turnStatus === "discarding" ||
+    turnStatus === "discardingOpt";
 
   const toggleSelect = useCallback(
     (id) => {
@@ -40,41 +43,41 @@ export default function OwnCards({
       <div className="owncards-row">
         <AnimatePresence initial={false}>
           {cards.map(({ id, name }) => {
-          const isSelected = selectedIds.has(id);
-          const disabledClass = canSelect ? "" : "owncards-card--disabled";
+            const isSelected = selectedIds.has(id);
+            const disabledClass = canSelect ? "" : "owncards-card--disabled";
 
-          const imgSrc = CARDS_MAP[name];
-          if (!imgSrc) {
-            console.warn(`⚠️ Missing entry in CARDS_MAP for name: "${name}"`);
-          }
-        
-          return (
-            <motion.div
-              key={id}
-              layout
-              initial={{ opacity: 0, y: 60, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -60, scale: 0.9 }}
-              transition={{
-                type: "spring",
-                stiffness: 400,
-                damping: 28,
-              }}
-            >
-              <img
-                src={imgSrc || ""}
-                alt={`Card ${name}`}
-                className={`owncards-card ${
-                  isSelected ? "owncards-card--selected" : ""
-                } ${disabledClass}`}
-                width={130}
-                height={198}
-                draggable={false}
-                onClick={() => toggleSelect(id)}
-              />
-            </motion.div>
-          );
-        })}
+            const imgSrc = CARDS_MAP[name];
+            if (!imgSrc) {
+              console.warn(`⚠️ Missing entry in CARDS_MAP for name: "${name}"`);
+            }
+
+            return (
+              <motion.div
+                key={id}
+                layout
+                initial={{ opacity: 0, y: 60, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -60, scale: 0.9 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 28,
+                }}
+              >
+                <img
+                  src={imgSrc || ""}
+                  alt={`Card ${name}`}
+                  className={`owncards-card ${
+                    isSelected ? "owncards-card--selected" : ""
+                  } ${disabledClass}`}
+                  width={130}
+                  height={198}
+                  draggable={false}
+                  onClick={() => toggleSelect(id)}
+                />
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
       </div>
 
@@ -90,13 +93,14 @@ export default function OwnCards({
             />
           ))}
 
-        {turnStatus === "discarding" && (
-          <DiscardButton
-            selectedCards={selectedArray}
-            handSize={cards.length}
-            onDiscardSuccess={() => setSelectedIds(new Set())}
-          />
-        )}
+        {turnStatus === "discarding" ||
+          (turnStatus === "discardingOpt" && (
+            <DiscardButton
+              selectedCards={selectedArray}
+              handSize={cards.length}
+              onDiscardSuccess={() => setSelectedIds(new Set())}
+            />
+          ))}
 
         {turnStatus === "drawing" && (
           <DrawRegularCardButton
