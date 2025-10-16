@@ -6,6 +6,7 @@ import GameMatchesList from "../../components/GameMatchesList/GameMatchesList";
 import GameScreen from "../../components/GameScreen/GameScreen";
 import SyncOrchestrator from "../../components/Sync/SyncOrchestrator";
 import SetsGrid from "../../components/Board/SetsGrid/SetsGrid";
+import GameEndScreenDemo from "../../components/GameEndScreen/GameEndScreenDemo";
 
 function App() {
   const currentPlayerId = 1;
@@ -289,24 +290,11 @@ function App() {
     ],
   };
 
-  const sampleSets = [
-    {
-      setId: 1,
-      setName: "Hercule Poirot",
-      cards: [{ id: 1, name: "Hercule Poirot" }],
-    },
-    {
-      setId: 2,
-      setName: "Miss Marple",
-      cards: [{ id: 2, name: "Miss Marple" }],
-    },
-
-  ];
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<TitleScreen />} />
-        <Route path="/create" element={<SetsGrid sets={sampleSets} position="vertical-right" />} />
+        <Route path="/create" element={<GameEndScreenDemo />} />
         <Route
           path="/join"
           element={

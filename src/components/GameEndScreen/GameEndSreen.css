@@ -119,21 +119,29 @@
 }
 
 .btn-back-home {
+  width: 170px;
+  height: 60px;
+  padding: 0;
   color: #f4e1a3;
   background-color: rgb(163, 34, 34);
-  border: none;
-  padding: 12px 24px;
-  font-size: 1rem;
-  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-family: 'Metropolis', Arial, sans-serif;
+  font-size: 22px;
+  user-select: none;
+  pointer-events: auto;
+  margin: 7px;
+  z-index: 10;
+
+  transition: 
+    background-color 0.25s ease,
+    transform 0.2s ease,
+    box-shadow 0.25s ease;
 }
 
 .btn-back-home:hover {
-  background-color: rgb(140, 28, 28);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transform: scale(1.05); /* gentle grow */
+  box-shadow: 0 0px 40px  #f4e1a3cc;
 }
 
 .btn-back-home:active {
