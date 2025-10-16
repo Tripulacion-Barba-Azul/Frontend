@@ -80,7 +80,7 @@ export default function GameScreen() {
             break;
 
           default:
-            console.warn("Evento no manejado:", data);
+            console.warn("GAMESCREEN: Evento no manejado:", data);
         }
       } catch (err) {
         console.warn("⚠️ Mensaje no JSON:", event.data);
@@ -109,21 +109,26 @@ export default function GameScreen() {
           refreshTrigger={refreshLobby}
         />
       )}
-
-      <Notifier
-        publicData={publicData}
-        actualPlayerId={parseInt(playerId)}
-        wsRef={wsRef.current}
-      />
-
-      <EffectManager
-        publicData={publicData}
-        privateData={privateData}
-        actualPlayerId={parseInt(playerId)}
-        wsRef={wsRef.current}
-      />
-
-      <GameEndScreen websocket={wsRef.current} />
+  
+      {/* Only render WebSocket-dependent components after it's ready */}
+      {isConnected && wsRef.current && (
+        <>
+          <Notifier
+            publicData={publicData}
+            actualPlayerId={parseInt(playerId)}
+            wsRef={wsRef}
+          />
+  
+          <EffectManager
+            publicData={publicData}
+            privateData={privateData}
+            actualPlayerId={parseInt(playerId)}
+            wsRef={wsRef}
+          />
+  
+          <GameEndScreen websocket={wsRef.current} />
+        </>
+      )}
     </>
   );
 }

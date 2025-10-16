@@ -135,12 +135,14 @@ export default function EffectManager({
    * WebSocket listener (entry point for effects)
    * ─────────────────────────────────────────────────────────────────────────*/
   useEffect(() => {
-    if (!wsRef) {
+    // soporte tanto wsRef como wsRef.current
+    const wsInstance = wsRef?.current ?? wsRef;
+    if (!wsInstance) {
       warn("wsRef is not defined; EffectManager idle.");
       return;
     }
-
-    wsRef.onmessage = (event) => {
+  
+    const listener = (event) => {
       let data;
       try {
         data = JSON.parse(event.data);
@@ -152,7 +154,7 @@ export default function EffectManager({
         warn("WS message without 'event' field:", data);
         return;
       }
-
+  
       // Reset selections for a new flow
       setSelPlayer1(null);
       setSelPlayer2(null);
@@ -162,7 +164,7 @@ export default function EffectManager({
       setSelOrderIds(null);
       setPayload(data.payload ?? null);
       setBackRequested(false);
-
+  
       // Initialize step based on event type
       switch (data.event) {
         case "selectAnyPlayer":
@@ -170,56 +172,62 @@ export default function EffectManager({
           setCurrentEvent("selectAnyPlayer");
           gotoStep("selectPlayer");
           break;
-
+  
         case "andThenThereWasOneMore":
           log("WS event:", data.event);
           setCurrentEvent("andThenThereWasOneMore");
           gotoStep("selectPlayer");
           break;
-
+  
         case "revealSecret":
           log("WS event:", data.event);
           setCurrentEvent("revealSecret");
           gotoStep("selectPlayer");
           break;
-
+  
         case "revealOwnSecret":
           log("WS event:", data.event);
           setCurrentEvent("revealOwnSecret");
           gotoStep("selectSecret");
           break;
-
+  
         case "hideSecret":
           log("WS event:", data.event);
           setCurrentEvent("hideSecret");
           gotoStep("selectPlayer");
           break;
-
+  
         case "stealSet":
           log("WS event:", data.event);
           setCurrentEvent("stealSet");
           gotoStep("selectPlayer");
           break;
-
+  
         case "lookIntoTheAshes":
           log("WS event:", data.event);
           setCurrentEvent("lookIntoTheAshes");
           gotoStep("selectDiscard");
           break;
-
+  
         case "delayTheMurderersEscape":
           log("WS event:", data.event);
           setCurrentEvent("delayTheMurderersEscape");
           gotoStep("orderDiscard");
           break;
-
+  
         default:
-          warn("Unknown WS event:", data.event);
+          warn("Unknown WS event (EffectManager):", data.event);
           setCurrentEvent(null);
           setStep(null);
       }
     };
-  }, [wsRef, gotoStep]);
+  
+    // usar addEventListener para no pisar otros listeners
+    wsInstance.addEventListener("message", listener);
+    return () => {
+      wsInstance.removeEventListener("message", listener);
+    };
+  }, [wsRef, gotoStep]); // dependemos de wsRef (ref o instancia) y gotoStep
 
   /** ───────────────────────────────────────────────────────────────────────────
    * Derived data

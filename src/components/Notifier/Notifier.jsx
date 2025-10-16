@@ -81,8 +81,9 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
   const [currentNotification, setCurrentNotification] = useState(null);
 
   useEffect(() => {
-    if (!wsRef?.current) return;
-
+    const wsInstance = wsRef?.current ?? wsRef;
+    if (!wsInstance) return;
+  
     const handleWebSocketMessage = (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -128,20 +129,32 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
             handleNoEffect();
             break;  
           default:
-            console.warn('Unknown event type:', eventType);
+            break;
         }
       } catch (error) {
         console.error('Error processing websocket message:', error);
       }
     };
 
-    const ws = wsRef.current;
-    ws.addEventListener('message', handleWebSocketMessage);
+    if (wsInstance.addEventListener) {
+      wsInstance.addEventListener('message', handleWebSocketMessage);
+    } else {
+      // fallback: some websockets only expose onmessage
+      const prev = wsInstance.onmessage;
+      wsInstance.onmessage = (event) => {
+        handleWebSocketMessage(event);
+        if (prev) prev(event);
+      };
+    }
 
     return () => {
-      ws.removeEventListener('message', handleWebSocketMessage);
+      if (wsInstance.removeEventListener) {
+        wsInstance.removeEventListener('message', handleWebSocketMessage);
+      } else {
+
+      }
     };
-  }, [wsRef, publicData]);
+  }, [wsRef?.current ?? wsRef, publicData]);
 
   const PLAYER_COLORS = [
     '#e6194B', '#3cb44b', '#ffe119', '#4363d8', 
@@ -156,15 +169,20 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
   };
 
   const playerColorIndexMap = {};
-  publicData?.players?.forEach((p, idx) => { playerColorIndexMap[p.id] = idx; });
+  (publicData?.players ?? []).forEach((p, idx) => {
+    playerColorIndexMap[p.id] = idx;
+  });
+  
 
   // Helper function to get player name by ID
   const getPlayerNameColored = (playerId) => {
-    const player = publicData.players.find(p => p.id === playerId);
+    const players = publicData?.players ?? [];
+    const player = players.find(p => String(p.id) === String(playerId));
     if (!player) return `Player ${playerId}`;
-    return colorName(player.name, playerColorIndexMap[playerId]);
+    const idx = playerColorIndexMap[player.id] ?? 0;
+    return colorName(player.name, idx);
   };
-
+  
   // Helper function to get set name by ID
   const getSetName = (setId, playerId) => {
     const player = publicData.players.find(p => p.id === playerId);
@@ -200,8 +218,8 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
 
   // Event handlers
   const handleCardsOffTheTable = (payload) => {
-    const { playerID, quantity, selectedPlayerId } = payload;
-    const playerName = getPlayerNameColored(playerID);
+    const { playerId, quantity, selectedPlayerId } = payload;
+    const playerName = getPlayerNameColored(playerId);
     const targetName = getPlayerNameColored(selectedPlayerId);
     
     // Create an array with 'quantity' number of "Not so Fast!" cards
@@ -212,7 +230,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
       revealed: false
     }));
     
-    if (selectedPlayerId === playerID) {
+    if (selectedPlayerId === playerId) {
       setCurrentNotification({
         text: `${playerName} made themselves discard <br /> ${quantity} "Not so Fast!" cards`,
         cards: notSoFastCards,
@@ -228,8 +246,8 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
   };
 
   const handleStealSet = (payload) => {
-    const { playerID, stolenPlayerId, setId } = payload;
-    const playerName = getPlayerNameColored(playerID);
+    const { playerId, stolenPlayerId, setId } = payload;
+    const playerName = getPlayerNameColored(playerId);
     const stolenFromName = getPlayerNameColored(stolenPlayerId);
     const setName = getSetName(setId, stolenPlayerId);
     const setImage = getSetImage(setId, stolenPlayerId);
@@ -242,8 +260,8 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
   };
 
   const handleLookIntoTheAshes = (payload) => {
-    const { playerID } = payload;
-    const playerName = getPlayerNameColored(playerID);
+    const { playerId } = payload;
+    const playerName = getPlayerNameColored(playerId);
     
     setCurrentNotification({
       text: `${playerName} looked into the ashes`,
@@ -253,34 +271,34 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
   };
   
   const handleAndThenThereWasOneMore = (payload) => {
-    const { playerID, secretId, secretName, stolenPlayerId, giftedPlayerId } = payload;
-    const playerName = getPlayerNameColored(playerID);
+    const { playerId, secretId, secretName, stolenPlayerId, giftedPlayerId } = payload;
+    const playerName = getPlayerNameColored(playerId);
     const stolenFromName = getPlayerNameColored(stolenPlayerId);
     const giftedToName = getPlayerNameColored(giftedPlayerId);
         
     // All possible combinations:
-    if (stolenPlayerId === playerID && giftedPlayerId === playerID) {
+    if (stolenPlayerId === playerId && giftedPlayerId === playerId) {
       // Player takes their own secret and gives it to themselves
       setCurrentNotification({
         text: `${playerName} took one of their revealed secrets <br /> and hid it`,
         cards: [{id: secretId, name: secretName, revealed: true, isSecret:true}],
         setImage: null
       });
-    } else if (stolenPlayerId === playerID && giftedPlayerId !== playerID) {
+    } else if (stolenPlayerId === playerId && giftedPlayerId !== playerId) {
       // Player takes their own secret and gives it to someone else
       setCurrentNotification({
         text: `${playerName} took one of their own secrets <br /> and gave it to ${giftedToName}. <br /> Now the secret is hidden`,
         cards: [{id: secretId, name: secretName, revealed: true, isSecret:true}],
         setImage: null
       });
-    } else if (stolenPlayerId !== playerID && giftedPlayerId === playerID) {
+    } else if (stolenPlayerId !== playerId && giftedPlayerId === playerId) {
       // Player takes from someone else and gives it to themselves
       setCurrentNotification({
         text: `${playerName} stole a secret from ${stolenFromName}. <br /> Now the secret is hidden`,
         cards: [{id: secretId, name: secretName, revealed: true, isSecret:true}],
         setImage: null
       });
-    } else if (stolenPlayerId !== playerID && giftedPlayerId !== playerID && giftedPlayerId === stolenPlayerId) {
+    } else if (stolenPlayerId !== playerId && giftedPlayerId !== playerId && giftedPlayerId === stolenPlayerId) {
       // Player takes from someone and gives it back to the same person
       setCurrentNotification({
         text: `${playerName} took a secret from ${stolenFromName} <br /> and gave it back to them. <br /> Now the secret is hidden`,
@@ -298,8 +316,8 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
   };
 
   const handleRevealSecret = (payload) => {
-    const { playerID, secretId, selectedPlayerId } = payload;
-    const playerName = getPlayerNameColored(playerID);
+    const { playerId, secretId, selectedPlayerId } = payload;
+    const playerName = getPlayerNameColored(playerId);
     const targetName = getPlayerNameColored(selectedPlayerId);
     
     // Find the secret card
@@ -314,7 +332,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
       revealed: secret.revealed 
     } : null;
     
-    if (selectedPlayerId === playerID) {
+    if (selectedPlayerId === playerId) {
       setCurrentNotification({
         text: `${playerName} revealed one of their own secrets`,
         cards: displayCard ? [displayCard] : [],
@@ -330,8 +348,8 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
   };
 
   const handleRevealSecretForce = (payload) => {
-    const { playerID, secretId, selectedPlayerId } = payload;
-    const playerName = getPlayerNameColored(playerID);
+    const { playerId, secretId, selectedPlayerId } = payload;
+    const playerName = getPlayerNameColored(playerId);
     const targetName = getPlayerNameColored(selectedPlayerId);
     
     // Find the secret card
@@ -346,7 +364,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
       revealed: true
     } : null;
     
-    if (selectedPlayerId === playerID) {
+    if (selectedPlayerId === playerId) {
       setCurrentNotification({
         text: `${playerName} revealed one of their own secrets`,
         cards: displayCard ? [displayCard] : [],
@@ -362,8 +380,8 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
   };
 
   const handleSatterthwaiteWild = (payload) => {
-    const { playerID, secretId, secretName, selectedPlayerId } = payload;
-    const playerName = getPlayerNameColored(playerID);
+    const { playerId, secretId, secretName, selectedPlayerId } = payload;
+    const playerName = getPlayerNameColored(playerId);
     const targetName = getPlayerNameColored(selectedPlayerId);
     
     // Find the secret card
@@ -372,7 +390,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     
     const displayCard = createSecretCard(secret);
     
-    if (selectedPlayerId === playerID) {
+    if (selectedPlayerId === playerId) {
       setCurrentNotification({
         text: `${playerName} showed one of their own secrets. <br /> The secret remains hidden`,
         cards: [{id: secretId, name: secretName, revealed: true, isSecret:true}],
@@ -388,11 +406,11 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
   };
 
   const handleHideSecret = (payload) => {
-    const { playerID, secretId, selectedPlayerId } = payload;
-    const playerName = getPlayerNameColored(playerID);
+    const { playerId, secretId, selectedPlayerId } = payload;
+    const playerName = getPlayerNameColored(playerId);
     const targetName = getPlayerNameColored(selectedPlayerId);
 
-    if (selectedPlayerId != playerID) {
+    if (selectedPlayerId != playerId) {
         setCurrentNotification({
             text: `${playerName} hid one of ${targetName}'s secrets`,
             cards: [{id: secretId, revealed: false, isSecret:true}],
@@ -409,8 +427,8 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
   };
 
   const handleDelayTheMurderersEscape = (payload) => {
-    const { playerID } = payload;
-    const playerName = getPlayerNameColored(playerID);
+    const { playerId } = payload;
+    const playerName = getPlayerNameColored(playerId);
 
     setCurrentNotification({
       text: `${playerName} took cards from the discard pile <br /> and put them on top of the deck <br /> in some order`,
