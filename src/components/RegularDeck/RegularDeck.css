@@ -41,6 +41,7 @@
   font-family: "Metropolis";
   font-weight: bold;
   color: #f4e1a3;
+  box-shadow: 0 0px 10px  #f4e1a3cc;
 }
 
 .RegularDeck-container.full .RegularDeck-count,

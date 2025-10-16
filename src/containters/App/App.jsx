@@ -28,7 +28,7 @@ function App() {
         name: "Player A",
         avatar: 1,
         turnOrder: 1,
-        turnStatus: "discarding",
+        turnStatus: "playing",
         cardCount: 3,
         // Public secrets: keep name null unless revealed === true
         secrets: [{ id: 201, revealed: false, name: null }],

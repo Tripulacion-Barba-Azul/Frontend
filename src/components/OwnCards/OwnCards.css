@@ -55,8 +55,8 @@
 /* Actions area (placeholders only) */
 .owncards-actions {
   position: absolute;
-  right: 16px;   /* distance from right edge */
-  bottom: 16px;  /* distance from bottom edge */
+  right: 6%;   /* distance from right edge */
+  top: 80%;
   display: flex;
   gap: 8px;
   /* Ensure actions can receive clicks */
@@ -67,20 +67,37 @@
 
 /* Minimal button look — replace with your button component later if needed */
 .owncards-action {
-  width: 250px;      
-  height: 70px;      
-  padding: 0;        
+  width: 320px;
+  height: 120px;
+  padding: 0;
   color: #f4e1a3;
-  background-color: rgb(163, 34, 34);           
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  background-color: rgb(163, 34, 34);
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 25px;
+  font-size: 40px;
   user-select: none;
-  /* Ensure button can receive clicks */
   pointer-events: auto;
+  margin: 7px;
   z-index: 10;
+
+  transition: 
+    background-color 0.25s ease,
+    transform 0.2s ease,
+    box-shadow 0.25s ease;
 }
 
 .owncards-action:hover {
-  background-color: rgb(140, 29, 29);
+  transform: scale(1.05); /* gentle grow */
+  box-shadow: 0 0px 85px  #f4e1a3cc;
+}
+
+.owncards-action:active {
+  transform: scale(0.97); /* tactile press effect */
+  box-shadow: 0 0px 85px  #f4e1a3cc;
+}
+
+/* optional: a slight glowing border effect when focused */
+.owncards-action:focus {
+  outline: none;
+  box-shadow: 0 0px 85px  #f4e1a3cc;
 }
