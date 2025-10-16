@@ -28,7 +28,7 @@ body.active-viewset {
 }
 
 .btn-viewset img:hover {
-  transform: scale(1.05);
+  transform: scale(1.2);
 }
 
 /* Modal container + overlay */

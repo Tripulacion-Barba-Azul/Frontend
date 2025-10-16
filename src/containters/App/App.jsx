@@ -50,6 +50,7 @@ function App() {
             setName: "Hercule Poirot",
             cards: [{ id: 105, name: "Hercule Poirot" }],
           },
+          
         ],
       },
       {
@@ -90,6 +91,7 @@ function App() {
             setName: "Hercule Poirot",
             cards: [{ id: 105, name: "Hercule Poirot" }],
           },
+          
         ],
       },
       {
@@ -109,14 +111,8 @@ function App() {
             ],
           },
           { setName: "Miss Marple", cards: [{ id: 103, name: "Miss Marple" }] },
-          {
-            setName: "Lady Eileen Brent",
-            cards: [{ id: 104, name: "Lady Eileen Brent" }],
-          },
-          {
-            setName: "Hercule Poirot",
-            cards: [{ id: 105, name: "Hercule Poirot" }],
-          },
+
+          
         ],
       },
       {
@@ -144,6 +140,7 @@ function App() {
             setName: "Hercule Poirot",
             cards: [{ id: 105, name: "Hercule Poirot" }],
           },
+          
         ],
       },
       {
@@ -183,6 +180,18 @@ function App() {
             setName: "Hercule Poirot",
             cards: [{ id: 105, name: "Hercule Poirot" }],
           },
+          {
+            setName: "Lady Eileen Brent",
+            cards: [{ id: 104, name: "Lady Eileen Brent" }],
+          },
+          {
+            setName: "Hercule Poirot",
+            cards: [{ id: 105, name: "Hercule Poirot" }],
+          },
+
+
+          
+          
         ],
       },
       {
@@ -213,15 +222,35 @@ function App() {
               { id: 102, name: "Tuppence Beresford" },
             ],
           },
-          { setName: "Miss Marple", cards: [{ id: 103, name: "Miss Marple" }] },
           {
-            setName: "Lady Eileen Brent",
-            cards: [{ id: 104, name: "Lady Eileen Brent" }],
+            setName: "Tommy Beresford",
+            cards: [
+              { id: 101, name: "Tommy Beresford" },
+              { id: 102, name: "Tuppence Beresford" },
+            ],
           },
           {
-            setName: "Hercule Poirot",
-            cards: [{ id: 105, name: "Hercule Poirot" }],
+            setName: "Tommy Beresford",
+            cards: [
+              { id: 101, name: "Tommy Beresford" },
+              { id: 102, name: "Tuppence Beresford" },
+            ],
           },
+          {
+            setName: "Tommy Beresford",
+            cards: [
+              { id: 101, name: "Tommy Beresford" },
+              { id: 102, name: "Tuppence Beresford" },
+            ],
+          },
+          {
+            setName: "Tommy Beresford",
+            cards: [
+              { id: 101, name: "Tommy Beresford" },
+              { id: 102, name: "Tuppence Beresford" },
+            ],
+          },
+
         ],
       },
     ],
@@ -259,53 +288,25 @@ function App() {
       { id: 910, revealed: false, name: "Prankster" },
     ],
   };
-  const testSets = [
+
+  const sampleSets = [
     {
-      setName: "Tommy Beresford",
-      cards: [
-        { id: 101, name: "Tommy Beresford" },
-        { id: 102, name: "Tuppence Beresford" },
-      ],
-    },
-    { setName: "Miss Marple", cards: [{ id: 103, name: "Miss Marple" }] },
-    {
-      setName: "Lady Eileen Brent",
-      cards: [{ id: 104, name: "Lady Eileen Brent" }],
-    },
-    {
+      setId: 1,
       setName: "Hercule Poirot",
-      cards: [{ id: 105, name: "Hercule Poirot" }],
+      cards: [{ id: 1, name: "Hercule Poirot" }],
     },
     {
-      setName: "Hercule Poirot",
-      cards: [{ id: 105, name: "Hercule Poirot" }],
+      setId: 2,
+      setName: "Miss Marple",
+      cards: [{ id: 2, name: "Miss Marple" }],
     },
-    {
-      setName: "Hercule Poirot",
-      cards: [{ id: 105, name: "Hercule Poirot" }],
-    },
-    {
-      setName: "Hercule Poirot",
-      cards: [{ id: 105, name: "Hercule Poirot" }],
-    },
-    {
-      setName: "Hercule Poirot",
-      cards: [{ id: 105, name: "Hercule Poirot" }],
-    },
-    {
-      setName: "Hercule Poirot",
-      cards: [{ id: 105, name: "Hercule Poirot" }],
-    },
-    {
-      setName: "Hercule Poirot",
-      cards: [{ id: 105, name: "Hercule Poirot" }],
-    },
+
   ];
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<TitleScreen />} />
-        <Route path="/create" element={<CreateGameScreen />} />
+        <Route path="/create" element={<SetsGrid sets={sampleSets} position="vertical-right" />} />
         <Route
           path="/join"
           element={

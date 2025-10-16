@@ -97,18 +97,24 @@
 /* SetsGrid overlay */
 .badge-sets {
   position: absolute;
-  left: var(--sets-left, auto);
-  right: var(--sets-right, auto);
-  top: var(--sets-top, auto);
-  bottom: var(--sets-bottom, auto);
   pointer-events: auto;
-  z-index: 1; /* Below secrets by default */
+  z-index: 1;
+
+  /* anchor edge only */
+  top: 0;       /* or bottom: 0; depending on position */
+  left: 100%;   /* right of avatar, for position-right */
+  
+  /* remove width/height: let content size naturally */
+  width: max-content;
+  height: max-content;
+
+  /* optional small gap */
+  margin-left: 16px;  /* spacing from avatar */
 }
 
 /* ===== POSITION PRESETS (hardcoded offsets) =====
    Tune the pixel values to match your layout needs.
 */
-
 /* ----- SMALL (112x112) ----- */
 .avatar-stack.badge-small.position-right {
   /* CardCount: bottom-right (slightly outside) */
@@ -120,8 +126,9 @@
   --sec-top: -70px;
 
   /* SetsGrid: to the right side of the avatar */
-  --sets-left: calc(100% - 252px);
-  --sets-top: -50px;
+  --sets-left: 100%;      /* anchor to right edge */
+  --sets-top: 0;
+  --sets-transform: translateX(16px);
 }
 
 .avatar-stack.badge-small.position-left {
@@ -134,8 +141,9 @@
   --sec-top: -70px;
 
   /* SetsGrid: to the left side of the avatar */
-  --sets-right: calc(100% - 310px);
-  --sets-top: -50px;
+  --sets-right: 100%;     /* anchor to left edge */
+  --sets-top: 0;
+  --sets-transform: translateX(-16px);
 }
 
 .avatar-stack.badge-small.position-up {
@@ -148,11 +156,42 @@
   --sec-top: -70px;
 
   /* SetsGrid: above the avatar (left-aligned) */
-  --sets-left: -55px;
-  --sets-bottom: calc(100% - 290px);
+  --sets-left: 50%;       /* center horizontally */
+  --sets-bottom: 100%;
+  --sets-transform: translateX(-50%) translateY(-16px);
 }
 
+/* ----- BIG (152x152) ----- */
 .avatar-stack.badge-big.position-down {
-  --sets-left: 430px;
-  --sets-top: calc(100% - 270px);
+  /* SetsGrid: below the avatar */
+  --sets-left: 50%;       /* center horizontally */
+  --sets-top: 100%;
+  --sets-transform: translateX(-50%) translateY(16px);
 }
+
+.avatar-stack.position-right .badge-sets {
+  top: -30%;
+  left: -100%;
+  margin-left: 16px;
+}
+
+.avatar-stack.position-left .badge-sets {
+  top: -30%;
+  left: 100%;
+  margin-right: 16px;
+}
+
+.avatar-stack.position-up .badge-sets {
+  top: 100%;
+  left: 40%;
+  transform: translateX(-50%);
+  margin-bottom: 16px;
+}
+
+.avatar-stack.position-down .badge-sets {
+  top: -90%;
+  left: 450%;
+  transform: translateX(-50%);
+  margin-top: 16px;
+}
+

@@ -1,121 +1,161 @@
 :root {
-  --sets-gap: 0.5rem;
-  --sets-row-gap: 0.1rem;
+  --sets-gap: 0.75rem;
+  --sets-row-gap: 0.4rem;
   --sets-item-min: 30px;
+  --anim-buffer: 28px;
 }
 
-/* Grid wrapper: centered, no overflow */
+/* Base grid */
 .sets-grid {
-  width: 100%;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--sets-row-gap);
+  width: auto;
   box-sizing: border-box;
+  gap: var(--sets-row-gap);
   padding: 6px;
+  overflow: visible;
+  pointer-events: auto;
+  /* small buffer to avoid temporary scrollbars on y/x translate */
+  --buffer: var(--anim-buffer);
 }
 
-/* Override ViewSet margin */
+/* internal reset for ViewSet margins */
 .sets-grid .btn-viewset {
   margin: 0 !important;
 }
 
-/* Each item: minimal wrapper, allow shadows to extend */
+/* item wrapper */
 .sets-item {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--sets-gap);
   padding: 0;
+  overflow: visible;
+  transform-origin: center;
 }
 
-/* --------------------------
-   HORIZONTAL (rows stacked vertically)
-   -------------------------- */
-.sets-horizontal {
-  display: flex;
+/* ---------------- HORIZONTAL (rows stack top->down) ---------------- */
+.sets-grid[data-position="horizontal"],
+.sets-grid.sets-horizontal {
   flex-direction: column;
-  gap: var(--sets-gap);
-  flex-wrap: wrap;
+  align-items: center;        /* each row centered horizontally */
+  justify-content: flex-start;/* anchor top; new rows append downward */
+  gap: var(--sets-row-gap);
+  padding-bottom: calc(var(--buffer)); /* reserve bottom buffer */
+  padding-left: 0; /* ADD THIS */
+  padding-right: 0; /* ADD THIS */
 }
 
+.sets-row-wrapper {
+  display: block;
+  overflow: visible;
+  width: 100%; /* ADD THIS */
+}
+
+/* row: center items symmetrically */
 .sets-row {
   display: flex;
-  flex-direction: row;
-  justify-content: center;
+  justify-content: center; /* KEEP THIS - centers items in the row */
   align-items: center;
   gap: var(--sets-gap);
   padding: 2px 6px;
+  overflow: visible;
+  width: 100%; /* ADD THIS */
 }
 
-.sets-row .sets-item {
-  min-width: var(--sets-item-min);
-}
-
-/* --------------------------
-   VERTICAL (columns side-by-side)
-   -------------------------- */
-.sets-vertical {
+/* ---------------- VERTICAL (columns) ---------------- */
+/* Vertical left/right grid container */
+.sets-grid[data-position="vertical-left"],
+.sets-grid[data-position="vertical-right"] {
   display: flex;
   flex-direction: row;
+  justify-content: flex-start; /* left) or flex-end (right) */
+  align-items: stretch;        /* columns take full height */
   gap: var(--sets-gap);
-  flex-wrap: wrap; /* allow columns to wrap instead of overflowing */
+  
+  /* Make container fill parent so vertical centering works */
+  height: 100%;
+  overflow: visible;
+
+  /* extra padding from edges */
+  padding-left: calc(var(--buffer));
+  padding-right: calc(var(--buffer));
 }
 
-.sets-column {
+/* Inner wrapper to vertically center the columns */
+.sets-grid[data-position="vertical-left"] .sets-column,
+.sets-grid[data-position="vertical-right"] .sets-column {
   display: flex;
   flex-direction: column;
+  justify-content: center; /* vertically center items inside the column */
+  align-items: center;     /* horizontally center cards inside column */
+  height: 100%;            /* make column fill grid vertically */
+  overflow: visible;
+}
+
+/* ---------------- VERTICAL-LEFT / VERTICAL-RIGHT ---------------- */
+.sets-grid[data-position="vertical-left"] {
+  flex-direction: row;
+  justify-content: flex-start; /* columns start from left and expand right */
+  align-items: stretch;        
+  gap: var(--sets-gap);
+  padding-left: calc(var(--buffer));
+  padding-right: 0; /* Remove right padding for left alignment */
+  height: 100%;
+  overflow: visible;
+}
+
+.sets-grid[data-position="vertical-right"] {
+  flex-direction: row;
+  justify-content: flex-end; /* columns start from right and expand left */
+  align-items: stretch;        
+  gap: var(--sets-gap);
+  padding-right: calc(var(--buffer));
+  padding-left: 0; /* Remove left padding for right alignment */
+  height: 100%;
+  overflow: visible;
+}
+
+/* Ensure each column centers its items internally */
+.sets-grid[data-position="vertical-left"] .sets-column,
+.sets-grid[data-position="vertical-right"] .sets-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* center items vertically inside the column */
+  align-items: center;     /* center items horizontally inside the column */
+  overflow: visible;
+}
+
+/* ---------------- DOUBLE HORIZONTAL (single centered row) ---------------- */
+.sets-grid[data-position="doubleHorizontal"],
+.sets-grid.sets-double-horizontal {
+  flex-direction: row;
   justify-content: center;
   align-items: center;
   gap: var(--sets-gap);
-  padding: 2px 6px;
+  padding-left: calc(var(--buffer));
+  padding-right: calc(var(--buffer));
+  overflow: visible;
+  padding-top: 0; /* ADD THIS */
+  padding-bottom: 0; /* ADD THIS */
 }
 
-.sets-column .sets-item {
-  min-width: var(--sets-item-min);
-}
-
-/* --------------------------
-   DOUBLE HORIZONTAL (single horizontal row)
-   -------------------------- */
-.sets-double-horizontal {
+.sets-single-row {
   display: flex;
   flex-direction: row;
-  flex-wrap: nowrap; /* force single row */
   justify-content: center;
   align-items: center;
   gap: var(--sets-gap);
-  width: 100%;
-  padding: 6px;
-  box-sizing: border-box;
-  overflow-x: auto; /* allow horizontal scroll if needed */
+  overflow: visible;
+  width: 100%; /* ADD THIS */
 }
 
-/* Make the inner wrapper a flex row that doesn't wrap */
-.sets-double-horizontal .sets-single-row {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap; /* keep items in a single line */
-  gap: var(--sets-gap);
-}
-
-/* --------------------------
-   Responsiveness
-   -------------------------- */
+/* responsiveness */
 @media (max-width: 900px) {
-  :root {
-    --sets-gap: 0.4rem;
-  }
-  .sets-item {
-    min-width: 44px;
-  }
+  :root { --sets-gap: 0.5rem; --sets-row-gap: 0.3rem; --anim-buffer: 22px; }
+  .sets-item { min-width: 44px; }
 }
-
 @media (max-width: 480px) {
-  :root {
-    --sets-gap: 0.35rem;
-  }
-  .sets-item {
-    min-width: 40px;
-  }
+  :root { --sets-gap: 0.35rem; --anim-buffer: 18px; }
+  .sets-item { min-width: 40px; }
 }

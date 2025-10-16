@@ -44,7 +44,10 @@ export default function PlayerBadge({
       ? "horizontal"
       : position === "down"
       ? "doubleHorizontal"
-      : "vertical";
+      : position == "left"
+      ? "vertical-right"
+      : position == "right" 
+      ? "vertical-left" : "";
 
   return (
     <div className="player-badge">

@@ -15,15 +15,8 @@ function chunkArray(arr, size) {
  * SetsGrid
  *
  * props:
- * - sets: [{ setId: int, setName: string, cards: [{ id, name }] }, ...]
- * - position: "horizontal" | "vertical" | "doubleHorizontal"
- *
- * Behavior:
- * - if sets is empty or not an array -> returns null (renders nothing)
- * - horizontal: make rows of up to 10 items (each row is centered)
- * - vertical: make columns of up to 10 items (each column centered; columns are centered as a group)
- * - doubleHorizontal: single row, grows horizontally (no 10-per-row split), horizontal scroll if needed
- * - spacing between buttons is minimal; overrides ViewSet's default button margin inside this grid
+ * - sets: [{ setId, setName, cards: [...] }, ...]
+ * - position: "horizontal" | "vertical" | "doubleHorizontal" | "vertical-left" | "vertical-right"
  */
 export default function SetsGrid({ sets = [], position = "horizontal" }) {
   if (!Array.isArray(sets) || sets.length === 0) return null;
@@ -31,23 +24,26 @@ export default function SetsGrid({ sets = [], position = "horizontal" }) {
   const pos = position || "horizontal";
 
   const motionProps = {
-    initial: { opacity: 0, y: 20, scale: 0.95 },
+    initial: { opacity: 0, y: 8, scale: 0.985 },
     animate: { opacity: 1, y: 0, scale: 1 },
-    exit: { opacity: 0, y: -20, scale: 0.95 },
-    transition: { type: "spring", stiffness: 100, damping: 40 },
+    exit: { opacity: 0, y: -8, scale: 0.985 },
+    transition: { type: "spring", stiffness: 320, damping: 32 },
   };
 
+  // doubleHorizontal: one centered row
   if (pos === "doubleHorizontal") {
     return (
       <div className="sets-grid sets-double-horizontal" data-position={pos}>
         <div className="sets-single-row" role="list">
-          <AnimatePresence>
+          <AnimatePresence initial={false} mode="popLayout">
             {sets.map((s, idx) => (
               <motion.div
                 {...motionProps}
+                layout
                 key={s.setId ?? s.setName ?? idx}
                 className="sets-item"
                 role="listitem"
+                style={{ willChange: "transform, opacity" }}
               >
                 <ViewSet cards={s.cards} setName={s.setName} />
               </motion.div>
@@ -58,50 +54,85 @@ export default function SetsGrid({ sets = [], position = "horizontal" }) {
     );
   }
 
+  // horizontal: rows of up to 4
   if (pos === "horizontal") {
     const rows = chunkArray(sets, 4);
     return (
       <div className="sets-grid sets-horizontal" data-position={pos}>
-        {rows.map((row, rowIndex) => (
-          <div key={rowIndex} className="sets-row" role="list">
-            <AnimatePresence>
-              {row.map((s, idx) => (
-                <motion.div
-                  {...motionProps}
-                  key={s.setId ?? s.setName ?? `${rowIndex}-${idx}`}
-                  className="sets-item"
-                  role="listitem"
-                >
-                  <ViewSet cards={s.cards} setName={s.setName} />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-        ))}
+        <AnimatePresence initial={false} mode="popLayout">
+          {rows.map((row, rowIndex) => (
+            <motion.div layout key={`row-${rowIndex}`} className="sets-row-wrapper" role="list">
+              <div className="sets-row">
+                {row.map((s, idx) => (
+                  <motion.div
+                    {...motionProps}
+                    layout
+                    key={s.setId ?? s.setName ?? `${rowIndex}-${idx}`}
+                    className="sets-item"
+                    role="listitem"
+                    style={{ willChange: "transform, opacity" }}
+                  >
+                    <ViewSet cards={s.cards} setName={s.setName} />
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     );
   }
+
 
   if (pos === "vertical") {
     const cols = chunkArray(sets, 4);
     return (
       <div className="sets-grid sets-vertical" data-position={pos}>
-        {cols.map((col, colIndex) => (
-          <div key={colIndex} className="sets-column" role="list">
-            <AnimatePresence>
+        <AnimatePresence initial={false} mode="popLayout">
+          {cols.map((col, colIndex) => (
+            <motion.div layout key={`col-${colIndex}`} className="sets-column" role="list">
               {col.map((s, idx) => (
                 <motion.div
                   {...motionProps}
+                  layout
                   key={s.setId ?? s.setName ?? `${colIndex}-${idx}`}
                   className="sets-item"
                   role="listitem"
+                  style={{ willChange: "transform, opacity" }}
                 >
                   <ViewSet cards={s.cards} setName={s.setName} />
                 </motion.div>
               ))}
-            </AnimatePresence>
-          </div>
-        ))}
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  if (pos === "vertical-left" || pos === "vertical-right") {
+    const cols = chunkArray(sets, 4);
+    const className = `sets-grid sets-${pos}`;
+    return (
+      <div className={className} data-position={pos}>
+        <AnimatePresence initial={false} mode="popLayout">
+          {cols.map((col, colIndex) => (
+            <motion.div layout key={`vcol-${colIndex}`} className="sets-column" role="list">
+              {col.map((s, idx) => (
+                <motion.div
+                  {...motionProps}
+                  layout
+                  key={s.setId ?? s.setName ?? `${colIndex}-${idx}`}
+                  className="sets-item"
+                  role="listitem"
+                  style={{ willChange: "transform, opacity" }}
+                >
+                  <ViewSet cards={s.cards} setName={s.setName} />
+                </motion.div>
+              ))}
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
     );
   }
