@@ -115,12 +115,18 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
           case 'notifierHideSecret':
             handleHideSecret(payload);
             break;
+          case 'notifierDelayTheMurderersEscape':
+            handleDelayTheMurderersEscape(payload);
+            break;
           case 'cardsPlayed':
             handleCardsPlayed(payload);
             break;
           case 'discardEvent':
             handleDiscardEvent(payload);
             break;
+          case 'notifierNoEffect':
+            handleNoEffect();
+            break;  
           default:
             console.warn('Unknown event type:', eventType);
         }
@@ -137,10 +143,26 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     };
   }, [wsRef, publicData]);
 
+  const PLAYER_COLORS = [
+    '#e6194B', '#3cb44b', '#ffe119', '#4363d8', 
+    '#f58231', '#911eb4'
+  ];
+
+
+  // Helper to wrap a player name in a colored span
+  const colorName = (name, index) => {
+    const color = PLAYER_COLORS[index % PLAYER_COLORS.length];
+    return `<span style="color:${color}; font-weight:bold">${name}</span>`;
+  };
+
+  const playerColorIndexMap = {};
+  publicData?.players?.forEach((p, idx) => { playerColorIndexMap[p.id] = idx; });
+
   // Helper function to get player name by ID
-  const getPlayerName = (playerId) => {
+  const getPlayerNameColored = (playerId) => {
     const player = publicData.players.find(p => p.id === playerId);
-    return player ? player.name : `Player ${playerId}`;
+    if (!player) return `Player ${playerId}`;
+    return colorName(player.name, playerColorIndexMap[playerId]);
   };
 
   // Helper function to get set name by ID
@@ -179,8 +201,8 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
   // Event handlers
   const handleCardsOffTheTable = (payload) => {
     const { playerID, quantity, selectedPlayerId } = payload;
-    const playerName = getPlayerName(playerID);
-    const targetName = getPlayerName(selectedPlayerId);
+    const playerName = getPlayerNameColored(playerID);
+    const targetName = getPlayerNameColored(selectedPlayerId);
     
     // Create an array with 'quantity' number of "Not so Fast!" cards
     const notSoFastCards = Array.from({ length: quantity }, (_, index) => ({
@@ -207,8 +229,8 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
 
   const handleStealSet = (payload) => {
     const { playerID, stolenPlayerId, setId } = payload;
-    const playerName = getPlayerName(playerID);
-    const stolenFromName = getPlayerName(stolenPlayerId);
+    const playerName = getPlayerNameColored(playerID);
+    const stolenFromName = getPlayerNameColored(stolenPlayerId);
     const setName = getSetName(setId, stolenPlayerId);
     const setImage = getSetImage(setId, stolenPlayerId);
     
@@ -221,7 +243,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
 
   const handleLookIntoTheAshes = (payload) => {
     const { playerID } = payload;
-    const playerName = getPlayerName(playerID);
+    const playerName = getPlayerNameColored(playerID);
     
     setCurrentNotification({
       text: `${playerName} looked into the ashes`,
@@ -232,9 +254,9 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
   
   const handleAndThenThereWasOneMore = (payload) => {
     const { playerID, secretId, secretName, stolenPlayerId, giftedPlayerId } = payload;
-    const playerName = getPlayerName(playerID);
-    const stolenFromName = getPlayerName(stolenPlayerId);
-    const giftedToName = getPlayerName(giftedPlayerId);
+    const playerName = getPlayerNameColored(playerID);
+    const stolenFromName = getPlayerNameColored(stolenPlayerId);
+    const giftedToName = getPlayerNameColored(giftedPlayerId);
         
     // All possible combinations:
     if (stolenPlayerId === playerID && giftedPlayerId === playerID) {
@@ -277,8 +299,8 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
 
   const handleRevealSecret = (payload) => {
     const { playerID, secretId, selectedPlayerId } = payload;
-    const playerName = getPlayerName(playerID);
-    const targetName = getPlayerName(selectedPlayerId);
+    const playerName = getPlayerNameColored(playerID);
+    const targetName = getPlayerNameColored(selectedPlayerId);
     
     // Find the secret card
     const targetPlayer = publicData.players.find(p => p.id === selectedPlayerId);
@@ -309,8 +331,8 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
 
   const handleRevealSecretForce = (payload) => {
     const { playerID, secretId, selectedPlayerId } = payload;
-    const playerName = getPlayerName(playerID);
-    const targetName = getPlayerName(selectedPlayerId);
+    const playerName = getPlayerNameColored(playerID);
+    const targetName = getPlayerNameColored(selectedPlayerId);
     
     // Find the secret card
     const targetPlayer = publicData.players.find(p => p.id === selectedPlayerId);
@@ -341,8 +363,8 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
 
   const handleSatterthwaiteWild = (payload) => {
     const { playerID, secretId, secretName, selectedPlayerId } = payload;
-    const playerName = getPlayerName(playerID);
-    const targetName = getPlayerName(selectedPlayerId);
+    const playerName = getPlayerNameColored(playerID);
+    const targetName = getPlayerNameColored(selectedPlayerId);
     
     // Find the secret card
     const targetPlayer = publicData.players.find(p => p.id === selectedPlayerId);
@@ -367,8 +389,8 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
 
   const handleHideSecret = (payload) => {
     const { playerID, secretId, selectedPlayerId } = payload;
-    const playerName = getPlayerName(playerID);
-    const targetName = getPlayerName(selectedPlayerId);
+    const playerName = getPlayerNameColored(playerID);
+    const targetName = getPlayerNameColored(selectedPlayerId);
 
     if (selectedPlayerId != playerID) {
         setCurrentNotification({
@@ -386,9 +408,20 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
 
   };
 
+  const handleDelayTheMurderersEscape = (payload) => {
+    const { playerID } = payload;
+    const playerName = getPlayerNameColored(playerID);
+
+    setCurrentNotification({
+      text: `${playerName} took cards from the discard pile <br /> and put them on top of the deck <br /> in some order`,
+      cards: [],
+      setImage: null
+  });
+  }
+
   const handleCardsPlayed = (payload) => {
     const { playerId, cards, actionType } = payload;
-    const playerName = getPlayerName(playerId);
+    const playerName = getPlayerNameColored(playerId);
     
     let actionText = '';
     switch (actionType) {
@@ -421,7 +454,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
 
   const handleDiscardEvent = (payload) => {
     const { playerId, cards } = payload;
-    const playerName = getPlayerName(playerId);
+    const playerName = getPlayerNameColored(playerId);
     
     // Add isSecret and revealed properties to regular cards
     const displayCards = cards.map(card => ({
@@ -435,6 +468,16 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
       cards: displayCards,
       setImage: null
     });
+  };
+
+  const handleNoEffect = () => {
+
+    setCurrentNotification({
+      text: `Nothing happened.`,
+      cards: [],
+      setImage: null
+    });
+
   };
 
   const closeNotification = () => {

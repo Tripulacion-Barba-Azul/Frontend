@@ -38,11 +38,8 @@ export default function GameEndScreen({ websocket }) {
   };
 
   // if didnt get any data, dont show anything
-  if (
-    !gameEndData ||
-    !gameEndData.players ||
-    gameEndData.players.length === 0
-  ) {
+
+  if (!gameEndData || !gameEndData.players || gameEndData.players.length === 0) {
     return null;
   }
 
