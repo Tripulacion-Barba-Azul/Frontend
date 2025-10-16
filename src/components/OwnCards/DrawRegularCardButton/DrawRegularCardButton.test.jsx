@@ -83,7 +83,8 @@ describe('DrawRegularCardButton', () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-          playerId: 123
+          playerId: 123,
+          deck: 'regular'
           })
         }
       );
