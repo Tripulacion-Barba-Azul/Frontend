@@ -1,10 +1,8 @@
 import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import ViewSet from "./ViewSet/ViewSet";
 import "./SetsGrid.css";
 
-/**
- * chunkArray(arr, size) -> array of arrays each at most `size` long
- */
 function chunkArray(arr, size) {
   const out = [];
   for (let i = 0; i < arr.length; i += size) {
@@ -32,69 +30,81 @@ export default function SetsGrid({ sets = [], position = "horizontal" }) {
 
   const pos = position || "horizontal";
 
-  // doubleHorizontal -> single row (no chunking)
+  const motionProps = {
+    initial: { opacity: 0, y: 20, scale: 0.95 },
+    animate: { opacity: 1, y: 0, scale: 1 },
+    exit: { opacity: 0, y: -20, scale: 0.95 },
+    transition: { type: "spring", stiffness: 100, damping: 40 },
+  };
+
   if (pos === "doubleHorizontal") {
     return (
       <div className="sets-grid sets-double-horizontal" data-position={pos}>
         <div className="sets-single-row" role="list">
-          {sets.map((s, idx) => (
-            <div
-              key={s.setId ?? s.setName ?? idx}
-              className="sets-item"
-              role="listitem"
-            >
-              <ViewSet cards={s.cards} setName={s.setName} />
-            </div>
-          ))}
+          <AnimatePresence>
+            {sets.map((s, idx) => (
+              <motion.div
+                {...motionProps}
+                key={s.setId ?? s.setName ?? idx}
+                className="sets-item"
+                role="listitem"
+              >
+                <ViewSet cards={s.cards} setName={s.setName} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       </div>
     );
   }
 
-  // horizontal -> rows of up to 4
   if (pos === "horizontal") {
     const rows = chunkArray(sets, 4);
     return (
       <div className="sets-grid sets-horizontal" data-position={pos}>
         {rows.map((row, rowIndex) => (
           <div key={rowIndex} className="sets-row" role="list">
-            {row.map((s, idx) => (
-              <div
-                key={s.setId ?? s.setName ?? `${rowIndex}-${idx}`}
-                className="sets-item"
-                role="listitem"
-              >
-                <ViewSet cards={s.cards} setName={s.setName} />
-              </div>
-            ))}
+            <AnimatePresence>
+              {row.map((s, idx) => (
+                <motion.div
+                  {...motionProps}
+                  key={s.setId ?? s.setName ?? `${rowIndex}-${idx}`}
+                  className="sets-item"
+                  role="listitem"
+                >
+                  <ViewSet cards={s.cards} setName={s.setName} />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         ))}
       </div>
     );
   }
 
-  // vertical -> columns of up to 4 (columns are centered as a group)
   if (pos === "vertical") {
     const cols = chunkArray(sets, 4);
     return (
       <div className="sets-grid sets-vertical" data-position={pos}>
         {cols.map((col, colIndex) => (
           <div key={colIndex} className="sets-column" role="list">
-            {col.map((s, idx) => (
-              <div
-                key={s.setId ?? s.setName ?? `${colIndex}-${idx}`}
-                className="sets-item"
-                role="listitem"
-              >
-                <ViewSet cards={s.cards} setName={s.setName} />
-              </div>
-            ))}
+            <AnimatePresence>
+              {col.map((s, idx) => (
+                <motion.div
+                  {...motionProps}
+                  key={s.setId ?? s.setName ?? `${colIndex}-${idx}`}
+                  className="sets-item"
+                  role="listitem"
+                >
+                  <ViewSet cards={s.cards} setName={s.setName} />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
         ))}
       </div>
     );
   }
 
-  // fallback — unknown position -> render nothing
   return null;
 }

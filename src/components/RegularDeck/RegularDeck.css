@@ -74,7 +74,7 @@
 }
 
 .deck--enabled .RegularDeck-image:hover {
-  transform: translateY(-6px) scale(1.05);
+  transform: scale(1.05);
 }
 
 .deck--disabled .RegularDeck-image {

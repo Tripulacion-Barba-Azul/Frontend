@@ -43,6 +43,7 @@ export const SETS_MAP = {
   "Tommy Beresford": "/Icons/seticons_beresford.png",
   "Tuppence Beresford": "/Icons/seticons_beresford.png",
   "The Beresfords": "/Icons/seticons_beresford.png",
+  "Siblings Beresford": "/Icons/seticons_beresford.png"
 }
 
 export const AVATAR_MAP = {

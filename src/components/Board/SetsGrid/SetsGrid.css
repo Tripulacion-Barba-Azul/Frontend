@@ -1,34 +1,26 @@
-/* ---------------------------
-   Visual tuning variables
-   --------------------------- */
 :root {
-  --sets-gap: 0.5rem; /* minimal gap between buttons */
-  --sets-row-gap: 0.1rem; /* vertical gap between rows */
-  --sets-item-min: 30px; /* minimum button size area */
+  --sets-gap: 0.5rem;
+  --sets-row-gap: 0.1rem;
+  --sets-item-min: 30px;
 }
 
-/* Root: keep things centered in both directions by default */
+/* Grid wrapper: centered, no overflow */
 .sets-grid {
   width: 100%;
   display: flex;
-  justify-content: center; /* center group horizontally */
-  align-items: center; /* center vertically inside parent */
+  justify-content: center;
+  align-items: center;
   gap: var(--sets-row-gap);
   box-sizing: border-box;
   padding: 6px;
 }
 
-/* ------------------------------------------------------------------
-     IMPORTANT: override ViewSet/ViewMyCards default .btn-viewset margin
-     so buttons inside this grid have minimal spacing and no large top margin.
-     This selector is intentionally specific to take precedence.
-     ------------------------------------------------------------------ */
+/* Override ViewSet margin */
 .sets-grid .btn-viewset {
   margin: 0 !important;
 }
 
-/* Each "item" is a small wrapper around the ViewSet button,
-     kept minimal so spacing is controlled by the grid/row/column. */
+/* Each item: minimal wrapper, allow shadows to extend */
 .sets-item {
   display: inline-flex;
   align-items: center;
@@ -38,86 +30,68 @@
 }
 
 /* --------------------------
-     HORIZONTAL (rows of 10)
-     -------------------------- */
+   HORIZONTAL (rows stacked vertically)
+   -------------------------- */
 .sets-horizontal {
-  flex-direction: column; /* rows stacked vertically */
+  flex-direction: column; /* rows stacked */
 }
 
-/* A single row: center items, allow wrap only by the chunking logic above */
 .sets-row {
   display: flex;
-  justify-content: center; /* centers the items if fewer than 10 in the row */
+  justify-content: center;
   align-items: center;
   gap: var(--sets-gap);
+  flex-wrap: wrap; /* allows items to wrap instead of overflowing */
   width: 100%;
   box-sizing: border-box;
   padding: 2px 4px;
 }
 
-/* ensure minimal size for buttons inside row */
 .sets-row .sets-item {
   min-width: var(--sets-item-min);
 }
 
 /* --------------------------
-     VERTICAL (columns of 10)
-     -------------------------- */
+   VERTICAL (columns side-by-side)
+   -------------------------- */
 .sets-vertical {
-  flex-direction: row; /* columns sit side-by-side */
+  display: flex;
+  flex-direction: row;
   gap: var(--sets-gap);
-  flex-wrap: nowrap;
+  flex-wrap: wrap; /* allow columns to wrap instead of overflowing */
 }
 
-/* Each column stacks up to 10 items vertically and is centered */
 .sets-column {
   display: flex;
   flex-direction: column;
-  justify-content: center; /* center items vertically when column has fewer than 10 */
+  justify-content: center;
   align-items: center;
   gap: var(--sets-gap);
   padding: 2px 6px;
 }
 
-/* ensure column doesn't collapse under small sizes */
 .sets-column .sets-item {
   min-width: var(--sets-item-min);
 }
 
 /* --------------------------
-     DOUBLE HORIZONTAL (single, horizontally-growing row)
-     -------------------------- */
+   DOUBLE HORIZONTAL (single horizontal row)
+   -------------------------- */
 .sets-double-horizontal {
-  flex-direction: column; /* keep a single horizontal strip centered vertically */
-}
-
-/* the single row that grows horizontally (no wrapping) */
-.sets-single-row {
   display: flex;
   flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: center; /* centers items when total width <= container */
+  flex-wrap: wrap; /* wrap instead of scrolling */
+  justify-content: center;
   align-items: center;
   gap: var(--sets-gap);
   width: 100%;
-  overflow-x: auto; /* allow horizontal growth & scrolling */
-  -webkit-overflow-scrolling: touch;
   padding: 6px;
   box-sizing: border-box;
 }
 
-/* tweak scrollbar appearance minimally (optional) */
-.sets-single-row::-webkit-scrollbar {
-  height: 8px;
-}
-.sets-single-row::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 4px;
-}
-
 /* --------------------------
-     Responsiveness: make sure items stay usable on small screens
-     -------------------------- */
+   Responsiveness
+   -------------------------- */
 @media (max-width: 900px) {
   :root {
     --sets-gap: 0.4rem;
