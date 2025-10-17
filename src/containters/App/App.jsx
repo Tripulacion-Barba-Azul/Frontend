@@ -5,8 +5,6 @@ import JoinGameScreen from "../../components/PreGameScreen/JoinGameScreen/JoinGa
 import GameMatchesList from "../../components/GameMatchesList/GameMatchesList";
 import GameScreen from "../../components/GameScreen/GameScreen";
 import SyncOrchestrator from "../../components/Sync/SyncOrchestrator";
-import SetsGrid from "../../components/Board/SetsGrid/SetsGrid";
-import GameEndScreenDemo from "../../components/GameEndScreen/GameEndScreenDemo";
 
 function App() {
   const currentPlayerId = 1;
@@ -294,7 +292,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<TitleScreen />} />
-        <Route path="/create" element={<GameEndScreenDemo />} />
+        <Route path="/create" element={<CreateGameScreen />} />
         <Route
           path="/join"
           element={
