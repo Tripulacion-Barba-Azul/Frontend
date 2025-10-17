@@ -135,12 +135,14 @@ export default function EffectManager({
    * WebSocket listener (entry point for effects)
    * ─────────────────────────────────────────────────────────────────────────*/
   useEffect(() => {
-    if (!wsRef) {
+    // soporte tanto wsRef como wsRef.current
+    const wsInstance = wsRef?.current ?? wsRef;
+    if (!wsInstance) {
       warn("wsRef is not defined; EffectManager idle.");
       return;
     }
-
-    wsRef.onmessage = (event) => {
+    console.log("EffectManager listening to WS messages");
+    const listener = (event) => {
       let data;
       try {
         data = JSON.parse(event.data);
@@ -214,12 +216,30 @@ export default function EffectManager({
           break;
 
         default:
-          warn("Unknown WS event:", data.event);
+          warn("Unknown WS event (EffectManager):", data.event);
           setCurrentEvent(null);
           setStep(null);
       }
     };
-  }, [wsRef, gotoStep]);
+
+    // usar addEventListener para no pisar otros listeners
+    if (wsInstance.addEventListener) {
+      wsInstance.addEventListener("message", listener);
+    } else {
+      // fallback: some websockets only expose onmessage
+      const prev = wsInstance.onmessage;
+      wsInstance.onmessage = (event) => {
+        listener(event);
+        if (prev) prev(event);
+      };
+    }
+    return () => {
+      if (wsInstance.removeEventListener) {
+        wsInstance.removeEventListener("message", listener);
+      } else {
+      }
+    };
+  }, [wsRef?.current ?? wsRef, gotoStep]); // dependemos de wsRef (ref o instancia) y gotoStep
 
   /** ───────────────────────────────────────────────────────────────────────────
    * Derived data
@@ -252,7 +272,7 @@ export default function EffectManager({
 
   const ownSecrets = useMemo(() => privateData?.secrets ?? [], [privateData]);
 
-  // For discard-based events: payload
+  // For discard-based events: payload.cards
   const discardTopFive = useMemo(() => payload ?? [], [payload]);
 
   /** ───────────────────────────────────────────────────────────────────────────
