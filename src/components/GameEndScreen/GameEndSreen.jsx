@@ -74,11 +74,11 @@ export default function GameEndScreen({ websocket }) {
     if (!role) return "#cccccc";
     switch (role.toLowerCase()) {
       case "detective":
-        return "#ffffff";
+        return "#f4f1b4";
       case "murderer":
-        return "#e74c3c";
+        return "#d12222";
       case "accomplice":
-        return "#ff8c00";
+        return "#ff5900";
       default:
         return "#cccccc";
     }
@@ -107,7 +107,6 @@ export default function GameEndScreen({ websocket }) {
         </div>
 
         <div className="game-end-content">
-          <div className="winners-section">
             <ul className="winners-list">
               {players.map((player, index) => (
                 <li key={index} className="winner-item">
@@ -125,7 +124,7 @@ export default function GameEndScreen({ websocket }) {
                         color:
                           player.role.toLowerCase() === "detective"
                             ? "#000000"
-                            : "#ffffff",
+                            : "#f4e1a3",
                       }}
                     >
                       {getRoleBadge(player.role)}
@@ -134,7 +133,6 @@ export default function GameEndScreen({ websocket }) {
                 </li>
               ))}
             </ul>
-          </div>
         </div>
 
         <div className="game-end-actions">

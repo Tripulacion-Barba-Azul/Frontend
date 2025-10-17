@@ -109,7 +109,7 @@ export default function GameScreen() {
           refreshTrigger={refreshLobby}
         />
       )}
-  
+
       {/* Only render WebSocket-dependent components after it's ready */}
       {isConnected && wsRef.current && (
         <>
@@ -118,14 +118,14 @@ export default function GameScreen() {
             actualPlayerId={parseInt(playerId)}
             wsRef={wsRef}
           />
-  
+
           <EffectManager
             publicData={publicData}
             privateData={privateData}
             actualPlayerId={parseInt(playerId)}
             wsRef={wsRef}
           />
-  
+
           <GameEndScreen websocket={wsRef.current} />
         </>
       )}

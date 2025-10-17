@@ -65,21 +65,21 @@ const GameMatchesList = () => {
     if (currentPlayers >= maxPlayers) {
       return {
         color: 'status-red',
-        status: 'Llena',
+        status: '',
         canJoin: false,
         icon: '🔴'
       };
     } else if (currentPlayers >= minPlayers) {
       return {
         color: 'status-yellow',
-        status: 'Lista para jugar',
+        status: '',
         canJoin: true,
         icon: '🟡'
       };
     } else {
       return {
         color: 'status-green',
-        status: 'Esperando jugadores',
+        status: '',
         canJoin: true,
         icon: '🟢'
       };
@@ -93,32 +93,44 @@ const GameMatchesList = () => {
 
   // Handle joing match
   const handleJoinMatch = (matchId) => {
-    console.log(`Intentando unirse a la partida ${matchId}`);
+    console.log(`Trying to join the game ${matchId}`);
     navigate(`/join/${matchId}`);
   };
 
   // loading spinner
   if (loading) {
     return (
-      <div className="loading-container">
+      <div 
+        className="loading-container"
+        style={{
+          background: `url('/Assets/background_pregame.jpg') no-repeat center center fixed`,
+          backgroundSize: 'cover'
+        }}
+      >
         <div className="loading-spinner"></div>
-        <span className="loading-text">Cargando partidas...</span>
+        <span className="loading-text">Loading games...</span>
       </div>
     );
   }
 
   return (
-    <div className="matches-container">
+    <div 
+      className="matches-container"
+      style={{
+        background: `url('/Assets/background_pregame.jpg') no-repeat center center fixed`,
+        backgroundSize: 'cover'
+      }}
+    >
       <div className="matches-wrapper">
         <div className="matches-header">
-          <h1 className="matches-title">Partidas Disponibles</h1>
+          <h1 className="matches-title">List of games</h1>
           <button 
             className="refresh-button" 
             onClick={handleRefresh}
             disabled={refreshing}
           >
             <RefreshCw className={`refresh-icon ${refreshing ? 'spinning' : ''}`} />
-            {refreshing ? 'Actualizando...' : 'Actualizar'}
+            {refreshing ? 'Refreshing...' : 'Refresh'}
           </button>
         </div>
 
@@ -144,7 +156,7 @@ const GameMatchesList = () => {
                   <div className="match-creator">
                     <User className="creator-icon" />
                     <span className="creator-text">
-                      Creado por: <strong>{match.creator}</strong>
+                      Created by: <strong>{match.creator}</strong>
                     </span>
                   </div>
 
@@ -153,7 +165,7 @@ const GameMatchesList = () => {
                     <div className="players-count">
                       <Users className="players-icon" />
                       <span className="players-text">
-                        {match.currentPlayers}/{match.maxPlayers} jugadores
+                        {match.currentPlayers}/{match.maxPlayers} players
                       </span>
                     </div>
                   </div>
@@ -175,8 +187,8 @@ const GameMatchesList = () => {
                       ></div>
                     </div>
                     <div className="progress-labels">
-                      <span>Mín: {match.minPlayers}</span>
-                      <span>Máx: {match.maxPlayers}</span>
+                      <span>Min: {match.minPlayers}</span>
+                      <span>Max: {match.maxPlayers}</span>
                     </div>
                   </div>
 
@@ -189,12 +201,12 @@ const GameMatchesList = () => {
                     {status.canJoin ? (
                       <>
                         <Play className="button-icon" />
-                        Unirse a la partida
+                        Join Game
                       </>
                     ) : (
                       <>
                         <Clock className="button-icon" />
-                        Partida llena
+                        Game is full
                       </>
                     )}
                   </button>
@@ -208,25 +220,25 @@ const GameMatchesList = () => {
         {matches.length === 0 && (
           <div className="empty-state">
             <div className="empty-icon">🎮</div>
-            <h3 className="empty-title">No hay partidas disponibles</h3>
+            <h3 className="empty-title">There are no available games</h3>
           </div>
         )}
 
         {/*Color indicators*/}
         <div className="legend-container">
-          <h4 className="legend-title">Leyenda de estados:</h4>
+          <h4 className="legend-title">Statuses:</h4>
           <div className="legend-grid">
             <div className="legend-item">
               <span className="legend-dot legend-dot-green"></span>
-              <span> Esperando jugadores (se puede unir, no alcanza mínimo)</span>
+              <span> Waiting for players <br /> (can join, minimum not reached)</span>
             </div>
             <div className="legend-item">
               <span className="legend-dot legend-dot-yellow"></span>
-              <span> Lista para jugar (se puede unir, alcanza mínimo)</span>
+              <span> Ready to play <br /> (can join, minimum reached)</span>
             </div>
             <div className="legend-item">
               <span className="legend-dot legend-dot-red"></span>
-              <span> Partida llena (no se puede unir)</span>
+              <span> Game full <br /> (can't join)</span>
             </div>
           </div>
         </div>

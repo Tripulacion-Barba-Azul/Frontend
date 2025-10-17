@@ -17,6 +17,7 @@
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
   transition: transform 0.15s ease;
 }
+
 .ins-launcher:hover .ins-launcherImg,
 .ins-launcher:focus-visible .ins-launcherImg {
   transform: scale(1.08);
@@ -27,15 +28,13 @@
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgba(0, 0, 0, 0.72);
+  background: rgba(0, 0, 0, 0.85);
   display: grid;
   place-items: center;
   padding: 1rem;
 }
 
-/* Modal
-   Width is computed from frame height * aspect-ratio + side paddings.
-   Frame height fits viewport (stable across slides). */
+/* Modal */
 .ins-modal {
   width: min(
     calc(min(78vh, 880px, calc(92vw * 2048 / 1378)) * 1378 / 2048 + 32px),
@@ -43,33 +42,34 @@
   );
   display: grid;
   grid-template-rows: 56px 1fr;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 2px solid #f4e1a30d;
   border-radius: 16px;
-  background: #2b2b2f;
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.7);
+  background: #1e1e1ee4;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.8);
   overflow: hidden;
   box-sizing: border-box;
+  transition: all 0.3s ease;
 }
 
 /* Header */
 .ins-header {
   position: relative;
-  background: linear-gradient(#2b2b2f, #26262a);
+  background: linear-gradient(#1e1e1e, #1a1a1a);
   display: grid;
   align-items: center;
-  padding: 0 52px; /* keeps the title visually centered even with the close button */
+  padding: 0 52px;
+  border-bottom: 1px solid #f4e1a30d;
 }
 .ins-title {
   margin: 0 auto;
-  color: #e6d7a6;
-  font-weight: 700;
+  color: #f4e1a3;
   letter-spacing: 0.02em;
   text-align: center;
   font-size: 1.45rem;
   font-family: "Metropolis";
 }
 
-/* Close: red cross centered via pseudo-elements */
+/* Close button */
 .ins-close {
   position: absolute;
   top: 40%;
@@ -78,11 +78,12 @@
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgb(163, 34, 34); /* keeps your current red box look */
+  border: 2px solid #f4e1a30d;
+  background: rgb(163, 34, 34);
   cursor: pointer;
   display: grid;
   place-items: center;
+  transition: all 0.3s ease;
 }
 .ins-close::before,
 .ins-close::after {
@@ -92,7 +93,7 @@
   top: 50%;
   width: 14px;
   height: 2px;
-  background: #e6d7a6; /* cross color */
+  background: #f4e1a3;
   border-radius: 1px;
   transform-origin: center;
 }
@@ -110,16 +111,17 @@
 .ins-body {
   padding: 10px 16px 14px;
   display: grid;
-  grid-template-rows: 1fr 26px; /* "preGame": stage + counter; "inGame": counter hidden */
+  grid-template-rows: 1fr 26px;
   gap: 8px;
   box-sizing: border-box;
+  background: #1e1e1e52;
 }
 
-/* Stage (fixed height; width by aspect ratio) */
+/* Stage */
 .ins-stage {
   position: relative;
   height: min(78vh, 880px, calc(92vw * 2048 / 1378));
-  aspect-ratio: 1378 / 2048; /* your normalized images ratio */
+  aspect-ratio: 1378 / 2048;
   width: auto;
   margin: 0 auto;
   display: grid;
@@ -132,14 +134,15 @@
   height: 100%;
   display: grid;
   place-items: center;
-  background: #1f1f22;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #25252500;
+  border: 2px solid #f4e1a30d;
   border-radius: 12px;
   overflow: hidden;
   box-sizing: border-box;
+  transition: all 0.3s ease;
 }
 
-/* Image: always contained (no crop) */
+/* Image */
 .ins-image {
   max-width: 100%;
   max-height: 100%;
@@ -149,10 +152,10 @@
   display: block;
 }
 
-/* Counter (only visible in preGame because JSX skips it in inGame) */
+/* Counter */
 .ins-counter {
   text-align: right;
-  color: #e6d7a6;
+  color: #f4e1a3;
   line-height: 26px;
   font-family: "Metropolis";
   font-size: 0.95rem;
@@ -167,10 +170,8 @@
   }
 }
 
-/* Side arrows
-   Drawn with pseudo-elements: the visible circle is ::after, chevron is ::before. */
+/* Side arrows */
 .ins-arrow {
-  /* actual button box is minimal; visible size is handled by pseudo-elements */
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
@@ -198,12 +199,19 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 28px; /* circle size */
-  height: 28px; /* circle size */
+  width: 28px;
+  height: 28px;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background: rgba(34, 34, 34, 0.95);
+  background: rgba(37, 37, 37, 0.95);
+  border: 1px solid #f4e1a30d;
   box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+.ins-arrow:hover::after {
+  border-color: #f4e1a3;
+  filter: brightness(1.2);
 }
 
 /* Chevron centered inside the circle */
@@ -212,19 +220,36 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 9px; /* chevron size */
+  width: 9px;
   height: 9px;
-  border-top: 2px solid #e6d7a6; /* chevron color */
-  border-right: 2px solid #e6d7a6; /* chevron color */
+  border-top: 2px solid #f4e1a3;
+  border-right: 2px solid #f4e1a3;
   transform-origin: center;
   z-index: 3;
 }
 .ins-left::before {
   transform: translate(-30%, -50%) rotate(225deg);
-} /* < */
+}
 .ins-right::before {
   transform: translate(-70%, -50%) rotate(45deg);
-} /* > */
-.ins-arrow:hover::after {
-  filter: brightness(1.08);
+}
+
+/* Additional styling for better integration */
+.ins-modal * {
+  box-sizing: border-box;
+}
+
+/* Focus states for accessibility */
+.ins-close:focus-visible,
+.ins-arrow:focus-visible {
+  outline: 2px solid #f4e1a3;
+  outline-offset: 2px;
+}
+
+/* Smooth transitions for all interactive elements */
+.ins-modal,
+.ins-close,
+.ins-frame,
+.ins-arrow::after {
+  transition: all 0.3s ease;
 }

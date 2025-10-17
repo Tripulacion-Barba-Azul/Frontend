@@ -10,6 +10,6 @@ export default function CreateGameButton () {
       };
 
     return(<div> 
-        <button onClick={handleClick} className="CreateGameButton" >Create <br /> Game</button>
+        <button onClick={handleClick} className="CreateGameButton" >Create Game</button>
     </div>);
 }

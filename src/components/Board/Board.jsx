@@ -4,17 +4,28 @@ import Instructions from "../Instructions/Instructions.jsx";
 
 /**
  * Input:
- * - players: Array[{
- *     id: number,
- *     name: string,
- *     avatar: string,          // key in AVATAR_MAP
- *     turnOrder: number,           // 1..N ordering within the match
- *     turnStatus: string “waiting”|“playing”|“discarding”|“drawing”
- *     cardCount: number,
- *     secrets: Array:[{id: number,
- *                      name: string #default null,
- *                      revealed: Bool}]
- *   }>
+ * - players: [{
+//              id: int
+//              name: String
+//              avatar: int
+//              socialDisgrace: bool
+//              turnOrder: int
+//              turnStatus: enum(string) # “waiting” | “playing” | "takingAction" | “discarding” | “discardingOpt” | “drawing”
+//              cardCount: int
+//              secrets: [{
+//                  id: int
+//                  revealed: bool
+//                  name: String #default null
+//               }]
+//              sets: [{
+//                  setId: int
+//                  setName: enum(string)
+//                  cards: [{
+//                      id: int
+//                      name: enum(string)
+//                   }]
+//               }]
+//           }]
  *
  * - currentPlayerId: number
  *
@@ -85,6 +96,7 @@ export default function Board({
               <PlayerBadge
                 name={p.name}
                 avatar={p.avatar}
+                socialDisgrace={p.socialDisgrace}
                 size={p.size}
                 ringColor={p.ringColor}
                 nameBgColor={p.nameBgColor}

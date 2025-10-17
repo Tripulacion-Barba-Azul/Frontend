@@ -1,85 +1,161 @@
-form {
-  max-width: 500px;
-  margin: 0 auto;
-}
-
-label {
-  display: block;
-  margin-bottom: 5px;
-  font-family: "Metropolis";
-  color: #f4e1a3;
-  font-family: "Metropolis";
-}
-
-input {
+.join-game-container {
   width: 100%;
-  padding: 8px;
-  margin-bottom: 5px;
-  border: 2px solid rgb(163, 34, 34);
-  border-radius: 4px;
-  background-color: rgb(164, 34, 34);
-  font-family: "Metropolis";
-  color: #f4e1a3;
-}
-
-.error {
-  color: rgb(340, 34, 34);
-  font-size: 14px;
-  margin-top: 0;
-  margin-bottom: 15px;
-  font-family: "Metropolis";
-}
-
-button {
-  background-color: rgb(163, 34, 34);
-  color: #f4e1a3;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 10px;
-  font-size: 1rem;
-  font-family: "Metropolis";
-}
-
-.container {
-  background-color: rgb(163, 34, 34, 0.4);
-  border-radius: 10px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 400px;
-  padding: 30px;
+  padding: 0;
   display: flex;
-  flex-direction: column;
   justify-content: center;
 }
 
-.AvatarRow {
+.join-game-wrapper {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.join-game-header {
+  margin-bottom: 3rem;
+  text-align: center;
+}
+
+.join-game-title {
+  font-size: 3rem;
+  color: #f4e1a3;
+  margin-bottom: 0.5rem;
+  font-family: 'Metropolis';
+}
+
+.join-game-form {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.form-section {
+  border: 2px solid #f4e1a30d;
+  border-radius: 12px;
+  padding: 2.5rem;
+  background-color: #1e1e1ee4;
+  transition: all 0.3s ease;
+}
+
+.form-section:hover {
+  border: 2px solid #f4e1a3;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+  color: #f4e1a3;
+  font-family: 'Metropolis';
+  font-size: 1.1rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 18px;
+  border: 2px solid #f4e1a30d;
+  border-radius: 10px;
+  background-color: #252525e4;
+  color: #f4e1a3;
+  font-size: 1.1rem;
+  font-family: 'Metropolis';
+  transition: all 0.3s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #f4e1a3;
+  background-color: #333;
+}
+
+.form-input:hover {
+  border-color: #f4e1a3;
+}
+
+.error-message {
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  font-family: 'Metropolis';
+}
+
+.avatar-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-top: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  width: 100%;
 }
 
-.chooseBtn {
-  line-height: 2;
-  padding: 6px 10px;
+.choose-avatar-button {
+  background-color: rgb(163, 34, 34);
+  color: #f4e1a3;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 24px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Metropolis';
 }
 
-.AvatarPreview {
-  width: 72px;
-  height: 72px;
+.choose-avatar-button:hover:not(:disabled) {
+  background-color: rgb(140, 25, 25);
+  transform: scale(1.05);
+}
+
+.avatar-preview {
+  width: 150px;
+  height: 150px;
   border-radius: 50%;
   overflow: hidden;
-  border: 2px solid #f4e1a3;
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25) inset;
-  background: rgba(0, 0, 0, 0.15);
-  margin-left: auto;
+  border: 3px solid #f4e1a30d;
+  background: #2a2a2a;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
 }
 
-.AvatarPreview img {
+.avatar-preview img {
   width: 100%;
   height: 100%;
-  display: block;
   object-fit: cover;
+}
+
+.join-game-submit-button {
+  width: 240px;
+  height: 75px;
+  padding: 0;
+  color: #f4e1a3;
+  background-color: rgb(163, 34, 34);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 26px;
+  margin: 2rem auto 0;
+  display: block;
+  transition:
+    background-color 0.25s ease,
+    transform 0.2s ease,
+    box-shadow 0.25s ease;
+  font-family: 'Metropolis';
+}
+
+.join-game-submit-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0px 50px #f4e1a3cc;
+}
+
+.join-game-submit-button:active {
+  transform: scale(0.97);
+  box-shadow: 0 0px 50px #f4e1a3cc;
 }
