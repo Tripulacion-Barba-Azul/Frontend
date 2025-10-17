@@ -2,8 +2,8 @@ import "./Lobby.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import StartGameButton from "./StartGameButton/StartGameButton";
+import AbandonGameButton from "./AbandonGameButton/AbandonGameButton";
 import CancelGameButton from "./CancelGameButton/CancelGameButton";
-
 
 function Lobby(props) {
   const navigate = useNavigate();
@@ -79,28 +79,19 @@ function Lobby(props) {
     }
   };
 
-  
-  useEffect(() => {
-    if (props.refreshTrigger > 0) {
-      fetchMatches();
-    }
-  }, [props.refreshTrigger]);
-
-
-  useEffect(() => {
-    fetchMatches();
-  }, [props.id]);
-
+  // Manejar mensajes del WebSocket
   useEffect(() => {
     if (!props.ws) return;
 
     const handleWebSocketMessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        const { event: eventType, payload } = data;
-
-        if (eventType === 'gameDeleted') {
-          const { gameName, ownerName } = payload;
+        
+        if (data.event === "playerExit") {
+          // Update player list when someone leaves
+          fetchMatches();
+        } else if (data.event === 'gameDeleted') {
+          const { gameName, ownerName } = data.payload;
           setCancelNotificationData({
             ownerName: ownerName,
             gameName: gameName
@@ -108,16 +99,26 @@ function Lobby(props) {
           setShowCancelNotification(true);
         }
       } catch (error) {
-        console.error('Error processing websocket message in Lobby:', error);
+        console.error("Error processing WebSocket message in Lobby:", error);
       }
     };
 
-    props.ws.addEventListener('message', handleWebSocketMessage);
+    props.ws.addEventListener("message", handleWebSocketMessage);
 
     return () => {
-      props.ws.removeEventListener('message', handleWebSocketMessage);
+      props.ws.removeEventListener("message", handleWebSocketMessage);
     };
   }, [props.ws]);
+
+  useEffect(() => {
+    if (props.refreshTrigger > 0) {
+      fetchMatches();
+    }
+  }, [props.refreshTrigger]);
+
+  useEffect(() => {
+    fetchMatches();
+  }, [props.id]);
 
   if (!currentGame) {
     return <div className="Lobby">Loading game info...</div>;
@@ -227,6 +228,13 @@ function Lobby(props) {
             />
           </div>
         )}
+        
+        {/* Leave game button - only for players who are NOT owner */}
+        <AbandonGameButton
+          isOwner={isOwner}
+          playerId={props.playerId}
+          gameId={props.id}
+        />
       </div>
       <CancelNotificationModal />
     </div>
