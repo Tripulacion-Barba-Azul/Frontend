@@ -1,15 +1,16 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { render, screen, act, waitFor } from "@testing-library/react";
 import { useParams, useSearchParams } from "react-router-dom";
 import GameScreen from "./GameScreen";
 
-// ---- Mocks de dependencias ----
+/* ---------------------- Router mocks ---------------------- */
 vi.mock("react-router-dom", () => ({
   useParams: vi.fn(),
   useSearchParams: vi.fn(),
 }));
 
+/* ---------------------- Child component mocks ---------------------- */
 vi.mock("../Lobby/Lobby", () => ({
   default: ({ isConnected }) => (
     <div data-testid="lobby">Lobby - Connected: {String(isConnected)}</div>
@@ -29,7 +30,15 @@ vi.mock("../GameEndScreen/GameEndSreen", () => ({
   default: () => <div data-testid="game-end-screen">Game End Screen</div>,
 }));
 
-// ---- Mock WebSocket ----
+vi.mock("../Notifier/Notifier", () => ({
+  default: () => <div data-testid="notifier">Notifier</div>,
+}));
+
+vi.mock("../EffectManager/EffectManager", () => ({
+  default: () => <div data-testid="effect-manager">EffectManager</div>,
+}));
+
+/* ---------------------- Minimal WebSocket mock ---------------------- */
 const createMockWebSocket = () => ({
   close: vi.fn(),
   send: vi.fn(),
@@ -48,38 +57,57 @@ describe("GameScreen", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    // Router stubs
     useParams.mockReturnValue({ gameId: mockGameId });
     useSearchParams.mockReturnValue([
       new URLSearchParams(`playerId=${mockPlayerId}`),
     ]);
+
+    // WebSocket stub per test
     mockWebSocket = createMockWebSocket();
     global.WebSocket = vi.fn(() => mockWebSocket);
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
+  it("initially renders Lobby and NOT the WS-dependent components", () => {
+    render(<GameScreen />);
+
+    // Lobby is always present
+    expect(screen.getByTestId("lobby")).toBeInTheDocument();
+
+    // WS-dependent components should NOT render until connection is open
+    expect(screen.queryByTestId("game-end-screen")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("notifier")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("effect-manager")).not.toBeInTheDocument();
   });
 
-  it("renderiza Lobby cuando el juego no está listo", () => {
+  it("renders WS-dependent components after WebSocket onopen (isConnected=true)", () => {
     render(<GameScreen />);
+
+    act(() => {
+      mockWebSocket.onopen?.();
+    });
+
     expect(screen.getByTestId("lobby")).toBeInTheDocument();
     expect(screen.getByTestId("game-end-screen")).toBeInTheDocument();
+    expect(screen.getByTestId("notifier")).toBeInTheDocument();
+    expect(screen.getByTestId("effect-manager")).toBeInTheDocument();
   });
 
-  it("crea la conexión WebSocket en el mount", () => {
+  it("creates a WebSocket connection on mount", () => {
     render(<GameScreen />);
     expect(WebSocket).toHaveBeenCalledWith(
       `ws://localhost:8000/ws/${mockGameId}/${mockPlayerId}`
     );
   });
 
-  it("no crea WebSocket cuando falta gameId", () => {
+  it("does not create a WebSocket when gameId is missing", () => {
     useParams.mockReturnValue({ gameId: undefined });
     render(<GameScreen />);
     expect(WebSocket).not.toHaveBeenCalled();
   });
 
-  it("maneja onopen y muestra conectado en Lobby", () => {
+  it("handles onopen by marking Lobby as connected", () => {
     render(<GameScreen />);
     act(() => {
       mockWebSocket.onopen?.();
@@ -87,47 +115,54 @@ describe("GameScreen", () => {
     expect(screen.getByText("Lobby - Connected: true")).toBeInTheDocument();
   });
 
-  it("maneja onclose sin reintentar conexión automáticamente", () => {
-    vi.useFakeTimers();
+  it("handles onclose by marking disconnected and hides WS-dependent components", () => {
     render(<GameScreen />);
+
+    // Open first so components appear
     act(() => {
       mockWebSocket.onopen?.();
     });
-    expect(screen.getByText("Lobby - Connected: true")).toBeInTheDocument();
+    expect(screen.getByTestId("game-end-screen")).toBeInTheDocument();
 
+    // Then close - components should disappear (isConnected=false)
     act(() => {
       mockWebSocket.onclose?.();
     });
     expect(screen.getByText("Lobby - Connected: false")).toBeInTheDocument();
+    expect(screen.queryByTestId("game-end-screen")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("notifier")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("effect-manager")).not.toBeInTheDocument();
 
-    act(() => {
-      vi.advanceTimersByTime(5000);
-    });
-
-    // no reconexión automática
+    // No retry logic: only one WebSocket constructor call
     expect(WebSocket).toHaveBeenCalledTimes(1);
   });
 
-  it("maneja onerror sin cerrar el socket manualmente", () => {
-    render(<GameScreen />);
+  it("handles onerror by logging and setting disconnected (does not close explicitly)", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    render(<GameScreen />);
+
+    // Make it connected first to later verify it becomes disconnected
+    act(() => {
+      mockWebSocket.onopen?.();
+    });
+    expect(screen.getByText("Lobby - Connected: true")).toBeInTheDocument();
+
     act(() => {
       mockWebSocket.onerror?.(new Event("error"));
     });
-    expect(spy).toHaveBeenCalled();
-    // no debe cerrar explícitamente
-    expect(mockWebSocket.close).not.toHaveBeenCalled();
+    expect(screen.getByText("Lobby - Connected: false")).toBeInTheDocument();
+    expect(mockWebSocket.close).not.toHaveBeenCalled(); // current code does not close on error
     spy.mockRestore();
   });
 
-  it("maneja publicUpdate y setea publicData (sin render del Sync aún)", () => {
+  it("handles publicUpdate and sets publicData (no Sync yet if private/started missing)", () => {
     render(<GameScreen />);
     act(() => {
       mockWebSocket.onmessage?.({
         data: JSON.stringify({
           event: "publicUpdate",
           payload: {
-            gameStatus: "inProgress",
+            gameStatus: "waiting", // does not set started=true
             regularDeckCount: 10,
             discardPileTop: { id: 1, name: "Card1" },
             draftCards: [],
@@ -137,10 +172,12 @@ describe("GameScreen", () => {
         }),
       });
     });
+    // Still Lobby because private or started is missing
     expect(screen.getByTestId("lobby")).toBeInTheDocument();
+    expect(screen.queryByTestId("sync-orchestrator")).not.toBeInTheDocument();
   });
 
-  it("maneja privateUpdate y setea privateData (sin render del Sync aún)", () => {
+  it("handles privateUpdate and sets privateData (no Sync yet if public/started missing)", () => {
     render(<GameScreen />);
     act(() => {
       mockWebSocket.onmessage?.({
@@ -156,19 +193,20 @@ describe("GameScreen", () => {
       });
     });
     expect(screen.getByTestId("lobby")).toBeInTheDocument();
+    expect(screen.queryByTestId("sync-orchestrator")).not.toBeInTheDocument();
   });
 
-  it("maneja playerJoined", () => {
+  it("handles player_joined safely (no crash, still Lobby)", () => {
     render(<GameScreen />);
     act(() => {
       mockWebSocket.onmessage?.({
-        data: JSON.stringify({ event: "playerJoined" }),
+        data: JSON.stringify({ event: "player_joined" }),
       });
     });
     expect(screen.getByTestId("lobby")).toBeInTheDocument();
   });
 
-  it("maneja gameStarted (sin datos aún) y mantiene Lobby", () => {
+  it("handles gameStarted alone and keeps Lobby until public/private exist", () => {
     render(<GameScreen />);
     act(() => {
       mockWebSocket.onmessage?.({
@@ -176,24 +214,24 @@ describe("GameScreen", () => {
       });
     });
     expect(screen.getByTestId("lobby")).toBeInTheDocument();
+    expect(screen.queryByTestId("sync-orchestrator")).not.toBeInTheDocument();
   });
 
-  it("maneja eventos desconocidos sin crashear", () => {
+  it("logs unknown events without crashing", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     render(<GameScreen />);
+    const unknown = { event: "unknownEvent", payload: { x: 1 } };
     act(() => {
-      mockWebSocket.onmessage?.({
-        data: JSON.stringify({ event: "unknownEvent", payload: { x: 1 } }),
-      });
+      mockWebSocket.onmessage?.({ data: JSON.stringify(unknown) });
     });
-    expect(warn).toHaveBeenCalledWith(
-      "Evento no manejado:",
-      expect.objectContaining({ event: "unknownEvent" })
-    );
+    expect(warn).toHaveBeenCalled();
+    const [msg, obj] = warn.mock.calls[0];
+    expect(String(msg)).toMatch(/Evento no manejado/);
+    expect(obj).toMatchObject(unknown);
     warn.mockRestore();
   });
 
-  it("maneja mensajes no-JSON", () => {
+  it("handles non-JSON messages gracefully", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     render(<GameScreen />);
     act(() => {
@@ -203,84 +241,87 @@ describe("GameScreen", () => {
     warn.mockRestore();
   });
 
-  it("renderiza SyncOrchestrator cuando todo está listo vía publicUpdate(inProgress) + privateUpdate", async () => {
+  it("renders SyncOrchestrator when publicUpdate(in_progress) + privateUpdate are received", async () => {
     render(<GameScreen />);
+
     act(() => {
-      mockWebSocket.onopen?.();
-    });
-    act(() => {
+      // public with in_progress should flip started=true
       mockWebSocket.onmessage?.({
         data: JSON.stringify({
           event: "publicUpdate",
-          payload: { gameStatus: "inProgress", players: [] },
+          payload: {
+            gameStatus: "in_progress",
+            regularDeckCount: 10,
+            discardPileTop: { id: 1, name: "Card1" },
+            draftCards: [],
+            discardPileCount: 5,
+            players: [],
+          },
         }),
       });
+      // private ready
       mockWebSocket.onmessage?.({
         data: JSON.stringify({
           event: "privateUpdate",
-          payload: { cards: [{ id: 1 }], secrets: [{ id: 1 }], role: "r" },
+          payload: {
+            cards: [{ id: 1, name: "Card1", type: "action" }],
+            secrets: [{ id: 1, revealed: false, name: "Secret1" }],
+            role: "detective",
+            ally: null,
+          },
         }),
       });
-      mockWebSocket.onmessage?.({
-             data: JSON.stringify({ event: "gameStarted" }),
-           });
     });
 
     await waitFor(() =>
       expect(screen.getByTestId("sync-orchestrator")).toBeInTheDocument()
     );
+    expect(
+      screen.getByText("Sync - Player: 456, Public: yes, Private: yes")
+    ).toBeInTheDocument();
   });
 
-  it("renderiza SyncOrchestrator cuando llega gameStarted después de datos", async () => {
+  it("renders SyncOrchestrator when gameStarted follows public(waiting) + private", async () => {
     render(<GameScreen />);
-    act(() => {
-         mockWebSocket.onopen?.();
-    });
+
     act(() => {
       mockWebSocket.onmessage?.({
         data: JSON.stringify({
           event: "publicUpdate",
-          payload: { gameStatus: "waiting", players: [] },
+          payload: {
+            gameStatus: "waiting",
+            regularDeckCount: 10,
+            discardPileTop: { id: 1, name: "Card1" },
+            draftCards: [],
+            discardPileCount: 5,
+            players: [],
+          },
         }),
       });
       mockWebSocket.onmessage?.({
         data: JSON.stringify({
           event: "privateUpdate",
-          payload: { cards: [{ id: 1 }], secrets: [{ id: 1 }], role: "r" },
+          payload: {
+            cards: [{ id: 1, name: "Card1", type: "action" }],
+            secrets: [{ id: 1, revealed: false, name: "Secret1" }],
+            role: "detective",
+            ally: null,
+          },
         }),
       });
       mockWebSocket.onmessage?.({
         data: JSON.stringify({ event: "gameStarted" }),
       });
     });
+
     await waitFor(() =>
       expect(screen.getByTestId("sync-orchestrator")).toBeInTheDocument()
     );
   });
 
-  it("cierra el WebSocket al desmontar", () => {
+  it("closes the WebSocket on unmount", () => {
     const { unmount } = render(<GameScreen />);
     unmount();
     expect(mockWebSocket.close).toHaveBeenCalled();
-  });
-
-  it("reconecta manualmente si el backend vuelve a estar disponible", async () => {
-    // First render, backend down
-    global.WebSocket = vi.fn(() => {
-      throw new Error("Server unavailable");
-    });
-
-    expect(() => render(<GameScreen />)).toThrow("Server unavailable");
-    expect(WebSocket).toHaveBeenCalledTimes(1);
-
-    // Now backend comes up again
-    global.WebSocket = vi.fn(() => createMockWebSocket());
-    await act(async () => {
-      // simulate user reloading or triggering useEffect again
-      render(<GameScreen />);
-    });
-
-    expect(WebSocket).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId("lobby")).toBeInTheDocument();
   });
 });

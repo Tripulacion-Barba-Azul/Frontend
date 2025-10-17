@@ -5,74 +5,23 @@ import OwnCards from "../OwnCards/OwnCards.jsx";
 import RegularDeck from "../RegularDeck/RegularDeck.jsx";
 import ViewMyCards from "../ViewMyCards/ViewMyCards.jsx";
 import ViewMySecrets from "../ViewMySecrets/ViewMySecrets.jsx";
-
-//
-// privateData:  {
-// 	        cards: [{
-//           		id: int
-//           		name: string
-//           		type: enum(string)
-//           }]
-// 	        secrets: [{
-// 		          id: int
-// 		          reveled: bool
-// 		          name: String <NOT NULL>
-//           }]
-// 	        role: enum(string) # "murderer" | "accomplice" | "detective"
-// 	        ally: {
-// 		          id: int
-// 		          role: enum(String) # "murderer" | "accomplice"
-//               } | null
-// }
-
-//
-// publicData:	{
-//         	actionStatus: enum(string) # ”blocked” | “unblocked”
-//         	gameStatus: enum(string) # “waiting” | “inProgress” | “finished”
-//         	regularDeckCount: int
-//         	discardPileTop: {
-//         			id: int
-//         			name: String
-//           }
-//         	draftCards: [{
-//         			id: int
-//         			name: String
-//           }]
-//         	discardPileCount: int
-//           players: [{
-//         	    id: int
-//         	    name: String
-//         	    avatar: int
-//         	    turnOrder: int
-//         	    turnStatus: enum(string) # “waiting” | “playing” | “discarding” | “Drawing”
-//         	    cardCount: int
-//         	    secrets: [{
-//         		      id: int
-//         		      revealed: bool
-//         		      name: String #default null
-//               }]
-//         	    sets: [{
-//         			    setName: enum(string)
-//         			    cards: [{
-//         			        id: int
-//         			        name: enum(string)
-//                   }]
-//               }]
-//           }]
-//       }
+import DrawDraftCardButton from "../DrawDraftCardButton/DrawDraftCardButton.jsx";
 
 export default function SyncOrchestrator({
   publicData,
   privateData,
   currentPlayerId,
 }) {
-  // Own cards turn status
   const turnStatus =
     publicData.players.find((p) => p?.id === currentPlayerId)?.turnStatus ??
     "waiting";
+  const socialDisgrace =
+    publicData.players.find((p) => p?.id === currentPlayerId)?.socialDisgrace ??
+    false;
+
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      {/* Board */}
+      {/* Game Board */}
       <Board
         players={publicData.players}
         currentPlayerId={currentPlayerId}
@@ -102,17 +51,27 @@ export default function SyncOrchestrator({
         </div>
 
         {/* Own Cards */}
-        <OwnCards cards={privateData.cards} turnStatus={turnStatus} />
+        <OwnCards
+          cards={privateData.cards}
+          turnStatus={turnStatus}
+          socialDisgrace={socialDisgrace}
+        />
 
         {/* View My Cards */}
-        <div className="fixed left-110 bottom-45 z-50 pointer-events-auto">
+        <div className="fixed left-105 bottom-45 z-50 pointer-events-auto">
           <ViewMyCards cards={privateData.cards} />
         </div>
 
         {/* View My Secrets */}
-        <div className="fixed right-416 bottom-27 z-50 pointer-events-auto">
+        <div className="fixed right-421 bottom-27 z-50 pointer-events-auto">
           <ViewMySecrets secrets={privateData.secrets} />
         </div>
+
+        {/* Draw Draft Cards  */}
+        <DrawDraftCardButton
+          cards={publicData.draftCards}
+          turnStatus={turnStatus}
+        />
       </div>
     </div>
   );

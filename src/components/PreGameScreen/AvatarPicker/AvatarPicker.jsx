@@ -1,6 +1,6 @@
 import React from "react";
 import "./AvatarPicker.css";
-import { AVATAR_MAP } from "./AvatarPickerConstants";
+import { AVATAR_MAP } from "../../generalMaps";
 
 export default function AvatarPicker({
   isOpen,

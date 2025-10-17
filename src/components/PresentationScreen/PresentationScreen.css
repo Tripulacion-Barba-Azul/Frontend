@@ -1,8 +1,3 @@
-@import "@fontsource/cinzel/600.css"; /* títulos */
-@import "@fontsource/inter/400.css"; /* cuerpo */
-@import "@fontsource/inter/600.css"; /* énfasis en cuerpo */
-@import "@fontsource/special-elite/400.css"; /* notas/pistas */
-
 /* ====== TUNING POR VARIABLES (editá valores acá) ====== */
 .root {
   /* Tamaños y proporciones */
@@ -22,12 +17,6 @@
   --panel-bg: rgba(12, 12, 14, 0.62); /* fondo del recuadro */
   --panel-border: rgba(255, 255, 255, 0.18);
   --panel-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
-
-  /* Familias */
-  --font-heading: "Cinzel", serif;
-  --font-body: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  --font-note: "Special Elite", "Courier Prime", ui-monospace, SFMono-Regular,
-    Menlo, monospace;
 
   /* Tamaños responsivos (ajustá a gusto) */
   --fs-title: clamp(1rem, 1.2vw + 0.6rem, 1.25rem);
@@ -64,7 +53,7 @@
 
 /* Panel por encima del overlay */
 .panel {
-  font-family: var(--font-body);
+  font-family: "Metropolis";
   position: relative;
   z-index: 1;
   width: min(var(--panel-max-w), 92%);
@@ -103,7 +92,7 @@
 }
 
 .textBox {
-  font-family: var(--font-heading);
+  font-family: "Metropolis";
   font-weight: 600;
   letter-spacing: 0.02em;
   font-size: clamp(1rem, 1.2vw + 0.6rem, 1.3rem);

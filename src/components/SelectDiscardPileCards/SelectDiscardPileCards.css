@@ -1,0 +1,139 @@
+.sdp-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell,
+    "Helvetica Neue", Arial;
+}
+
+/* Background overlay */
+.sdp-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  pointer-events: auto;
+}
+
+/* */
+.sdp-panel {
+  position: relative;
+  width: min(1400px, 94vw);
+  max-height: 88vh;
+  background: linear-gradient(180deg, #2b2b2b 0%, #232323 100%);
+  color: #e9e4d4; /* texto general cálido */
+  border-radius: 16px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  pointer-events: auto;
+  border: 1px solid #383838;
+}
+
+/* --- Header centrado y título dorado --- */
+.sdp-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid #3a3a3a;
+  display: flex;
+  justify-content: center; /* centrado */
+  align-items: center;
+}
+.sdp-title {
+  margin: 0;
+  color: #e6d7a6; /* dorado suave */
+  font-size: 2rem;
+  font-family: "Metropolis";
+  letter-spacing: 0.4px;
+  font-size: clamp(22px, 2.4vw, 30px); /* tamaño similar a la captura */
+  text-align: center;
+}
+
+/* --- Contenido --- */
+.sdp-content {
+  padding: 20px;
+  overflow: auto;
+}
+.sdp-empty {
+  padding: 28px;
+  text-align: center;
+  color: #beb6a6;
+}
+
+/* Grid: mantenemos cartas grandes. El JSX ya fuerza 1 fila si hay ≤5 cartas */
+.sdp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 25px;
+}
+
+/* Tarjeta: bloques gris oscuro, borde tenue; selección con borde dorado */
+.sdp-card {
+  position: relative;
+  background: #2f2f2f;
+  border: 3px solid #3c3c3c;
+  border-radius: 14px;
+  padding: 0px;
+  cursor: pointer;
+  transform: scale(1);
+  transform-origin: center;
+  transition: transform 120ms ease, border-color 80ms ease, box-shadow 80ms ease;
+}
+.sdp-card:hover {
+  transform: translateY(-2px) scale(1.02);
+  border-color: #6a6a6a;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+}
+.sdp-card.selected {
+  border-color: #d6b16a;
+  box-shadow: 0 0 0 2px rgba(214, 177, 106, 0.45) inset,
+    0 10px 22px rgba(214, 177, 106, 0.18);
+  transform: scale(1.08);
+  z-index: 1;
+}
+
+.sdp-card.selected:hover {
+  transform: translateY(-2px) scale(1.1);
+}
+
+.sdp-card-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* --- Footer y botón burdeos --- */
+.sdp-footer {
+  display: flex;
+  justify-content: center; /* centrado como en la captura */
+  padding: 14px 18px 18px;
+  border-top: 1px solid #3a3a3a;
+}
+
+.sdp-confirm {
+  appearance: none;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-weight: 600;
+  font-size: 1.1rem; /* tamaño del botón similar a la captura */
+  cursor: pointer;
+  color: #e6d7a6; /* texto claro cálido */
+  background: rgb(163, 34, 34); /* burdeos */
+  box-shadow: 0 6px 16px rgba(90, 44, 44, 0.45);
+}
+.sdp-confirm:disabled {
+  background: rgba(163, 34, 34, 0.35);
+  color: rgba(244, 225, 163, 0.3);
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.sdp-confirm:not(:disabled):hover {
+  filter: brightness(1.06);
+}

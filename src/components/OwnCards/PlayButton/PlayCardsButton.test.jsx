@@ -52,7 +52,9 @@ describe("<PlayCardsButton />", () => {
     );
 
     fireEvent.click(screen.getByRole("button"));
-    expect(await screen.findByText(/something went wrong/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/something went wrong/i)
+    ).toBeInTheDocument();
   });
 
   it("sends correct request and calls onPlaySuccess on success", async () => {
@@ -72,13 +74,13 @@ describe("<PlayCardsButton />", () => {
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        "/play/123/actions/play-card",
+        "http://localhost:8000/play/123/actions/play-card",
         expect.objectContaining({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            cards: [{ cardId: 10 }, { cardId: 20 }],
-            actualPlayerID: 42,
+            playerId: 42,
+            cards: [10, 20],
           }),
         })
       );
@@ -93,10 +95,7 @@ describe("<PlayCardsButton />", () => {
 
     render(
       <MemoryRouter>
-        <PlayCardsButton
-          selectedCards={[5]}
-          onPlaySuccess={onPlaySuccess}
-        />
+        <PlayCardsButton selectedCards={[5]} onPlaySuccess={onPlaySuccess} />
       </MemoryRouter>
     );
 

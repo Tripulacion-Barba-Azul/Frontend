@@ -20,11 +20,17 @@ export default function DrawRegularCardButton({
     if (!canDraw) return;
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:8000/play/${gameId}/actions/draw-card`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playerId: Number(playerId) }),
-      });
+      const response = await fetch(
+        `http://localhost:8000/play/${gameId}/actions/draw-card`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            playerId: Number(playerId),
+            deck: "regular",
+          }),
+        }
+      )
 
       if (!response.ok) {
         throw new Error(`Draw failed with status ${response.status}`);

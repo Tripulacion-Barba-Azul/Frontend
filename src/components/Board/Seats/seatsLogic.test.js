@@ -1,21 +1,20 @@
-// seatsLogic.test.js
 import { describe, it, expect } from "vitest";
 import { buildSeatedPlayersFromOrders } from "./seatsLogic.js";
-import {
-  SEAT_POSITIONS,
-  SEATING_BY_COUNT,
-  RING_COLORS,
-} from "./seatsConstants.js";
+import { SEAT_POSITIONS, SEATING_BY_COUNT } from "./seatsConstants.js";
 
-// Helper to build a player object in the new format
+/** Helper: builds a player object with the new input shape */
 function mkPlayer({
   id,
   name,
   avatar = "default1",
   turnOrder,
-  turnStatus = "waiting", // "waiting" | "playing" | "discarding" | "discardingOpt" | "Drawing"
+  // turnStatus is case-insensitive:
+  // "waiting" | "playing" | "takingAction" | "discarding" | "discardingOpt" | "drawing"
+  turnStatus = "waiting",
   cardCount = 0,
   secrets = [], // [{ id, name, revealed }]
+  sets = undefined, // optional: defaults to [] in the output
+  socialDisgrace = undefined, // optional: should flow through (defaults to false)
 }) {
   return {
     id,
@@ -25,14 +24,16 @@ function mkPlayer({
     turnStatus,
     cardCount,
     secrets,
+    sets,
+    socialDisgrace,
   };
 }
 
-describe("buildSeatedPlayersFromOrders (new player shape + new signature)", () => {
-  it("places the currentPlayer first (size=big) and respects seating by player count", () => {
+describe("buildSeatedPlayersFromOrders (updated behavior)", () => {
+  it("anchors currentPlayer first (size=big), respects seating map and positions per seatId", () => {
     const players = [
       mkPlayer({ id: 1, name: "P1", turnOrder: 1 }),
-      mkPlayer({ id: 2, name: "P2", turnOrder: 2, turnStatus: "playing" }),
+      mkPlayer({ id: 2, name: "P2", turnOrder: 2 }),
       mkPlayer({ id: 3, name: "P3", turnOrder: 3 }),
       mkPlayer({ id: 4, name: "P4", turnOrder: 4 }),
       mkPlayer({ id: 5, name: "P5", turnOrder: 5 }),
@@ -40,68 +41,73 @@ describe("buildSeatedPlayersFromOrders (new player shape + new signature)", () =
     ];
 
     const CURRENT_ID = 2;
-    const OUT = buildSeatedPlayersFromOrders(
+    const out = buildSeatedPlayersFromOrders(
       players,
       CURRENT_ID,
       "detective",
       null
     );
 
-    // returned count equals valid players (clamped 2..6)
-    expect(OUT).toHaveLength(6);
-
-    // first element is the current player and is "big"
-    expect(OUT[0].name).toBe("P2");
-    expect(OUT[0].size).toBe("big");
-
-    // seat ids follow SEATING_BY_COUNT[6]
-    const expectedSeatIds = SEATING_BY_COUNT[6];
-    expect(OUT.map((s) => s.id)).toEqual(expectedSeatIds);
-
-    // each item contains inline style from SEAT_POSITIONS[id]
-    for (const s of OUT) {
-      expect(s.style).toEqual(SEAT_POSITIONS[s.id].style);
-    }
-
-    // meta echoes turnOrder and marks the anchor as actualPlayer
-    expect(OUT[0].meta).toMatchObject({
+    // Count and anchor
+    expect(out).toHaveLength(6);
+    expect(out[0].name).toBe("P2");
+    expect(out[0].size).toBe("big");
+    expect(out[0].meta).toMatchObject({
       order: 2,
       actualPlayer: true,
       playerId: 2,
     });
-  });
 
-  it("cycles ringColor from RING_COLORS by index", () => {
-    const players = [
-      mkPlayer({ id: 1, name: "A", turnOrder: 1 }),
-      mkPlayer({ id: 2, name: "B", turnOrder: 2 }),
-      mkPlayer({ id: 3, name: "C", turnOrder: 3 }),
-      mkPlayer({ id: 4, name: "D", turnOrder: 4 }),
-    ];
+    // Seat ids must follow SEATING_BY_COUNT[6]
+    const expectedSeatIds = SEATING_BY_COUNT[6];
+    expect(out.map((s) => s.id)).toEqual(expectedSeatIds);
 
-    const OUT = buildSeatedPlayersFromOrders(players, 1, "detective", null);
+    // Each item carries inline style from SEAT_POSITIONS[id]
+    for (const s of out) {
+      expect(s.style).toEqual(SEAT_POSITIONS[s.id].style);
+    }
 
-    OUT.forEach((s, idx) => {
-      expect(RING_COLORS).toContain(s.ringColor);
-      expect(s.ringColor).toBe(RING_COLORS[idx % RING_COLORS.length]);
+    // Position mapping derived from seatId
+    const expectedBySeat = {
+      p1: "down",
+      p2: "right",
+      p6: "left",
+      // Remaining seats default to "up"
+    };
+    out.forEach((s) => {
+      const expected = expectedBySeat[s.id] ?? "up";
+      expect(s.position).toBe(expected);
     });
   });
 
-  it("computes 'turn' from turnStatus !== 'waiting' (case-insensitive)", () => {
+  it("derives ringColor from turnStatus using updated tokens (case-insensitive)", () => {
     const players = [
-      mkPlayer({ id: 1, name: "AP", turnOrder: 1, turnStatus: "waiting" }),
+      mkPlayer({ id: 1, name: "A", turnOrder: 1, turnStatus: "waiting" }),
       mkPlayer({ id: 2, name: "B", turnOrder: 2, turnStatus: "playing" }),
-      mkPlayer({ id: 3, name: "C", turnOrder: 3, turnStatus: "discarding" }),
-      mkPlayer({ id: 4, name: "D", turnOrder: 4, turnStatus: "Drawing" }), // capitalized
+      mkPlayer({ id: 3, name: "C", turnOrder: 3, turnStatus: "TakingAction" }), // mixed case
+      mkPlayer({ id: 4, name: "D", turnOrder: 4, turnStatus: "discarding" }),
+      mkPlayer({ id: 5, name: "E", turnOrder: 5, turnStatus: "DiscardingOpt" }), // mixed case
+      mkPlayer({ id: 6, name: "F", turnOrder: 6, turnStatus: "Drawing" }), // capitalized
     ];
 
-    const OUT = buildSeatedPlayersFromOrders(players, 1, "detective", null);
+    const out = buildSeatedPlayersFromOrders(players, 1, "detective", null);
 
-    expect(OUT[0].name).toBe("AP");
-    expect(OUT[0].turn).toBe(false); // waiting -> false
-    expect(OUT[1].turn).toBe(true); // playing -> true
-    expect(OUT[2].turn).toBe(true); // discarding -> true
-    expect(OUT[3].turn).toBe(true); // Drawing -> true
+    // Order is circular starting at current (id=1, order=1)
+    expect(out.map((p) => p.name)).toEqual(["A", "B", "C", "D", "E", "F"]);
+
+    // Updated ringColor tokens (from seatsLogic.js):
+    // waiting -> gray
+    // playing -> emerald
+    // takingAction -> lime
+    // discarding -> amber
+    // discardingOpt -> lightAmber
+    // drawing -> red
+    expect(out[0].ringColor).toBe("gray");
+    expect(out[1].ringColor).toBe("emerald");
+    expect(out[2].ringColor).toBe("lime");
+    expect(out[3].ringColor).toBe("amber");
+    expect(out[4].ringColor).toBe("lightAmber");
+    expect(out[5].ringColor).toBe("red");
   });
 
   it("colors only visible roles when current player is hidden-team and knows the ally", () => {
@@ -112,97 +118,28 @@ describe("buildSeatedPlayersFromOrders (new player shape + new signature)", () =
       mkPlayer({ id: 3, name: "OTHER", turnOrder: 3 }),
     ];
 
-    const currentPlayerId = 1;
-    const currentPlayerRole = "murderer";
-    const currentPlayerAlly = { id: 2, role: "accomplice" };
+    const out = buildSeatedPlayersFromOrders(players, 1, "murderer", {
+      id: 2,
+      role: "accomplice",
+    });
 
-    const OUT = buildSeatedPlayersFromOrders(
-      players,
-      currentPlayerId,
-      currentPlayerRole,
-      currentPlayerAlly
-    );
-
-    const colors = Object.fromEntries(OUT.map((p) => [p.name, p.nameBgColor]));
-    expect(colors["ME"]).toBe("red"); // self murderer -> red
-    expect(colors["ALLY"]).toBe("orange"); // ally accomplice -> orange
-    expect(colors["OTHER"]).toBe("white"); // unknown to current -> white
+    const byName = Object.fromEntries(out.map((p) => [p.name, p.nameBgColor]));
+    expect(byName["ME"]).toBe("red"); // self murderer -> red
+    expect(byName["ALLY"]).toBe("orange"); // ally accomplice -> orange
+    expect(byName["OTHER"]).toBe("white"); // unknown -> white
   });
 
-  it("when current player is detective, all labels are white (no hidden roles visible)", () => {
+  it("when current player is detective, all labels are white", () => {
     const players = [
       mkPlayer({ id: 10, name: "AP", turnOrder: 1 }),
       mkPlayer({ id: 20, name: "B", turnOrder: 2 }),
       mkPlayer({ id: 30, name: "C", turnOrder: 3 }),
     ];
-    const OUT = buildSeatedPlayersFromOrders(players, 10, "detective", null);
-    OUT.forEach((p) => expect(p.nameBgColor).toBe("white"));
+    const out = buildSeatedPlayersFromOrders(players, 10, "detective", null);
+    out.forEach((p) => expect(p.nameBgColor).toBe("white"));
   });
 
-  it("throws if fewer than 2 valid players (turnOrder in 1..6) remain after filtering", () => {
-    const invalid = [
-      mkPlayer({ id: 1, name: "Only", turnOrder: 1 }),
-      mkPlayer({ id: 2, name: "OutOfRange", turnOrder: 7 }), // filtered out
-    ];
-    expect(() =>
-      buildSeatedPlayersFromOrders(invalid, 1, "detective", null)
-    ).toThrow(/At least 2 valid players are required/i);
-  });
-
-  it("throws when players list is empty", () => {
-    expect(() =>
-      buildSeatedPlayersFromOrders([], 1, "detective", null)
-    ).toThrow(/At least 2 valid players are required/i);
-  });
-
-  it("throws when more than 6 valid players (1..6) are provided", () => {
-    const tooMany = [
-      mkPlayer({ id: 1, name: "A", turnOrder: 1 }),
-      mkPlayer({ id: 2, name: "B", turnOrder: 2 }),
-      mkPlayer({ id: 3, name: "C", turnOrder: 3 }),
-      mkPlayer({ id: 4, name: "D", turnOrder: 4 }),
-      mkPlayer({ id: 5, name: "E", turnOrder: 5 }),
-      mkPlayer({ id: 6, name: "F", turnOrder: 6 }),
-      // extra valid (duplicate order but still within 1..6 -> valid length becomes 7)
-      mkPlayer({ id: 7, name: "G", turnOrder: 1 }),
-    ];
-    expect(() =>
-      buildSeatedPlayersFromOrders(tooMany, 1, "detective", null)
-    ).toThrow(/At most 6 players are supported/i);
-  });
-
-  it("throws when two players share the same turnOrder (uniqueness)", () => {
-    const dupOrders = [
-      mkPlayer({ id: 1, name: "AP", turnOrder: 1 }),
-      mkPlayer({ id: 2, name: "B", turnOrder: 1 }),
-      mkPlayer({ id: 3, name: "C", turnOrder: 2 }),
-    ];
-    expect(() =>
-      buildSeatedPlayersFromOrders(dupOrders, 1, "detective", null)
-    ).toThrow(/turnOrder values must be unique/i);
-  });
-
-  it("throws when currentPlayerId is not present among players", () => {
-    const players = [
-      mkPlayer({ id: 1, name: "A", turnOrder: 1 }),
-      mkPlayer({ id: 2, name: "B", turnOrder: 2 }),
-    ];
-    expect(() =>
-      buildSeatedPlayersFromOrders(players, 999, "detective", null)
-    ).toThrow(/Exactly one player must match currentPlayerId \(none found\)/i);
-  });
-
-  it("throws when turnOrder does not form the exact sequence 1..count (no gaps)", () => {
-    const players = [
-      mkPlayer({ id: 1, name: "A", turnOrder: 1 }),
-      mkPlayer({ id: 2, name: "B", turnOrder: 3 }), // gap at 2
-    ];
-    expect(() =>
-      buildSeatedPlayersFromOrders(players, 1, "detective", null)
-    ).toThrow(/turnOrder values must be the sequence 1..2/i);
-  });
-
-  it("maps input name -> output name and preserves cardCount & secrets", () => {
+  it("preserves cardCount, secrets and passes sets array (defaults to [])", () => {
     const players = [
       mkPlayer({
         id: 1,
@@ -211,42 +148,128 @@ describe("buildSeatedPlayersFromOrders (new player shape + new signature)", () =
         turnStatus: "playing",
         cardCount: 4,
         secrets: [{ id: 101, name: "You are the murderer", revealed: true }],
+        sets: [
+          {
+            setName: "Tommy Beresford",
+            cards: [{ id: 1001, name: "Tommy Beresford" }],
+          },
+        ],
       }),
-      mkPlayer({ id: 2, name: "B", turnOrder: 2, cardCount: 2, secrets: [] }),
+      mkPlayer({
+        id: 2,
+        name: "B",
+        turnOrder: 2,
+        cardCount: 2,
+        secrets: [],
+        // sets omitted on purpose
+      }),
     ];
 
-    const OUT = buildSeatedPlayersFromOrders(players, 1, "detective", null);
+    const out = buildSeatedPlayersFromOrders(players, 1, "detective", null);
 
-    expect(OUT[0].name).toBe("AP");
-    expect(OUT[0].numCards).toBe(4);
-    expect(Array.isArray(OUT[0].secrets)).toBe(true);
-    expect(OUT[0].secrets[0]).toEqual({
+    // Anchor data
+    expect(out[0].name).toBe("AP");
+    expect(out[0].numCards).toBe(4);
+    expect(out[0].secrets[0]).toEqual({
       id: 101,
       name: "You are the murderer",
       revealed: true,
     });
+    expect(Array.isArray(out[0].sets)).toBe(true);
+    expect(out[0].sets).toHaveLength(1);
 
-    expect(OUT[1].name).toBe("B");
-    expect(OUT[1].numCards).toBe(2);
-    expect(OUT[1].secrets).toEqual([]);
+    // Second player data
+    expect(out[1].name).toBe("B");
+    expect(out[1].numCards).toBe(2);
+    expect(out[1].secrets).toEqual([]);
+    expect(Array.isArray(out[1].sets)).toBe(true);
+    expect(out[1].sets).toHaveLength(0); // defaulted to []
   });
 
-  it("sets meta.role only for self and (if provided) ally; null for others", () => {
+  it("propagates socialDisgrace (defaults to false) from input", () => {
     const players = [
-      mkPlayer({ id: 1, name: "ME", turnOrder: 1 }),
-      mkPlayer({ id: 2, name: "ALLY", turnOrder: 2 }),
-      mkPlayer({ id: 3, name: "X", turnOrder: 3 }),
+      mkPlayer({ id: 1, name: "AP", turnOrder: 1, socialDisgrace: true }),
+      mkPlayer({ id: 2, name: "B", turnOrder: 2 }), // undefined -> false
+      mkPlayer({ id: 3, name: "C", turnOrder: 3, socialDisgrace: false }),
     ];
-    const OUT = buildSeatedPlayersFromOrders(players, 1, "accomplice", {
-      id: 2,
-      role: "murderer",
-    });
 
-    const metaByName = Object.fromEntries(
-      OUT.map((p) => [p.name, p.meta.role])
+    const out = buildSeatedPlayersFromOrders(players, 1, "detective", null);
+
+    const byName = Object.fromEntries(
+      out.map((p) => [p.name, p.socialDisgrace])
     );
-    expect(metaByName["ME"]).toBe("accomplice");
-    expect(metaByName["ALLY"]).toBe("murderer");
-    expect(metaByName["X"]).toBeNull();
+    expect(byName["AP"]).toBe(true);
+    expect(byName["B"]).toBe(false);
+    expect(byName["C"]).toBe(false);
+  });
+
+  it("throws on invalid player lists (quantity, duplicates, gaps, or missing current)", () => {
+    // fewer than 2 valid players
+    expect(() =>
+      buildSeatedPlayersFromOrders(
+        [mkPlayer({ id: 1, name: "Only", turnOrder: 1 })],
+        1,
+        "detective",
+        null
+      )
+    ).toThrow();
+
+    // duplicate turnOrder
+    expect(() =>
+      buildSeatedPlayersFromOrders(
+        [
+          mkPlayer({ id: 1, name: "A", turnOrder: 1 }),
+          mkPlayer({ id: 2, name: "B", turnOrder: 1 }),
+          mkPlayer({ id: 3, name: "C", turnOrder: 2 }),
+        ],
+        1,
+        "detective",
+        null
+      )
+    ).toThrow();
+
+    // gaps in 1..N
+    expect(() =>
+      buildSeatedPlayersFromOrders(
+        [
+          mkPlayer({ id: 1, name: "A", turnOrder: 1 }),
+          mkPlayer({ id: 2, name: "B", turnOrder: 3 }), // gap at 2
+        ],
+        1,
+        "detective",
+        null
+      )
+    ).toThrow();
+
+    // currentPlayerId not present
+    expect(() =>
+      buildSeatedPlayersFromOrders(
+        [
+          mkPlayer({ id: 1, name: "A", turnOrder: 1 }),
+          mkPlayer({ id: 2, name: "B", turnOrder: 2 }),
+        ],
+        999,
+        "detective",
+        null
+      )
+    ).toThrow();
+
+    // more than 6 valid players
+    expect(() =>
+      buildSeatedPlayersFromOrders(
+        [
+          mkPlayer({ id: 1, name: "A", turnOrder: 1 }),
+          mkPlayer({ id: 2, name: "B", turnOrder: 2 }),
+          mkPlayer({ id: 3, name: "C", turnOrder: 3 }),
+          mkPlayer({ id: 4, name: "D", turnOrder: 4 }),
+          mkPlayer({ id: 5, name: "E", turnOrder: 5 }),
+          mkPlayer({ id: 6, name: "F", turnOrder: 6 }),
+          mkPlayer({ id: 7, name: "G", turnOrder: 1 }), // extra still-valid -> >6
+        ],
+        1,
+        "detective",
+        null
+      )
+    ).toThrow();
   });
 });

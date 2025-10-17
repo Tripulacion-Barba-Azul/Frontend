@@ -2,7 +2,7 @@ import "./JoinGameForm.css";
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AvatarPicker from "../../AvatarPicker/AvatarPicker";
-import { AVATAR_MAP } from "../../AvatarPicker/AvatarPickerConstants";
+import { AVATAR_MAP } from "../../../generalMaps";
 
 export default function JoinGameForm() {
   const [settings, setSettings] = useState({

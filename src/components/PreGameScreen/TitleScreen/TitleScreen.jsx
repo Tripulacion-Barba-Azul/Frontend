@@ -1,5 +1,6 @@
 import CreateGameButton from "./CreateGameButton/CreateGameButton";
 import JoinGameButton from "./JoinGameButton/JoinGameButton";
+import Instructions from "../../Instructions/Instructions";
 import "./TitleScreen.css";
 
 export default function TitleScreen() {
@@ -10,6 +11,7 @@ export default function TitleScreen() {
       </h1>
       <CreateGameButton />
       <JoinGameButton />
+      <Instructions mode="preGame" />
     </div>
   );
 }
