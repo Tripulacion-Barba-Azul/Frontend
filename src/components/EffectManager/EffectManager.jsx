@@ -111,7 +111,7 @@ export default function EffectManager({
 
       const body = { event: eventName, ...responsePayload };
       log("POST", url, body);
-
+      resetFlow();
       try {
         const response = await fetch(url, {
           method: "POST",
@@ -125,7 +125,6 @@ export default function EffectManager({
       } catch (err) {
         error("POST error:", err?.message ?? err);
       } finally {
-        resetFlow();
       }
     },
     [gameId, resetFlow]
