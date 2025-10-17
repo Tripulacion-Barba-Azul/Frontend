@@ -10,8 +10,8 @@ function Notification({ text, cards = [], setImage = null, onClose }) {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(false);
-      setTimeout(onClose, 300); // Wait for fade-out animation
-    }, 3000);
+      setTimeout(onClose, 500); // Wait for fade-out animation
+    }, 5000);
 
     return () => clearTimeout(timer);
   }, [onClose]);
@@ -72,7 +72,7 @@ function Notification({ text, cards = [], setImage = null, onClose }) {
         )}
 
         <div className="notifier-hint">
-          Click outside to close • (Auto-closes in 3s)
+          Click outside to close • (Auto-closes in 5s)
         </div>
       </div>
     </div>,

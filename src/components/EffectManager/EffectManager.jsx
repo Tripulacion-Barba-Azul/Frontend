@@ -452,7 +452,7 @@ export default function EffectManager({
   const promptText = useMemo(() => {
     switch (currentEvent) {
       case "selectAnyPlayer":
-        return "Select any player to discard all their NotSoFast cards";
+        return "Select any player";
       case "andThenThereWasOneMore":
         if (step === "selectPlayer")
           return "Select one player to steal a secret from";
