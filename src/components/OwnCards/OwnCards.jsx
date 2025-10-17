@@ -156,7 +156,8 @@ export default function OwnCards({
                 onDiscardSuccess={() => setSelectedIds(new Set())}
               />
             )}
-
+          </>
+        )}
       </div>
     </div>
   );

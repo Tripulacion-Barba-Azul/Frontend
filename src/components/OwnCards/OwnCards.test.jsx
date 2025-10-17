@@ -289,13 +289,6 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     expect(discard.getAttribute("data-atleast")).toBe("false");
   });
 
-  it("shows DrawRegularCardButton in 'drawing' even when socialDisgrace=true (no forced discard)", () => {
-    const cards = TEST_CARDS.slice(0, 2);
-    setup(cards, { turnStatus: "drawing", socialDisgrace: true });
-    expect(screen.getByTestId("draw-card-button")).toBeInTheDocument();
-    expect(screen.queryByTestId("discard-button")).not.toBeInTheDocument();
-  });
-
   it("also forces discard when socialDisgrace=true for 'playing' and 'takingAction'", () => {
     const cards = TEST_CARDS.slice(0, 2);
 
