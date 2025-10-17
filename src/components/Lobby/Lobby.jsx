@@ -1,13 +1,18 @@
 import "./Lobby.css";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import StartGameButton from "./StartGameButton/StartGameButton";
+import CancelGameButton from "./CancelGameButton/CancelGameButton";
 
-// Props esperados: { id, playerId, ws, isConnected, refreshTrigger }
+
 function Lobby(props) {
+  const navigate = useNavigate();
   const [currentGame, setCurrentGame] = useState(null);
   const [players, setPlayers] = useState([]);
   const [isOwner, setIsOwner] = useState(false);
   const [playerNotInGame, setPlayerNotInGame] = useState(false);
+  const [showCancelNotification, setShowCancelNotification] = useState(false);
+  const [cancelNotificationData, setCancelNotificationData] = useState(null);
 
   const fetchMatches = async () => {
     try {
@@ -40,30 +45,30 @@ function Lobby(props) {
         currentPlayers: playersArray,
       };
 
-      // Verificar si el jugador actual es el owner
+      
       const isCurrentPlayerOwner = props.playerId === data.ownerId;
       setIsOwner(isCurrentPlayerOwner);
 
       if (isCurrentPlayerOwner) {
-        // Si es owner, cargar todos los jugadores actuales
+        
         setPlayers(gameData.currentPlayers);
       } else {
-        // Si no es owner, verificar si está en la lista de jugadores
+        
         const currentPlayerInList = gameData.currentPlayers.find(
           (player) => player.playerId === props.playerId
         );
 
         if (currentPlayerInList) {
-          // El jugador está en la lista, cargar todos los jugadores
+          
           setPlayers(gameData.currentPlayers);
         } else {
-          // El jugador NO está en la lista - esto es un ERROR
+          
           console.error(
             `Player ID ${props.playerId} not found in game ${props.id}. This indicates the player is not part of this game.`
           );
-          // NO agregamos al jugador, solo cargamos los jugadores válidos
+          
           setPlayers(gameData.currentPlayers);
-          // Marcar que el jugador no está en el juego
+          
           setPlayerNotInGame(true);
         }
       }
@@ -74,29 +79,55 @@ function Lobby(props) {
     }
   };
 
-  // Actualizar cuando se recibe un trigger de refresh (por ejemplo, player_joined)
+  
   useEffect(() => {
     if (props.refreshTrigger > 0) {
-      console.log("🔄 Actualizando lista de jugadores debido a player_joined");
       fetchMatches();
     }
   }, [props.refreshTrigger]);
 
-  // Cargar datos iniciales cuando cambia el ID del juego
+
   useEffect(() => {
-    console.log("📋 Cargando datos iniciales del lobby");
     fetchMatches();
   }, [props.id]);
 
+  useEffect(() => {
+    if (!props.ws) return;
+
+    const handleWebSocketMessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        const { event: eventType, payload } = data;
+
+        if (eventType === 'gameDeleted') {
+          const { gameName, ownerName } = payload;
+          setCancelNotificationData({
+            ownerName: ownerName,
+            gameName: gameName
+          });
+          setShowCancelNotification(true);
+        }
+      } catch (error) {
+        console.error('Error processing websocket message in Lobby:', error);
+      }
+    };
+
+    props.ws.addEventListener('message', handleWebSocketMessage);
+
+    return () => {
+      props.ws.removeEventListener('message', handleWebSocketMessage);
+    };
+  }, [props.ws]);
+
   if (!currentGame) {
-    return <div className="Lobby">Cargando información del juego...</div>;
+    return <div className="Lobby">Loading game info...</div>;
   }
 
-  // Si el jugador no está en la partida, mostrar solo el mensaje de error
+  
   if (playerNotInGame) {
     return (
       <div className="Lobby" style={{ padding: "20px", textAlign: "center" }}>
-        <h2 style={{ color: "red" }}>No tienes acceso a esta partida</h2>
+        <h2 style={{ color: "red" }}>You dont have access to this game</h2>
       </div>
     );
   }
@@ -104,22 +135,49 @@ function Lobby(props) {
   const hasMinimumPlayers = players.length >= currentGame.minPlayers;
   const hasMaximumPlayers = players.length >= currentGame.maxPlayers;
 
+  const handleCloseNotification = () => {
+    setShowCancelNotification(false);
+    navigate("/");
+  };
+
+  const CancelNotificationModal = () => {
+    if (!showCancelNotification || !cancelNotificationData) return null;
+
+    return (
+      <div className="cancel-notification-overlay">
+        <div className="cancel-notification-modal">
+          <h3>Game canceled</h3>
+          <p>
+            The game "{cancelNotificationData.gameName}" has been canceled 
+            by {cancelNotificationData.ownerName}
+          </p>
+          <button 
+            className="close-notification-btn"
+            onClick={handleCloseNotification}
+          >
+            Back to home screen
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="Lobby">
       <h2>
-        Partida: {currentGame.name}{" "}
+        Game name: {currentGame.name}{" "}
         {props.isConnected && <span style={{ color: "green" }}>Connected</span>}
       </h2>
-      <h2>Creador de la partida: {currentGame.creator}</h2>
+      <h2>Game creator: {currentGame.creator}</h2>
       <h2>
         Min: {currentGame.minPlayers}, Max: {currentGame.maxPlayers}
       </h2>
 
       <div className="players-section">
         <h3>
-          Jugadores en espera ({players.length})
+          Current Players ({players.length})
           {hasMaximumPlayers && (
-            <span className="full-lobby-badge"> - PARTIDA LLENA</span>
+            <span className="full-lobby-badge"> - GAME FULL</span>
           )}
           :
         </h3>
@@ -129,26 +187,34 @@ function Lobby(props) {
               <li key={index} className="player-item">
                 {player.playerName}
                 {player.playerName === currentGame.creator && (
-                  <span className="creator-badge"> (Creador)</span>
+                  <span className="creator-badge"> (Creator)</span>
                 )}
                 {player.playerId === props.playerId && (
-                  <span className="current-player-badge"> (Tú)</span>
+                  <span className="current-player-badge"> (You)</span>
                 )}
               </li>
             ))
           ) : (
-            <li className="no-players">No hay jugadores en la partida</li>
+            <li className="no-players">No players in sight</li>
           )}
         </ul>
         {isOwner && (
-          <StartGameButton
-            disabled={!hasMinimumPlayers}
-            gameId={props.id}
-            actualPlayerId={props.playerId}
-            onStartGame={props.onStartGame}
-          />
+          <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+            <StartGameButton
+              disabled={!hasMinimumPlayers}
+              gameId={props.id}
+              actualPlayerId={props.playerId}
+              onStartGame={props.onStartGame}
+            />
+            <CancelGameButton
+              disabled={false}
+              gameId={props.id}
+              actualPlayerId={props.playerId}
+            />
+          </div>
         )}
       </div>
+      <CancelNotificationModal />
     </div>
   );
 }
