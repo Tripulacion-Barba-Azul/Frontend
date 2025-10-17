@@ -1,6 +1,7 @@
 import "./Lobby.css";
 import { useState, useEffect } from "react";
 import StartGameButton from "./StartGameButton/StartGameButton";
+import AbandonGameButton from "./AbandonGameButton/AbandonGameButton";
 
 // Props esperados: { id, playerId, ws, isConnected, refreshTrigger }
 function Lobby(props) {
@@ -73,6 +74,30 @@ function Lobby(props) {
       console.error("Error fetching matches:", error);
     }
   };
+
+  // Manejar mensajes del WebSocket
+  useEffect(() => {
+    if (!props.ws) return;
+
+    const handleWebSocketMessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data.event === "playerExit") {
+          // Update player list when someone leaves
+          fetchMatches();
+        }
+      } catch (error) {
+        console.error("Error processing WebSocket message in Lobby:", error);
+      }
+    };
+
+    props.ws.addEventListener("message", handleWebSocketMessage);
+
+    return () => {
+      props.ws.removeEventListener("message", handleWebSocketMessage);
+    };
+  }, [props.ws]);
 
   // Actualizar cuando se recibe un trigger de refresh (por ejemplo, player_joined)
   useEffect(() => {
@@ -148,6 +173,13 @@ function Lobby(props) {
             onStartGame={props.onStartGame}
           />
         )}
+        
+        {/* Leave game button - only for players who are NOT owner */}
+        <AbandonGameButton
+          isOwner={isOwner}
+          playerId={props.playerId}
+          gameId={props.id}
+        />
       </div>
     </div>
   );

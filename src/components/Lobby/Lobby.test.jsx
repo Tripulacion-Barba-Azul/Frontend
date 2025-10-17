@@ -54,6 +54,20 @@ vi.mock("./StartGameButton/StartGameButton", () => ({
   },
 }));
 
+vi.mock("./AbandonGameButton/AbandonGameButton", () => ({
+  default: function MockAbandonGameButton({ isOwner, playerId, gameId }) {
+    if (isOwner) {
+      return null; // Don't render for owner
+    }
+    
+    return (
+      <button data-testid="abandon-game-button">
+        Leave Game
+      </button>
+    );
+  },
+}));
+
 global.fetch = vi.fn();
 
 describe("Lobby Component", () => {
@@ -69,11 +83,13 @@ describe("Lobby Component", () => {
     ],
   };
 
-  // Mock WebSocket
+  // Mock WebSocket with addEventListener/removeEventListener
   const mockWs = {
     onmessage: null,
     close: vi.fn(),
     send: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
   };
 
   const defaultProps = {
@@ -88,6 +104,11 @@ describe("Lobby Component", () => {
       ok: true,
       json: () => Promise.resolve(mockGameData),
     });
+    // Reset mock WebSocket methods
+    mockWs.addEventListener.mockClear();
+    mockWs.removeEventListener.mockClear();
+    mockWs.close.mockClear();
+    mockWs.send.mockClear();
     mockWs.onmessage = null;
   });
 
@@ -154,6 +175,8 @@ describe("Lobby Component", () => {
 
       await waitFor(() => {
         expect(screen.getByTestId("start-game-button")).toBeInTheDocument();
+        // Owner should NOT see abandon game button
+        expect(screen.queryByTestId("abandon-game-button")).not.toBeInTheDocument();
       });
 
       unmount();
@@ -170,6 +193,8 @@ describe("Lobby Component", () => {
         expect(
           screen.queryByTestId("start-game-button")
         ).not.toBeInTheDocument();
+        // Non-owner should see abandon game button
+        expect(screen.getByTestId("abandon-game-button")).toBeInTheDocument();
       });
     });
   });
@@ -798,6 +823,182 @@ describe("Lobby Component", () => {
       await waitFor(() => {
         // Debería haber llamado fetch 4 veces (1 inicial + 3 por refreshTrigger)
         expect(fetch).toHaveBeenCalledTimes(4);
+      });
+    });
+  });
+
+  describe("WebSocket handling", () => {
+    test("sets up WebSocket event listener on mount", async () => {
+      const ownerProps = {
+        id: 1,
+        playerId: 5,
+        playerName: "Owner_test_2",
+        ...defaultProps,
+      };
+
+      render(<Lobby {...ownerProps} />);
+
+      await waitFor(() => {
+        expect(mockWs.addEventListener).toHaveBeenCalledWith(
+          "message",
+          expect.any(Function)
+        );
+      });
+    });
+
+    test("cleans up WebSocket event listener on unmount", async () => {
+      const ownerProps = {
+        id: 1,
+        playerId: 5,
+        playerName: "Owner_test_2",
+        ...defaultProps,
+      };
+
+      const { unmount } = render(<Lobby {...ownerProps} />);
+
+      await waitFor(() => {
+        expect(mockWs.addEventListener).toHaveBeenCalled();
+      });
+
+      unmount();
+
+      expect(mockWs.removeEventListener).toHaveBeenCalledWith(
+        "message",
+        expect.any(Function)
+      );
+    });
+
+    test("handles playerExit WebSocket message", async () => {
+      const mockGameDataAfterExit = {
+        ...mockGameData,
+        players: [
+          { playerId: 5, playerName: "Owner_test_2" },
+          // Player_test_1 has left
+        ],
+      };
+
+      // Mock initial fetch
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockGameData),
+      });
+
+      const ownerProps = {
+        id: 1,
+        playerId: 5,
+        playerName: "Owner_test_2",
+        ...defaultProps,
+      };
+
+      render(<Lobby {...ownerProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Jugadores en espera \(2\)/)).toBeInTheDocument();
+      });
+
+      // Get the message handler that was registered
+      const messageHandler = mockWs.addEventListener.mock.calls.find(
+        call => call[0] === "message"
+      )[1];
+
+      // Mock the fetch call that will be triggered by playerExit message
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockGameDataAfterExit),
+      });
+
+      // Simulate playerExit message
+      const mockEvent = {
+        data: JSON.stringify({ event: "playerExit" })
+      };
+
+      messageHandler(mockEvent);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Jugadores en espera \(1\)/)).toBeInTheDocument();
+      });
+    });
+
+    test("ignores invalid WebSocket messages", async () => {
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const ownerProps = {
+        id: 1,
+        playerId: 5,
+        playerName: "Owner_test_2",
+        ...defaultProps,
+      };
+
+      render(<Lobby {...ownerProps} />);
+
+      await waitFor(() => {
+        expect(mockWs.addEventListener).toHaveBeenCalled();
+      });
+
+      // Get the message handler
+      const messageHandler = mockWs.addEventListener.mock.calls.find(
+        call => call[0] === "message"
+      )[1];
+
+      // Simulate invalid JSON message
+      const mockEvent = {
+        data: "invalid json"
+      };
+
+      messageHandler(mockEvent);
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Error processing WebSocket message in Lobby:",
+        expect.any(Error)
+      );
+
+      consoleSpy.mockRestore();
+    });
+
+    test("does not set up event listener when ws prop is null", () => {
+      const propsWithoutWs = {
+        id: 1,
+        playerId: 5,
+        playerName: "Owner_test_2",
+        ws: null,
+        isConnected: false,
+        refreshTrigger: 0,
+      };
+
+      render(<Lobby {...propsWithoutWs} />);
+
+      expect(mockWs.addEventListener).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("AbandonGameButton integration", () => {
+    test("shows AbandonGameButton for non-owner players", async () => {
+      const playerProps = {
+        id: 1,
+        playerId: 3,
+        playerName: "Player_test_1",
+        ...defaultProps,
+      };
+
+      render(<Lobby {...playerProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("abandon-game-button")).toBeInTheDocument();
+      });
+    });
+
+    test("does not show AbandonGameButton for owner", async () => {
+      const ownerProps = {
+        id: 1,
+        playerId: 5,
+        playerName: "Owner_test_2",
+        ...defaultProps,
+      };
+
+      render(<Lobby {...ownerProps} />);
+
+      await waitFor(() => {
+        expect(screen.queryByTestId("abandon-game-button")).not.toBeInTheDocument();
       });
     });
   });
