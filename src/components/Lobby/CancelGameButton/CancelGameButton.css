@@ -1,21 +1,27 @@
 .CancelGameButton {
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    font-size: 16px;
-    font-weight: bold;
-    border-radius: 6px;
+    width: 220px;
+    height: 70px;
+    padding: 0;
+    font-family: 'Metropolis';
+    font-size: 25px;
+    font-weight: 500;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
     cursor: pointer;
-    transition: all 0.3s ease;
-    margin-top: 15px;
-    margin-left: 10px;
+    user-select: none;
+    pointer-events: auto;
+    margin: 7px;
+    z-index: 10;
+    transition:
+        background-color 0.25s ease,
+        transform 0.2s ease,
+        box-shadow 0.25s ease;
+    color: #f4e1a3;
+    background-color: rgb(163, 34, 34);
 }
 
 .CancelGameButton:hover:not(:disabled) {
-    background-color: #c82333;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    background-color: rgb(81, 21, 21);
 }
 
 .CancelGameButton.disabled,

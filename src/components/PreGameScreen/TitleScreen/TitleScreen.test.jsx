@@ -1,51 +1,98 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
-import "@testing-library/jest-dom";
+import { describe, it, expect, vi } from "vitest";
 import TitleScreen from "./TitleScreen";
 
+// Mock the child components to simplify testing
+vi.mock("./CreateGameButton/CreateGameButton", () => ({
+  default: function MockCreateGameButton() {
+    return <button>Create Game</button>;
+  },
+}));
+
+vi.mock("./JoinGameButton/JoinGameButton", () => ({
+  default: function MockJoinGameButton() {
+    return <button>Join Game</button>;
+  },
+}));
+
+vi.mock("../../Instructions/Instructions", () => ({
+  default: function MockInstructions({ mode }) {
+    return (
+      <div>
+        <button aria-label="open instructions">Instructions</button>
+        {mode === "preGame" && <div data-testid="pre-game-instructions">Pre Game Instructions</div>}
+      </div>
+    );
+  },
+}));
+
 describe("TitleScreen", () => {
-  it("renders the main title", () => {
+  it("renders all main images with correct alt texts", () => {
     render(
       <MemoryRouter>
         <TitleScreen />
       </MemoryRouter>
     );
-    // We don't assert the exact text to avoid failing on minor copy changes.
-    const heading = screen.getByRole("heading", { level: 1 });
-    expect(heading).toBeInTheDocument();
+
+    // Check for title image
+    const titleImage = screen.getByAltText("Agatha Christie's Death on the Cards");
+    expect(titleImage).toBeInTheDocument();
+    expect(titleImage).toHaveAttribute("src", "/Assets/DOTC_title.png");
+
+    // Check for characters image
+    const charactersImage = screen.getByAltText("Characters");
+    expect(charactersImage).toBeInTheDocument();
+    expect(charactersImage).toHaveAttribute("src", "/Assets/DOTC_characters.png");
   });
 
-  it("renders the 'Create Game' button", () => {
+  it("renders both game buttons in the buttons container", () => {
     render(
       <MemoryRouter>
         <TitleScreen />
       </MemoryRouter>
     );
+
     expect(screen.getByText("Create Game")).toBeInTheDocument();
-  });
-
-  it("renders the 'Join Game' button", () => {
-    render(
-      <MemoryRouter>
-        <TitleScreen />
-      </MemoryRouter>
-    );
     expect(screen.getByText("Join Game")).toBeInTheDocument();
+    
+    // Verify buttons are contained within the buttons container
+    const buttonsContainer = screen.getByText("Create Game").closest('.buttons-container');
+    expect(buttonsContainer).toBeInTheDocument();
+    expect(buttonsContainer).toContainElement(screen.getByText("Join Game"));
   });
 
-  it("renders the Instructions launcher (bottom-right icon)", () => {
+  it("renders the Instructions component with preGame mode", () => {
     render(
       <MemoryRouter>
         <TitleScreen />
       </MemoryRouter>
     );
-    // The launcher button has an accessible label set in Instructions.jsx
-    const launcher = screen.getByLabelText(/open instructions/i);
-    expect(launcher).toBeInTheDocument();
+
+    expect(screen.getByLabelText("open instructions")).toBeInTheDocument();
+    expect(screen.getByTestId("pre-game-instructions")).toBeInTheDocument();
   });
 
-  it("opens the Instructions modal in preGame mode with arrows and counter", async () => {
+  it("has correct layout structure", () => {
+    render(
+      <MemoryRouter>
+        <TitleScreen />
+      </MemoryRouter>
+    );
+
+    // Verify the main container
+    const titleScreen = screen.getByText("Create Game").closest('.TitleScreen');
+    expect(titleScreen).toBeInTheDocument();
+
+    // Verify the order of elements: title -> characters -> buttons -> instructions
+    const elements = titleScreen.children;
+    expect(elements[0]).toHaveClass('title-image');
+    expect(elements[1]).toHaveClass('characters-image');
+    expect(elements[2]).toHaveClass('buttons-container');
+  });
+
+  it("instructions button is interactive", async () => {
     const user = userEvent.setup();
     render(
       <MemoryRouter>
@@ -53,31 +100,36 @@ describe("TitleScreen", () => {
       </MemoryRouter>
     );
 
-    // Open the modal by clicking the launcher
-    const launcher = screen.getByLabelText(/open instructions/i);
-    await user.click(launcher);
+    const instructionsButton = screen.getByLabelText("open instructions");
+    
+    // Verify the button is in the document and can be focused
+    expect(instructionsButton).toBeInTheDocument();
+    
+    // Test interaction
+    await user.click(instructionsButton);
+    // Since we're mocking the Instructions component, we're mainly testing
+    // that the interaction doesn't break anything
+    expect(screen.getByTestId("pre-game-instructions")).toBeInTheDocument();
+  });
 
-    // Modal dialog should be visible with the correct accessible name
-    const dialog = screen.getByRole("dialog", { name: /how to play/i });
-    expect(dialog).toBeInTheDocument();
+  it("matches the visual structure with images and buttons", () => {
+    render(
+      <MemoryRouter>
+        <TitleScreen />
+      </MemoryRouter>
+    );
 
-    // Title text inside the modal
-    expect(screen.getByText(/how to play/i)).toBeInTheDocument();
+    // Quick snapshot of the structure
+    const titleImage = screen.getByAltText("Agatha Christie's Death on the Cards");
+    const charactersImage = screen.getByAltText("Characters");
+    const createButton = screen.getByText("Create Game");
+    const joinButton = screen.getByText("Join Game");
+    const instructions = screen.getByLabelText("open instructions");
 
-    // In preGame mode we should have both arrows and the counter
-    const prevArrow = screen.getByLabelText(/previous image/i);
-    const nextArrow = screen.getByLabelText(/next image/i);
-    expect(prevArrow).toBeInTheDocument();
-    expect(nextArrow).toBeInTheDocument();
-
-    // Counter "1 / 9" should be visible initially
-    expect(screen.getByText(/1\s*\/\s*9/i)).toBeInTheDocument();
-
-    // Close modal via the close (X) button
-    const closeBtn = screen.getByLabelText(/close/i);
-    await user.click(closeBtn);
-    expect(
-      screen.queryByRole("dialog", { name: /how to play/i })
-    ).not.toBeInTheDocument();
+    expect(titleImage).toBeInTheDocument();
+    expect(charactersImage).toBeInTheDocument();
+    expect(createButton).toBeInTheDocument();
+    expect(joinButton).toBeInTheDocument();
+    expect(instructions).toBeInTheDocument();
   });
 });

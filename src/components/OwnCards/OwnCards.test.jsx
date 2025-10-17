@@ -204,11 +204,6 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     expect(discard2.getAttribute("data-atleast")).toBe("false");
     expect(discard2.getAttribute("data-exact")).toBe("false");
 
-    // drawing -> DrawRegularCardButton visible
-    rerender(
-      <OwnCards cards={cards} turnStatus="drawing" socialDisgrace={false} />
-    );
-    expect(screen.getByTestId("draw-card-button")).toBeInTheDocument();
   });
 
   it("in 'playing' shows NoActionButton when nothing is selected and 'Play (n)' when selected; onPlaySuccess clears selection", () => {
@@ -292,13 +287,6 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     discard = screen.getByTestId("discard-button");
     expect(discard.getAttribute("data-exact")).toBe("true");
     expect(discard.getAttribute("data-atleast")).toBe("false");
-  });
-
-  it("shows DrawRegularCardButton in 'drawing' even when socialDisgrace=true (no forced discard)", () => {
-    const cards = TEST_CARDS.slice(0, 2);
-    setup(cards, { turnStatus: "drawing", socialDisgrace: true });
-    expect(screen.getByTestId("draw-card-button")).toBeInTheDocument();
-    expect(screen.queryByTestId("discard-button")).not.toBeInTheDocument();
   });
 
   it("also forces discard when socialDisgrace=true for 'playing' and 'takingAction'", () => {

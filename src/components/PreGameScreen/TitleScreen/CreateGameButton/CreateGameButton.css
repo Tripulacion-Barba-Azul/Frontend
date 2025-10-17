@@ -1,16 +1,37 @@
 .CreateGameButton {
-    color: #f4e1a3;            
+    width: 220px;
+    height: 70px;
+    padding: 0;
+    color: #f4e1a3;
     background-color: rgb(163, 34, 34);
-    padding: 12px 20px;
-    font-size: 1rem;
-    border: none;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
     cursor: pointer;
-    border-radius: 4px;
-    font-family: 'Metropolis';
-    width: 100px;      
-    height: 50px;      
-    margin: 10px;     
-    display: flex;              
-    justify-content: center;   
-    align-items: center;   
-}
+    font-size: 25px;
+    user-select: none;
+    pointer-events: auto;
+    margin: 7px;
+    z-index: 10;
+  
+    /* smoother feel */
+    transition: 
+      background-color 0.25s ease,
+      transform 0.2s ease,
+      box-shadow 0.25s ease;
+  }
+  
+  .CreateGameButton:hover {
+    transform: scale(1.05); /* gentle grow */
+    box-shadow: 0 0px 50px  #f4e1a3cc;
+  }
+  
+  .CreateGameButton:active {
+    transform: scale(0.97); /* tactile press effect */
+    box-shadow: 0 0px 50px  #f4e1a3cc;
+  }
+  
+  /* optional: a slight glowing border effect when focused */
+  .CreateGameButton:focus {
+    outline: none;
+    box-shadow: 0 0px 50px  #f4e1a3cc;
+  }
