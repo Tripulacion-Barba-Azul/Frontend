@@ -1,74 +1,205 @@
 import "./PresentationScreen.css";
-import { SECRETS_MAP } from "../generalMaps";
+import { useEffect, useRef } from "react";
+import { AVATAR_MAP } from "../generalMaps";
 
 /**
  * PresentationScreen
  *
  * Props:
  * - actualPlayer: { name: string; role: "murderer" | "accomplice" | "detective" | string }
- * - ally?: { name: string } | null
+ * - ally?: { name: string; avatar?: number|string } | null
+ * - close: (v: boolean) => void     // NEW: parent setter to hide this screen from outside
  *
  * Behavior:
  * - murderer:
  *    - shows murdererSrc image
- *    - left (big) text box: murdererOwnText
- *    - right (small) text box: murdererOtherText (uses ally name if available)
+ *    - left text box: murdererOwnText (player name in red)
+ *    - right text box: murdererOtherText (ally name in orange if present)
+ *    - ally chip: to the RIGHT, outside the textbox
  * - accomplice:
  *    - shows accompliceSrc image
- *    - left (big) text box: accompliceOwnText
- *    - right (small) text box: accompliceOtherText (uses ally name if available)
+ *    - left text box: accompliceOwnText (player name in orange)
+ *    - right text box: accompliceOtherText (ally name in red if present)
+ *    - ally chip: to the RIGHT, outside the textbox
  * - detective:
  *    - shows detectiveSrc image
- *    - a single text box (spans both columns) with detectiveText
+ *    - single text box with detectiveText (player name in white)
+ *    - placement controlled ONLY by CSS via `.detective-box { left/right: ...px }`
+ *
+ * Extra:
+ * - "I am ready" calls close(true) immediately.
+ * - Auto-calls close(true) after 20 seconds.
  */
-export default function PresentationScreen({ actualPlayer, ally = null }) {
-  const backgroundSrc = "/Board/backgroundBoard.png";
+export default function PresentationScreen({
+  actualPlayer,
+  ally = null,
+  close,
+}) {
+  const timeoutRef = useRef(null);
 
-  // Role images (from secrets/cards mapping)
-  const murdererSrc = SECRETS_MAP["You are the murderer"];
-  const accompliceSrc = SECRETS_MAP["You are the accomplice"];
-  const detectiveSrc = SECRETS_MAP["You are a detective"];
+  // Auto-close via parent's setter after 20s
+  useEffect(() => {
+    timeoutRef.current = setTimeout(() => {
+      try {
+        if (typeof close === "function") close(true);
+      } catch {
+        /* no-op */
+      }
+    }, 20000);
+
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, [close]);
+
+  const backgroundSrc = "/Presentation/background.png";
+
+  // Role images (replace with your final assets if needed)
+  const murdererSrc = "/Presentation/murderer.png";
+  const accompliceSrc = "/Presentation/accomplice.png";
+  const detectiveSrc = "/Presentation/detective.png";
 
   const playerName = actualPlayer?.name ?? "You";
   const allyName = ally?.name ?? null;
   const role = String(actualPlayer?.role || "detective").toLowerCase();
+  const isDetective = role === "detective";
 
-  // Role-specific texts
-  const murdererOwnText = `${playerName}, you are the murderer. Your goal is to escape without being caught. When the deck runs out of cards, you escape and win the game. Use your cards wisely to buy time and mislead the other players. But beware, detectives may find you suspicious if you are not careful.`;
-  const murdererOtherText = allyName
-    ? `${allyName} is your accomplice. They'll help you achieve your goals, but you won't lose if they get caught.`
-    : `Your accomplice will help you, but you won't lose if they get caught.`;
+  /** Colored name inline */
+  const Name = ({ name, role }) => (
+    <strong className={`role-name role-${role}`}>{name}</strong>
+  );
 
-  const accompliceOwnText = `${playerName}, you are the accomplice. Your goal is to help the murderer escape. When the deck runs out of cards, both of you escape and win the game. Work together to buy time and mislead the other players. But beware, detectives may find you suspicious if you are not careful.`;
-  const accompliceOtherText = allyName
-    ? `${allyName} is the murderer. If the murderer is caught, both of you lose. If you are caught, the murderer may still escape.`
-    : `The murderer is your ally: if they are caught, you both lose; if you are caught, they may still escape.`;
+  /** Ally chip (name box + avatar) following PlayerBadge minimal aesthetics */
+  const AllyChip = ({ name, avatarSrc, role }) => {
+    if (!name || !avatarSrc) return null;
+    const ring =
+      role === "murderer"
+        ? "#EF4444"
+        : role === "accomplice"
+        ? "#F59E0B"
+        : "#E6D7A6"; // detective cream
+    return (
+      <div className="ally-chip">
+        <div className="ally-name-box" data-role={role}>
+          {name}
+        </div>
+        <div
+          className={`ally-avatar-circle${
+            role === "detective" ? " no-glow" : ""
+          }`}
+          style={{ ["--ring-color"]: ring }}
+        >
+          <img
+            src={avatarSrc}
+            alt={`Avatar of ${name}`}
+            className="ally-avatar-img"
+            draggable={false}
+          />
+        </div>
+      </div>
+    );
+  };
 
-  const detectiveText = `${playerName}, you are a detective. Your goal is to find the murderer and stop them before they escape. You win if you reveal the murderer’s secret card before the deck runs out. Use your skills to gather clues and identify suspicious subjects. Time matters—trust no one.`;
+  const allyAvatarSrc =
+    ally && AVATAR_MAP[ally.avatar] ? AVATAR_MAP[ally.avatar] : null;
 
-  // Resolve per-role content
+  // Role content
   let cardSrc = detectiveSrc;
-  let leftText = detectiveText; // big box
-  let rightText = null; // small box (null means do not render)
+  let leftContent;
+  let rightContent = null;
+  let rightChip = null;
 
   if (role === "murderer") {
+    // Ally is the accomplice
     cardSrc = murdererSrc || cardSrc;
-    leftText = murdererOwnText;
-    rightText = murdererOtherText;
+    leftContent = (
+      <p>
+        <Name name={playerName} role="murderer" />, you are the murderer.
+        <br />
+        <br /> Your goal is to escape without being caught. When the deck runs
+        out of cards, you escape and win the game. <br /> Use your cards wisely
+        to buy time and mislead the other players. Beware, detectives may find
+        you suspicious if you are not careful.
+      </p>
+    );
+    rightContent = (
+      <p>
+        {allyName ? (
+          <Name name={allyName} role="accomplice" />
+        ) : (
+          "Your accomplice"
+        )}{" "}
+        is your accomplice. <br />
+        <br />
+        They&apos;ll help you achieve your goals, but you won&apos;t lose if
+        they get caught. <br />
+        Work together to outsmart the detectives.
+      </p>
+    );
+    rightChip = (
+      <AllyChip name={allyName} avatarSrc={allyAvatarSrc} role="accomplice" />
+    );
   } else if (role === "accomplice") {
+    // Ally is the murderer
     cardSrc = accompliceSrc || cardSrc;
-    leftText = accompliceOwnText;
-    rightText = accompliceOtherText;
-  } else if (role === "detective") {
+    leftContent = (
+      <p>
+        <Name name={playerName} role="accomplice" />, you are the accomplice.{" "}
+        <br />
+        <br />
+        Your goal is to help the murderer escape. When the deck runs out of
+        cards, both of you escape and win the game. <br /> Work together to buy
+        time and mislead the other players. But beware, detectives may find you
+        suspicious if you are not careful.
+      </p>
+    );
+    rightContent = (
+      <p>
+        {allyName ? <Name name={allyName} role="murderer" /> : "The murderer"}{" "}
+        is the murderer.
+        <br />
+        <br /> If the murderer is caught, both of you lose. If you are caught,
+        the murderer can still escape. <br /> Work together to outsmart the
+        detectives.
+      </p>
+    );
+    rightChip = (
+      <AllyChip name={allyName} avatarSrc={allyAvatarSrc} role="murderer" />
+    );
+  } else {
+    // detective
     cardSrc = detectiveSrc || cardSrc;
-    leftText = detectiveText;
-    rightText = null; // single textbox for detectives
+    leftContent = (
+      <p>
+        <Name name={playerName} role="detective" />, you are a detective.
+        <br />
+        <br /> Your goal is to find the murderer and stop them before they
+        escape. <br />
+        You win if you reveal the murderer’s secret card before the deck runs
+        out. Use your skills to gather clues and identify suspicious subjects.{" "}
+        <span style={{ fontWeight: 700, fontStyle: "italic" }}>
+          Time is crucial. Trust no one.
+        </span>
+      </p>
+    );
+    rightContent = null;
+    rightChip = null;
   }
+
+  const hasRightChip = Boolean(rightChip);
+
+  const handleReady = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    if (typeof close === "function") close(true);
+  };
 
   return (
     <div
       className="root"
-      aria-label="Información del jugador"
+      aria-label="Player information"
       style={
         backgroundSrc ? { backgroundImage: `url(${backgroundSrc})` } : undefined
       }
@@ -89,22 +220,32 @@ export default function PresentationScreen({ actualPlayer, ally = null }) {
         </div>
 
         {/* Texts area */}
-        <div className="textRow">
-          {/* Left (big) text box; for detective we span across both columns */}
+        <div className={`textRow ${hasRightChip ? "textRow--withChip" : ""}`}>
           <div
-            className="textBox"
+            className={`textBox ${
+              isDetective && !rightContent ? "detective-box" : ""
+            }`}
             data-variant="big"
-            style={rightText ? undefined : { gridColumn: "1 / -1" }}
+            data-det={isDetective ? "true" : "false"}
           >
-            {leftText}
+            {leftContent}
           </div>
 
-          {/* Right (small) text box only for murderer/accomplice */}
-          {rightText && (
+          {rightContent && (
             <div className="textBox" data-variant="small">
-              {rightText}
+              {rightContent}
             </div>
           )}
+
+          {/* Ally chip OUTSIDE the textbox, to the RIGHT */}
+          {hasRightChip && <div className="ally-chipWrap">{rightChip}</div>}
+        </div>
+
+        {/* Ready button row */}
+        <div className="readyRow">
+          <button type="button" className="readyButton" onClick={handleReady}>
+            I am ready
+          </button>
         </div>
       </div>
     </div>

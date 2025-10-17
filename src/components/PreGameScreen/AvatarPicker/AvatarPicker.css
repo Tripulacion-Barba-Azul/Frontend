@@ -1,77 +1,113 @@
 .ap-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.75);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 999;
+  backdrop-filter: blur(4px);
 }
 
+/* Modal container */
 .ap-modal {
-  background: rgba(163, 34, 34, 0.95);
-  border-radius: 10px;
-  padding: 16px;
-  max-width: 720px;
-  width: 92%;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-}
-
-.ap-head {
+  background: #1e1e1ee4;
+  border-radius: 18px;
+  padding: 6rem; /* triple padding */
+  width: 100%;
+  max-width: 1200px; /* wider to match new scale */
+  color: #f4e1a3;
+  font-family: "Metropolis", sans-serif;
+  box-shadow: 0 0 45px rgba(0, 0, 0, 0.7);
+  border: 2px solid #f4e1a30d;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  margin-bottom: 12px;
 }
 
+/* Header */
+.ap-head {
+  width: 100%;
+  display: flex;
+  justify-content: center; /* center the title */
+  align-items: center;
+  position: relative;
+  margin-bottom: 4rem; /* triple spacing */
+}
+
+/* Centered title */
 .ap-title {
   margin: 0;
-  color: #f4e1a3;
+  font-size: 3.3rem; /* triple size */
   font-family: "Metropolis";
-  font-size: 1.1rem;
-}
-
-.ap-close {
-  background: transparent;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  border-radius: 6px;
-  padding: 4px 10px;
-  cursor: pointer;
   color: #f4e1a3;
+  letter-spacing: 1px;
+  text-align: center;
 }
 
+/* Close button - small, in top-right corner */
+.ap-close {
+  position: absolute;
+  right: 0;
+  background: transparent;
+  border: 1px solid #f4e1a30d;
+  color: #f4e1a3;
+  border-radius: 8px;
+  font-size: 1.3rem;
+  padding: 2px 10px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.ap-close:hover {
+  background: rgba(244, 225, 163, 0.1);
+  border-color: #f4e1a34d;
+}
+
+/* Avatar grid */
 .ap-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
-  gap: 12px;
-}
-
-.ap-avatarBtn {
-  background: rgba(0, 0, 0, 0.08);
-  border: 2px solid rgb(163, 34, 34);
-  border-radius: 10px;
-  padding: 8px;
-  cursor: pointer;
-  display: grid;
-  gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); /* triple size */
+  gap: 3rem; /* triple gap */
+  width: 100%;
   justify-items: center;
 }
 
-.ap-avatarBtn:focus {
-  outline: 2px solid #f4e1a3;
-  outline-offset: 2px;
+/* Avatar button */
+.ap-avatarBtn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 3px solid transparent;
+  border-radius: 20px;
+  padding: 2.5rem; /* triple padding */
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
+.ap-avatarBtn:hover {
+  border-color: #f4e1a3;
+  transform: scale(1.05);
+}
+
+/* Selected avatar */
+.ap-avatarBtn[data-selected="true"] {
+  border-color: #f4e1a3;
+  box-shadow: 0 0 20px rgba(244, 225, 163, 0.3);
+}
+
+/* Avatar image */
 .ap-avatarImg {
-  width: 64px;
-  height: 64px;
+  width: 210px; /* triple size (was 70px) */
+  height: 210px;
   object-fit: cover;
   border-radius: 50%;
   display: block;
+  transition: transform 0.2s ease;
 }
 
-.ap-avatarBtn[data-selected="true"] {
-  outline: 2px solid #f4e1a3;
-  outline-offset: 2px;
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.25) inset;
+.ap-avatarBtn:hover .ap-avatarImg {
+  transform: scale(1.05);
 }

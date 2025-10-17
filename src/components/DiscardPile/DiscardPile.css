@@ -12,14 +12,37 @@
   display: block;
 }
 
+.DiscardPile-topcard-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
 .DiscardPile-topcard {
   position: absolute;
   top: 10%;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 20%;
+  transform: translateX(0);
   width: 60%;
   height: auto;
   border-radius: 6px;
   box-shadow: 0 4px 4px rgba(0, 0, 0, 0.5);
   z-index: 2;
+}
+
+/* Fix for one-card case */
+.DiscardPile-container.one-card {
+  width: 200px; /* Same width as the discard images */
+  height: 200px; /* Give it a height so the container has size */
+}
+
+.DiscardPile-container.one-card .DiscardPile-topcard {
+  position: absolute;
+  top: 1%; /* Same as regular case */
+  left: 20%; /* Same as regular case */
+  transform: translateX(0); /* Same as regular case */
+  width: 60%; /* Same as regular case */
 }

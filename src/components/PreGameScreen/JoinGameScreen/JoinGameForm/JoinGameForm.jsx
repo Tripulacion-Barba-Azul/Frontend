@@ -6,63 +6,16 @@ import { AVATAR_MAP } from "../../../generalMaps";
 
 export default function JoinGameForm() {
   const [settings, setSettings] = useState({
-    PlayerName: "",
-    PlayerBirthday: "",
-    avatar: "1",
+    PlayerName: "defaultName",
+    PlayerBirthday: "1990-01-01",
+    Avatar: "1",
   });
   const [formErrors, setFormErrors] = useState({});
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [submitting, setSubmitting] = useState(false); // NEW: request lock
 
   const { gameId } = useParams();
   const navigate = useNavigate();
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    const errors = validate(settings);
-    setFormErrors(errors);
-
-    if (Object.keys(errors).length === 0) {
-      const requestData = {
-        playerName: settings.PlayerName,
-        birthDate: String(settings.PlayerBirthday),
-        avatar: settings.avatar ? Number(settings.avatar) : undefined,
-      };
-
-      async function postData() {
-        try {
-          const response = await fetch(
-            `http://localhost:8000/games/${gameId}/join`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(requestData),
-            }
-          );
-
-          if (!response.ok) {
-            console.error("Error en la solicitud:", error);
-            navigate(`/join`);
-          } else {
-            const data = await response.json();
-            const fetchedId = data.gameId;
-            const fetchedPlayerId = data.actualPlayerId;
-
-            if (fetchedId != gameId) {
-              navigate(`/join`);
-            } else {
-              navigate(`/game/${fetchedId}?playerId=${fetchedPlayerId}`);
-            }
-          }
-        } catch (error) {
-          console.error("Error en la solicitud:", error);
-          navigate(`/join`);
-        }
-      }
-
-      postData();
-    }
-  };
 
   const validate = (values) => {
     const errors = {};
@@ -83,67 +36,143 @@ export default function JoinGameForm() {
     return errors;
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Prevent duplicate fast submits
+    if (submitting) return;
+
+    const errors = validate(settings);
+    setFormErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    setSubmitting(true); // lock UI
+
+    const requestData = {
+      playerName: settings.PlayerName,
+      birthDate: String(settings.PlayerBirthday),
+      avatar: settings.Avatar ? Number(settings.Avatar) : undefined,
+    };
+
+    try {
+      const response = await fetch(
+        `http://localhost:8000/games/${gameId}/join`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestData),
+        }
+      );
+
+      if (!response.ok) {
+        console.error("Error joining game:", response.statusText);
+        setSubmitting(false); // unlock on failure
+        navigate(`/join`);
+        return;
+      }
+
+      const data = await response.json();
+      const fetchedId = data.gameId;
+      const fetchedPlayerId = data.actualPlayerId;
+
+      if (String(fetchedId) !== String(gameId)) {
+        setSubmitting(false); // unlock before redirecting back
+        navigate(`/join`);
+        return;
+      }
+
+      // Navigation will unmount the component; no need to unlock
+      navigate(`/game/${fetchedId}?playerId=${fetchedPlayerId}`);
+    } catch (error) {
+      console.error("Error in request:", error);
+      setSubmitting(false); // unlock on failure
+      navigate(`/join`);
+    }
+  };
+
   return (
-    <div className="container">
-      <form onSubmit={handleSubmit}>
-        <label htmlFor="yourName">Your Name</label>
-        <br />
-        <input
-          id="yourName"
-          type="text"
-          value={settings.PlayerName}
-          onChange={(e) =>
-            setSettings({ ...settings, PlayerName: e.target.value })
-          }
-          placeholder="Your Name"
-        />
-        <p className="error">{formErrors.PlayerName}</p>
-        <br />
-
-        <label htmlFor="yourBirthday">Your Birthday</label>
-        <br />
-        <input
-          id="yourBirthday"
-          type="date"
-          value={settings.PlayerBirthday}
-          onChange={(e) =>
-            setSettings({ ...settings, PlayerBirthday: e.target.value })
-          }
-          placeholder="Your Birthday"
-        />
-        <p className="error">{formErrors.PlayerBirthday}</p>
-        <br />
-
-        <label>Your Avatar</label>
-        <div className="AvatarRow">
-          <button
-            type="button"
-            className="chooseBtn"
-            onClick={() => setShowAvatarPicker(true)}
-          >
-            Choose Avatar
-          </button>
-
-          <div
-            className="AvatarPreview"
-            role="img"
-            aria-label="Selected avatar"
-          >
-            <img src={AVATAR_MAP[settings.avatar]} alt="" />
-          </div>
+    <div className="join-game-container">
+      <div className="join-game-wrapper">
+        <div className="join-game-header">
+          <h1 className="join-game-title">Join Game</h1>
         </div>
-        <p className="error">{formErrors.avatar}</p>
 
-        <button>Join</button>
-      </form>
+        <form onSubmit={handleSubmit} className="join-game-form">
+          <fieldset className="form-section">
+            <div className="form-group">
+              <label htmlFor="yourName" className="form-label">
+                Your Name
+              </label>
+              <input
+                id="yourName"
+                type="text"
+                value={settings.PlayerName}
+                onChange={(e) =>
+                  setSettings({ ...settings, PlayerName: e.target.value })
+                }
+                className="form-input"
+                disabled={submitting}
+              />
+              <p className="error-message">{formErrors.PlayerName}</p>
+            </div>
 
-      <AvatarPicker
-        isOpen={showAvatarPicker}
-        onClose={() => setShowAvatarPicker(false)}
-        onSelect={(id) => setSettings((s) => ({ ...s, avatar: String(id) }))}
-        selectedId={Number(settings.avatar)}
-        ids={[1, 2, 3, 4, 5, 6]}
-      />
+            <div className="form-group">
+              <label htmlFor="yourBirthday" className="form-label">
+                Your Birthday
+              </label>
+              <input
+                id="yourBirthday"
+                type="date"
+                value={settings.PlayerBirthday}
+                onChange={(e) =>
+                  setSettings({ ...settings, PlayerBirthday: e.target.value })
+                }
+                className="form-input"
+                disabled={submitting}
+              />
+              <p className="error-message">{formErrors.PlayerBirthday}</p>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Your Avatar</label>
+              <div className="avatar-row">
+                <button
+                  type="button"
+                  className="choose-avatar-button"
+                  onClick={() => setShowAvatarPicker(true)}
+                  disabled={submitting} // optional: lock while submitting
+                >
+                  Choose <br /> Avatar
+                </button>
+                <div className="avatar-preview">
+                  <img
+                    src={AVATAR_MAP[settings.Avatar]}
+                    alt="Selected avatar"
+                  />
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <button
+            type="submit"
+            className="join-game-submit-button"
+            disabled={submitting}
+            aria-busy={submitting}
+            aria-disabled={submitting}
+          >
+            {submitting ? "Joining..." : "Join Game"}
+          </button>
+        </form>
+
+        <AvatarPicker
+          isOpen={showAvatarPicker}
+          onClose={() => setShowAvatarPicker(false)}
+          onSelect={(id) => setSettings((s) => ({ ...s, Avatar: String(id) }))}
+          selectedId={Number(settings.Avatar)}
+          ids={[1, 2, 3, 4, 5, 6]}
+        />
+      </div>
     </div>
   );
 }

@@ -4,7 +4,6 @@ import "./OwnCards.css";
 import { CARDS_MAP } from "../generalMaps.js";
 import DiscardButton from "./DiscardButton/DiscardButton";
 import NoActionButton from "./NoActionButton/NoActionButton";
-import DrawRegularCardButton from "./DrawRegularCardButton/DrawRegularCardButton.jsx";
 import PlayCardsButton from "./PlayButton/PlayCardsButton.jsx";
 
 /**
@@ -157,14 +156,6 @@ export default function OwnCards({
                 onDiscardSuccess={() => setSelectedIds(new Set())}
               />
             )}
-
-            {turnStatus === "drawing" && (
-              <DrawRegularCardButton
-                isDrawCardPhase={true}
-                playerCardCount={cards.length}
-              />
-            )}
-            {/* takingAction -> no buttons (default no branch) */}
           </>
         )}
       </div>

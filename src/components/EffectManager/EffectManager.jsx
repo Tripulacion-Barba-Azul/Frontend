@@ -111,7 +111,7 @@ export default function EffectManager({
 
       const body = { event: eventName, ...responsePayload };
       log("POST", url, body);
-
+      resetFlow();
       try {
         const response = await fetch(url, {
           method: "POST",
@@ -125,7 +125,6 @@ export default function EffectManager({
       } catch (err) {
         error("POST error:", err?.message ?? err);
       } finally {
-        resetFlow();
       }
     },
     [gameId, resetFlow]
@@ -135,12 +134,14 @@ export default function EffectManager({
    * WebSocket listener (entry point for effects)
    * ─────────────────────────────────────────────────────────────────────────*/
   useEffect(() => {
-    if (!wsRef) {
+    // soporte tanto wsRef como wsRef.current
+    const wsInstance = wsRef?.current ?? wsRef;
+    if (!wsInstance) {
       warn("wsRef is not defined; EffectManager idle.");
       return;
     }
-
-    wsRef.onmessage = (event) => {
+    console.log("EffectManager listening to WS messages");
+    const listener = (event) => {
       let data;
       try {
         data = JSON.parse(event.data);
@@ -214,12 +215,30 @@ export default function EffectManager({
           break;
 
         default:
-          warn("Unknown WS event:", data.event);
+          warn("Unknown WS event (EffectManager):", data.event);
           setCurrentEvent(null);
           setStep(null);
       }
     };
-  }, [wsRef, gotoStep]);
+
+    // usar addEventListener para no pisar otros listeners
+    if (wsInstance.addEventListener) {
+      wsInstance.addEventListener("message", listener);
+    } else {
+      // fallback: some websockets only expose onmessage
+      const prev = wsInstance.onmessage;
+      wsInstance.onmessage = (event) => {
+        listener(event);
+        if (prev) prev(event);
+      };
+    }
+    return () => {
+      if (wsInstance.removeEventListener) {
+        wsInstance.removeEventListener("message", listener);
+      } else {
+      }
+    };
+  }, [wsRef?.current ?? wsRef, gotoStep]); // dependemos de wsRef (ref o instancia) y gotoStep
 
   /** ───────────────────────────────────────────────────────────────────────────
    * Derived data
@@ -252,7 +271,7 @@ export default function EffectManager({
 
   const ownSecrets = useMemo(() => privateData?.secrets ?? [], [privateData]);
 
-  // For discard-based events: payload
+  // For discard-based events: payload.cards
   const discardTopFive = useMemo(() => payload ?? [], [payload]);
 
   /** ───────────────────────────────────────────────────────────────────────────
@@ -331,8 +350,8 @@ export default function EffectManager({
           sendEffectResponse("andThenThereWasOneMore", {
             playerId: actualPlayerId,
             secretId: selSecret,
-            stolenPlayerId: selPlayer2, // player who receives the hidden secret
-            selectedPlayerId: selPlayer1, // player we stole from
+            stolenPlayerId: selPlayer1, // player who receives the hidden secret
+            selectedPlayerId: selPlayer2, // player we stole from
           });
         }
         break;
@@ -432,7 +451,7 @@ export default function EffectManager({
   const promptText = useMemo(() => {
     switch (currentEvent) {
       case "selectAnyPlayer":
-        return "Select any player to discard all their NotSoFast cards";
+        return "Select any player";
       case "andThenThereWasOneMore":
         if (step === "selectPlayer")
           return "Select one player to steal a secret from";

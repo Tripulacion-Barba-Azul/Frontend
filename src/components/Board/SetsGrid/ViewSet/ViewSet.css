@@ -23,7 +23,12 @@ body.active-viewset {
   height: 100%;
   display: block;
   position: relative;
-  z-index: 100000;
+  z-index: 100;
+  filter: drop-shadow(0 0 8px #f6e4aae1)
+}
+
+.btn-viewset img:hover {
+  transform: scale(1.2);
 }
 
 /* Modal container + overlay */

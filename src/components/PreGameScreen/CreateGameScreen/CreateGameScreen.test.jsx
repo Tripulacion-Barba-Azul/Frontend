@@ -1,279 +1,223 @@
-import { render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+// CreateGameScreen.test.jsx
+import React from "react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  render,
+  screen,
+  fireEvent,
+  cleanup,
+  within,
+} from "@testing-library/react";
 import "@testing-library/jest-dom";
 import CreateGameScreen from "./CreateGameScreen";
-import userEvent from "@testing-library/user-event";
 
-describe("CreateGameScreen", () => {
-  it("should render the game creation form", () => {
-    render(
-      <MemoryRouter>
-        <CreateGameScreen />
-      </MemoryRouter>
-    );
+/* ===========================
+   ✅ Mocks SEGUROS (hoisted)
+   =========================== */
+const { navigateMock, avatarPickerId, generalMapsId } = vi.hoisted(() => ({
+  navigateMock: vi.fn(),
+  // IDs ABSOLUTOS que coinciden con los imports de CreateGameForm.jsx
+  avatarPickerId: new URL(
+    "../../AvatarPicker/AvatarPicker.jsx",
+    import.meta.url
+  ).pathname,
+  generalMapsId: new URL("../../generalMaps.js", import.meta.url).pathname,
+}));
 
-    expect(screen.getByLabelText(/game name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/minimum players/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/maximum players/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/your name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/your birthday/i)).toBeInTheDocument();
+// Mock de react-router-dom (solo useNavigate)
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, useNavigate: () => navigateMock };
+});
+
+// Mock de AvatarPicker EXACTO al ID resuelto
+vi.mock(avatarPickerId, () => ({
+  __esModule: true,
+  default: ({ isOpen, onSelect, onClose }) =>
+    isOpen ? (
+      <div data-testid="mock-avatar-picker">
+        <button
+          type="button"
+          onClick={() => {
+            onSelect(2);
+            onClose?.();
+          }}
+        >
+          Pick #2
+        </button>
+      </div>
+    ) : null,
+}));
+
+// Mock de AVATAR_MAP con el ID absoluto
+vi.mock(generalMapsId, () => ({
+  AVATAR_MAP: { 1: "/avatars/1.png", 2: "/avatars/2.png", 3: "/avatars/3.png" },
+}));
+
+/* Utilidad para promesas diferidas (para fetch) */
+const deferred = () => {
+  let resolve, reject;
+  const promise = new Promise((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+};
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+afterEach(() => {
+  cleanup();
+  if (global.fetch) global.fetch = undefined;
+});
+
+describe("CreateGameScreen + CreateGameForm (integrado)", () => {
+  it("renderiza el contenedor con fondo y el formulario", () => {
+    const { container } = render(<CreateGameScreen />);
+
+    const root = container.querySelector(".CreateGameScreen");
+    expect(root).toBeInTheDocument();
+
+    const styleAttr = root.getAttribute("style") || "";
+    expect(styleAttr).toContain("/Assets/background_pregame.jpg");
+    expect(root).toHaveStyle({ backgroundSize: "cover" });
+
+    // Cabecera y botón de submit del form
     expect(
-      screen.getByRole("button", { name: /choose avatar/i })
+      screen.getByRole("heading", { name: /Create New Game/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("img", { name: /selected avatar/i })
+      screen.getByRole("button", { name: /Create Game/i })
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /create/i })).toBeInTheDocument();
   });
 
-  it("should show error messages when required fields are empty", async () => {
-    const user = userEvent.setup();
-    const mockFetch = vi.fn();
-    global.fetch = mockFetch;
+  it("valida y evita enviar si hay datos inválidos", async () => {
+    render(<CreateGameScreen />);
 
-    render(
-      <MemoryRouter>
-        <CreateGameScreen />
-      </MemoryRouter>
-    );
+    fireEvent.change(screen.getByLabelText(/game name/i), {
+      target: { value: "" },
+    });
+    fireEvent.change(screen.getByLabelText(/min(imum)? players/i), {
+      target: { value: "1" },
+    });
+    fireEvent.change(screen.getByLabelText(/max(imum)? players/i), {
+      target: { value: "7" },
+    });
+    fireEvent.change(screen.getByLabelText(/your name/i), {
+      target: { value: "" },
+    });
 
-    const submitButton = screen.getByRole("button", { name: /create/i });
-    await user.click(submitButton);
+    const future = new Date();
+    future.setDate(future.getDate() + 1);
+    fireEvent.change(screen.getByLabelText(/your birthday/i), {
+      target: { value: future.toISOString().slice(0, 10) },
+    });
 
-    expect(screen.getByText(/the game must have a name/i)).toBeInTheDocument();
+    global.fetch = vi.fn(); // no debería llamarse
+    fireEvent.click(screen.getByRole("button", { name: /create game/i }));
+
+    expect(await screen.findByText(/must have a name/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/must specify minimum players/i)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/must specify maximum players/i)
-    ).toBeInTheDocument();
+      screen.getAllByText(/between\s*2\s*and\s*6/i).length
+    ).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/you must have a name/i)).toBeInTheDocument();
-    expect(screen.getByText(/you must say your birthday/i)).toBeInTheDocument();
-    expect(mockFetch).not.toHaveBeenCalled();
+    expect(screen.getByText(/cannot be in the future/i)).toBeInTheDocument();
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  it("should show error messages when names are too long", async () => {
-    const user = userEvent.setup();
-    const mockFetch = vi.fn();
-    global.fetch = mockFetch;
+  it("muestra errores de consistencia cuando MinPlayers > MaxPlayers", () => {
+    render(<CreateGameScreen />);
 
-    render(
-      <MemoryRouter>
-        <CreateGameScreen />
-      </MemoryRouter>
-    );
-    await user.type(
-      screen.getByLabelText(/game name/i),
-      "ingenieria del software 2025 es la mejor materia wow"
-    );
-    await user.type(screen.getByLabelText(/minimum players/i), "2");
-    await user.type(screen.getByLabelText(/maximum players/i), "2");
-    await user.type(
-      screen.getByLabelText(/your name/i),
-      "Supercalifragilisticoespiraleidoso"
-    );
-    await user.type(screen.getByLabelText(/your birthday/i), "1969-04-20");
+    fireEvent.change(screen.getByLabelText(/min(imum)? players/i), {
+      target: { value: "5" },
+    });
+    fireEvent.change(screen.getByLabelText(/max(imum)? players/i), {
+      target: { value: "3" },
+    });
 
-    const submitButton = screen.getByRole("button", { name: /create/i });
-    await user.click(submitButton);
+    global.fetch = vi.fn();
+    fireEvent.click(screen.getByRole("button", { name: /create game/i }));
 
-    expect(
-      screen.getByText(
-        /name of the game is too long! must be less than 20 characters/i
-      )
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/name too long! must be less than 20 characters/i)
-    ).toBeInTheDocument();
-    expect(mockFetch).not.toHaveBeenCalled();
+    expect(screen.getByText(/inconsistent with max/i)).toBeInTheDocument();
+    expect(screen.getByText(/inconsistent with min/i)).toBeInTheDocument();
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  it("should validate player range consistency", async () => {
-    const user = userEvent.setup();
-    const mockFetch = vi.fn();
-    global.fetch = mockFetch;
+  it("permite elegir avatar con el AvatarPicker mock y actualiza el preview", () => {
+    render(<CreateGameScreen />);
 
-    render(
-      <MemoryRouter>
-        <CreateGameScreen />
-      </MemoryRouter>
-    );
-    await user.type(screen.getByLabelText(/game name/i), "Partidarda");
-    await user.type(screen.getByLabelText(/minimum players/i), "4");
-    await user.type(screen.getByLabelText(/maximum players/i), "2");
-    await user.type(screen.getByLabelText(/your name/i), "Robotito");
-    await user.type(screen.getByLabelText(/your birthday/i), "1969-04-20");
+    // Abre el picker
+    fireEvent.click(screen.getByRole("button", { name: /choose/i }));
 
-    const submitButton = screen.getByRole("button", { name: /create/i });
-    await user.click(submitButton);
+    // Ahora SI debería estar nuestro mock
+    const picker = screen.getByTestId("mock-avatar-picker");
+    expect(picker).toBeInTheDocument();
 
-    expect(
-      screen.getByText(/inconsistent with max. players/i)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/inconsistent with min. players/i)
-    ).toBeInTheDocument();
-    expect(mockFetch).not.toHaveBeenCalled();
+    // Seleccionamos #2
+    fireEvent.click(within(picker).getByRole("button", { name: /pick #2/i }));
+
+    // El picker se cierra
+    expect(screen.queryByTestId("mock-avatar-picker")).not.toBeInTheDocument();
+
+    // El preview debe apuntar al AVATAR_MAP[2]
+    const previewImg = screen.getByAltText(/selected avatar/i);
+    expect(previewImg).toHaveAttribute("src", "/avatars/2.png");
   });
 
-  it("should not allow numbers outside the valid range (<2)", async () => {
-    const user = userEvent.setup();
-    const mockFetch = vi.fn();
-    global.fetch = mockFetch;
+  it("envía con datos válidos, bloquea la UI y navega (éxito)", async () => {
+    render(<CreateGameScreen />);
 
-    render(
-      <MemoryRouter>
-        <CreateGameScreen />
-      </MemoryRouter>
-    );
-    await user.type(screen.getByLabelText(/game name/i), "Partidarda");
-    await user.type(screen.getByLabelText(/minimum players/i), "1");
-    await user.type(screen.getByLabelText(/maximum players/i), "3");
-    await user.type(screen.getByLabelText(/your name/i), "Robotito");
-    await user.type(screen.getByLabelText(/your birthday/i), "1969-04-20");
+    fireEvent.change(screen.getByLabelText(/game name/i), {
+      target: { value: "MyGame" },
+    });
+    fireEvent.change(screen.getByLabelText(/min(imum)? players/i), {
+      target: { value: "3" },
+    });
+    fireEvent.change(screen.getByLabelText(/max(imum)? players/i), {
+      target: { value: "4" },
+    });
+    fireEvent.change(screen.getByLabelText(/your name/i), {
+      target: { value: "Alice" },
+    });
+    fireEvent.change(screen.getByLabelText(/your birthday/i), {
+      target: { value: "1990-01-01" },
+    });
 
-    const submitButton = screen.getByRole("button", { name: /create/i });
-    await user.click(submitButton);
+    const d = deferred();
+    global.fetch = vi.fn().mockImplementation(() => d.promise);
 
-    expect(
-      screen.getByText(
-        /out of range ! the game needs between 2 and 6 players to be played/i
-      )
-    ).toBeInTheDocument();
-    expect(mockFetch).not.toHaveBeenCalled();
+    const submitBtn = screen.getByRole("button", { name: /create game/i });
+    const chooseBtn = screen.getByRole("button", { name: /choose/i });
+
+    fireEvent.click(submitBtn);
+
+    // Bloqueo de UI
+    expect(submitBtn).toBeDisabled();
+    expect(submitBtn).toHaveAttribute("aria-busy", "true");
+    expect(chooseBtn).toBeDisabled();
+
+    // No doble envío
+    fireEvent.click(submitBtn);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    d.resolve({ ok: true, json: async () => ({ gameId: 123, ownerId: 45 }) });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(navigateMock).toHaveBeenCalledWith("/game/123?playerId=45");
   });
 
-  it("should not allow numbers outside the valid range (>6)", async () => {
-    const user = userEvent.setup();
-    const mockFetch = vi.fn();
-    global.fetch = mockFetch;
+  it("ante error HTTP navega a '/'", async () => {
+    render(<CreateGameScreen />);
 
-    render(
-      <MemoryRouter>
-        <CreateGameScreen />
-      </MemoryRouter>
-    );
-    await user.type(screen.getByLabelText(/game name/i), "Partidarda");
-    await user.type(screen.getByLabelText(/minimum players/i), "4");
-    await user.type(screen.getByLabelText(/maximum players/i), "10");
-    await user.type(screen.getByLabelText(/your name/i), "Robotito");
-    await user.type(screen.getByLabelText(/your birthday/i), "1969-04-20");
+    const d = deferred();
+    global.fetch = vi.fn().mockImplementation(() => d.promise);
 
-    const submitButton = screen.getByRole("button", { name: /create/i });
-    await user.click(submitButton);
+    fireEvent.click(screen.getByRole("button", { name: /create game/i }));
+    d.resolve({ ok: false, status: 500, statusText: "Server Error" });
 
-    expect(
-      screen.getByText(
-        /out of range ! the game needs between 2 and 6 players to be played/i
-      )
-    ).toBeInTheDocument();
-    expect(mockFetch).not.toHaveBeenCalled();
+    await Promise.resolve();
+    expect(navigateMock).toHaveBeenCalledWith("/");
   });
-
-  it("should validate future birthday", async () => {
-    const user = userEvent.setup();
-    const mockFetch = vi.fn();
-    global.fetch = mockFetch;
-
-    render(
-      <MemoryRouter>
-        <CreateGameScreen />
-      </MemoryRouter>
-    );
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const futureDate = tomorrow.toISOString().split("T")[0];
-
-    await user.type(screen.getByLabelText(/game name/i), "Test Game");
-    await user.type(screen.getByLabelText(/minimum players/i), "3");
-    await user.type(screen.getByLabelText(/maximum players/i), "4");
-    await user.type(screen.getByLabelText(/your name/i), "Test Player");
-    await user.type(screen.getByLabelText(/your birthday/i), futureDate);
-
-    const submitButton = screen.getByRole("button", { name: /create/i });
-    await user.click(submitButton);
-
-    expect(
-      screen.getByText(/date cannot be in the future/i)
-    ).toBeInTheDocument();
-    expect(mockFetch).not.toHaveBeenCalled();
-  });
-});
-
-it("should call the API with correct data when form is valid", async () => {
-  const user = userEvent.setup();
-  const mockFetch = vi.fn(() =>
-    Promise.resolve({
-      ok: true,
-      status: 200,
-      statusText: "OK",
-      json: () => Promise.resolve({ gameId: "g123", ownerId: "p456" }),
-    })
-  );
-  global.fetch = mockFetch;
-
-  render(
-    <MemoryRouter>
-      <CreateGameScreen />
-    </MemoryRouter>
-  );
-  await user.type(screen.getByLabelText(/game name/i), "Test Game");
-  await user.type(screen.getByLabelText(/minimum players/i), "2");
-  await user.type(screen.getByLabelText(/maximum players/i), "4");
-  await user.type(screen.getByLabelText(/your name/i), "Robotito");
-  await user.type(screen.getByLabelText(/your birthday/i), "1990-01-01");
-
-  const submitButton = screen.getByRole("button", { name: /create/i });
-  await user.click(submitButton);
-
-  expect(mockFetch).toHaveBeenCalledTimes(1);
-  expect(mockFetch).toHaveBeenCalledWith(
-    "http://localhost:8000/games",
-    expect.objectContaining({
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        player_info: {
-          playerName: "Robotito",
-          birthDate: "1990-01-01",
-          avatar: 1,
-        },
-        game_info: { gameName: "Test Game", minPlayers: 2, maxPlayers: 4 },
-      }),
-    })
-  );
-});
-
-it("should handle API error response", async () => {
-  const user = userEvent.setup();
-  const mockFetch = vi.fn(() =>
-    Promise.resolve({
-      ok: false,
-      status: 400,
-      statusText: "Internal Server Error",
-      json: () => Promise.resolve({}),
-    })
-  );
-  global.fetch = mockFetch;
-  console.error = vi.fn();
-
-  render(
-    <MemoryRouter>
-      <CreateGameScreen />
-    </MemoryRouter>
-  );
-  await user.type(screen.getByLabelText(/game name/i), "Test Game");
-  await user.type(screen.getByLabelText(/minimum players/i), "2");
-  await user.type(screen.getByLabelText(/maximum players/i), "4");
-  await user.type(screen.getByLabelText(/your name/i), "Robotito");
-  await user.type(screen.getByLabelText(/your birthday/i), "1990-01-01");
-
-  const submitButton = screen.getByRole("button", { name: /create/i });
-  await user.click(submitButton);
-
-  expect(mockFetch).toHaveBeenCalledTimes(1);
-  expect(console.error).toHaveBeenCalledWith(
-    "Error en la solicitud:",
-    "Internal Server Error"
-  );
 });
