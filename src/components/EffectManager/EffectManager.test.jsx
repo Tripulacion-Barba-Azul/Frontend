@@ -26,7 +26,7 @@ vi.mock("../SelectPlayer/SelectPlayer", () => ({
     <div data-testid="SelectPlayer">
       <div data-testid="sp-text">{text}</div>
       <div data-testid="sp-count">{players?.length ?? 0}</div>
-      {/* Clickable labels to choose the first/second player deterministically */}
+      {/* Clickable labels to choose deterministically */}
       {players?.map((p) => (
         <button
           key={p.id}
@@ -498,9 +498,10 @@ describe("EffectManager", () => {
       />
     );
     await waitHandlerReady(ws);
+    // IMPORTANT: payload is an ARRAY of cards (not { cards: [...] })
     sendWs(ws, {
       event: "lookIntoTheAshes",
-      payload: { cards: DISCARD_CARDS },
+      payload: DISCARD_CARDS,
     });
 
     const sdc = await screen.findByTestId("SelectDiscardPileCards");
@@ -532,9 +533,10 @@ describe("EffectManager", () => {
       />
     );
     await waitHandlerReady(ws);
+    // IMPORTANT: payload is an ARRAY of cards (not { cards: [...] })
     sendWs(ws, {
       event: "delayTheMurderersEscape",
-      payload: { cards: DISCARD_CARDS.slice(0, 3) },
+      payload: DISCARD_CARDS.slice(0, 3),
     });
 
     const odpc = await screen.findByTestId("OrderDiscardPileCards");

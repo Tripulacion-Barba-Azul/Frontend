@@ -15,6 +15,9 @@ export default function SyncOrchestrator({
   const turnStatus =
     publicData.players.find((p) => p?.id === currentPlayerId)?.turnStatus ??
     "waiting";
+  const socialDisgrace =
+    publicData.players.find((p) => p?.id === currentPlayerId)?.socialDisgrace ??
+    false;
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
@@ -41,7 +44,11 @@ export default function SyncOrchestrator({
         </div>
 
         {/* Own Cards */}
-        <OwnCards cards={privateData.cards} turnStatus={turnStatus} />
+        <OwnCards
+          cards={privateData.cards}
+          turnStatus={turnStatus}
+          socialDisgrace={socialDisgrace}
+        />
 
         {/* View My Cards */}
         <div className="fixed left-105 bottom-45 z-50 pointer-events-auto">

@@ -69,8 +69,25 @@ describe("GameScreen", () => {
     global.WebSocket = vi.fn(() => mockWebSocket);
   });
 
-  it("renders core scaffolding (Lobby, EndScreen, Notifier, EffectManager)", () => {
+  it("initially renders Lobby and NOT the WS-dependent components", () => {
     render(<GameScreen />);
+
+    // Lobby is always present
+    expect(screen.getByTestId("lobby")).toBeInTheDocument();
+
+    // WS-dependent components should NOT render until connection is open
+    expect(screen.queryByTestId("game-end-screen")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("notifier")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("effect-manager")).not.toBeInTheDocument();
+  });
+
+  it("renders WS-dependent components after WebSocket onopen (isConnected=true)", () => {
+    render(<GameScreen />);
+
+    act(() => {
+      mockWebSocket.onopen?.();
+    });
+
     expect(screen.getByTestId("lobby")).toBeInTheDocument();
     expect(screen.getByTestId("game-end-screen")).toBeInTheDocument();
     expect(screen.getByTestId("notifier")).toBeInTheDocument();
@@ -98,17 +115,24 @@ describe("GameScreen", () => {
     expect(screen.getByText("Lobby - Connected: true")).toBeInTheDocument();
   });
 
-  it("handles onclose by marking Lobby as disconnected (no reconnect in this version)", () => {
+  it("handles onclose by marking disconnected and hides WS-dependent components", () => {
     render(<GameScreen />);
+
+    // Open first so components appear
     act(() => {
       mockWebSocket.onopen?.();
     });
-    expect(screen.getByText("Lobby - Connected: true")).toBeInTheDocument();
+    expect(screen.getByTestId("game-end-screen")).toBeInTheDocument();
 
+    // Then close - components should disappear (isConnected=false)
     act(() => {
       mockWebSocket.onclose?.();
     });
     expect(screen.getByText("Lobby - Connected: false")).toBeInTheDocument();
+    expect(screen.queryByTestId("game-end-screen")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("notifier")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("effect-manager")).not.toBeInTheDocument();
+
     // No retry logic: only one WebSocket constructor call
     expect(WebSocket).toHaveBeenCalledTimes(1);
   });
@@ -116,6 +140,13 @@ describe("GameScreen", () => {
   it("handles onerror by logging and setting disconnected (does not close explicitly)", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     render(<GameScreen />);
+
+    // Make it connected first to later verify it becomes disconnected
+    act(() => {
+      mockWebSocket.onopen?.();
+    });
+    expect(screen.getByText("Lobby - Connected: true")).toBeInTheDocument();
+
     act(() => {
       mockWebSocket.onerror?.(new Event("error"));
     });
@@ -131,7 +162,7 @@ describe("GameScreen", () => {
         data: JSON.stringify({
           event: "publicUpdate",
           payload: {
-            gameStatus: "waiting", // does not start the board
+            gameStatus: "waiting", // does not set started=true
             regularDeckCount: 10,
             discardPileTop: { id: 1, name: "Card1" },
             draftCards: [],
@@ -141,8 +172,9 @@ describe("GameScreen", () => {
         }),
       });
     });
-    // Still Lobby because private/started not ready
+    // Still Lobby because private or started is missing
     expect(screen.getByTestId("lobby")).toBeInTheDocument();
+    expect(screen.queryByTestId("sync-orchestrator")).not.toBeInTheDocument();
   });
 
   it("handles privateUpdate and sets privateData (no Sync yet if public/started missing)", () => {
@@ -161,6 +193,7 @@ describe("GameScreen", () => {
       });
     });
     expect(screen.getByTestId("lobby")).toBeInTheDocument();
+    expect(screen.queryByTestId("sync-orchestrator")).not.toBeInTheDocument();
   });
 
   it("handles player_joined safely (no crash, still Lobby)", () => {
@@ -181,6 +214,7 @@ describe("GameScreen", () => {
       });
     });
     expect(screen.getByTestId("lobby")).toBeInTheDocument();
+    expect(screen.queryByTestId("sync-orchestrator")).not.toBeInTheDocument();
   });
 
   it("logs unknown events without crashing", () => {

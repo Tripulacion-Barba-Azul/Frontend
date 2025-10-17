@@ -1,4 +1,3 @@
-// seatsLogic.test.js
 import { describe, it, expect } from "vitest";
 import { buildSeatedPlayersFromOrders } from "./seatsLogic.js";
 import { SEAT_POSITIONS, SEATING_BY_COUNT } from "./seatsConstants.js";
@@ -9,10 +8,13 @@ function mkPlayer({
   name,
   avatar = "default1",
   turnOrder,
-  turnStatus = "waiting", // "waiting" | "playing" | "discarding" | "drawing" (case-insensitive)
+  // turnStatus is case-insensitive:
+  // "waiting" | "playing" | "takingAction" | "discarding" | "discardingOpt" | "drawing"
+  turnStatus = "waiting",
   cardCount = 0,
   secrets = [], // [{ id, name, revealed }]
-  sets = undefined, // optional: will default to [] in the output
+  sets = undefined, // optional: defaults to [] in the output
+  socialDisgrace = undefined, // optional: should flow through (defaults to false)
 }) {
   return {
     id,
@@ -23,6 +25,7 @@ function mkPlayer({
     cardCount,
     secrets,
     sets,
+    socialDisgrace,
   };
 }
 
@@ -77,27 +80,34 @@ describe("buildSeatedPlayersFromOrders (updated behavior)", () => {
     });
   });
 
-  it("derives ringColor from turnStatus (case-insensitive)", () => {
+  it("derives ringColor from turnStatus using updated tokens (case-insensitive)", () => {
     const players = [
       mkPlayer({ id: 1, name: "A", turnOrder: 1, turnStatus: "waiting" }),
       mkPlayer({ id: 2, name: "B", turnOrder: 2, turnStatus: "playing" }),
-      mkPlayer({ id: 3, name: "C", turnOrder: 3, turnStatus: "discarding" }),
-      mkPlayer({ id: 4, name: "D", turnOrder: 4, turnStatus: "Drawing" }), // capitalized
+      mkPlayer({ id: 3, name: "C", turnOrder: 3, turnStatus: "TakingAction" }), // mixed case
+      mkPlayer({ id: 4, name: "D", turnOrder: 4, turnStatus: "discarding" }),
+      mkPlayer({ id: 5, name: "E", turnOrder: 5, turnStatus: "DiscardingOpt" }), // mixed case
+      mkPlayer({ id: 6, name: "F", turnOrder: 6, turnStatus: "Drawing" }), // capitalized
     ];
 
     const out = buildSeatedPlayersFromOrders(players, 1, "detective", null);
 
     // Order is circular starting at current (id=1, order=1)
-    expect(out[0].name).toBe("A");
-    expect(out[1].name).toBe("B");
-    expect(out[2].name).toBe("C");
-    expect(out[3].name).toBe("D");
+    expect(out.map((p) => p.name)).toEqual(["A", "B", "C", "D", "E", "F"]);
 
-    // ringColor mapping
-    expect(out[0].ringColor).toBe("gray"); // waiting
-    expect(out[1].ringColor).toBe("green"); // playing
-    expect(out[2].ringColor).toBe("yellow"); // discarding
-    expect(out[3].ringColor).toBe("red"); // drawing (capitalization ignored)
+    // Updated ringColor tokens (from seatsLogic.js):
+    // waiting -> gray
+    // playing -> emerald
+    // takingAction -> lime
+    // discarding -> amber
+    // discardingOpt -> lightAmber
+    // drawing -> red
+    expect(out[0].ringColor).toBe("gray");
+    expect(out[1].ringColor).toBe("emerald");
+    expect(out[2].ringColor).toBe("lime");
+    expect(out[3].ringColor).toBe("amber");
+    expect(out[4].ringColor).toBe("lightAmber");
+    expect(out[5].ringColor).toBe("red");
   });
 
   it("colors only visible roles when current player is hidden-team and knows the ally", () => {
@@ -174,6 +184,23 @@ describe("buildSeatedPlayersFromOrders (updated behavior)", () => {
     expect(out[1].secrets).toEqual([]);
     expect(Array.isArray(out[1].sets)).toBe(true);
     expect(out[1].sets).toHaveLength(0); // defaulted to []
+  });
+
+  it("propagates socialDisgrace (defaults to false) from input", () => {
+    const players = [
+      mkPlayer({ id: 1, name: "AP", turnOrder: 1, socialDisgrace: true }),
+      mkPlayer({ id: 2, name: "B", turnOrder: 2 }), // undefined -> false
+      mkPlayer({ id: 3, name: "C", turnOrder: 3, socialDisgrace: false }),
+    ];
+
+    const out = buildSeatedPlayersFromOrders(players, 1, "detective", null);
+
+    const byName = Object.fromEntries(
+      out.map((p) => [p.name, p.socialDisgrace])
+    );
+    expect(byName["AP"]).toBe(true);
+    expect(byName["B"]).toBe(false);
+    expect(byName["C"]).toBe(false);
   });
 
   it("throws on invalid player lists (quantity, duplicates, gaps, or missing current)", () => {

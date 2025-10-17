@@ -54,20 +54,60 @@
   position: relative;
   z-index: 0;
 
-  /* Ring color is set inline via style={ ["--tw-ring-color"]: ringCol } */
+  /* Ring color is set inline via style={{ ["--tw-ring-color"]: ringCol }} */
   --tw-ring-color: rgb(51 65 85 / 0.7);
 
-  /* Ring thickness (requested = 8px) */
+  /* Ring thickness */
   --ring-width: 5px;
+
+  /* Subtle colored glow (fallback values) */
+  --ring-glow-blur: 30px;
+  --ring-glow-spread: 15px;
 
   /* Thin black inner edge between the image and the ring */
   border: 1px solid #000;
 
-  /* Colored ring + thin black outer edge + soft shadowing */
+  /* Fallback glow: uses the same ring color directly (no alpha).
+     We'll override below with color-mix() when supported. */
+  box-shadow:
+    /* colored ring */ 0 0 0 var(--ring-width) var(--tw-ring-color),
+    /* outer black edge */ 0 0 0 calc(var(--ring-width) + 1px) #000,
+    /* subtle colored glow (fallback) */ 0 0 var(--ring-glow-blur)
+      var(--ring-glow-spread) var(--tw-ring-color),
+    /* soft shadows */ 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* Prefer a softer glow using color-mix() when available */
+@supports (color: color-mix(in oklab, #000 50%, transparent)) {
+  .avatar-circle {
+    /* Derive a semi-transparent glow from the ring color */
+    --ring-glow: color-mix(in oklab, var(--tw-ring-color) 55%, transparent);
+
+    box-shadow:
+      /* colored ring */ 0 0 0 var(--ring-width)
+        var(--tw-ring-color),
+      /* outer black edge */ 0 0 0 calc(var(--ring-width) + 1px) #000,
+      /* refined colored glow */ 0 0 var(--ring-glow-blur)
+        var(--ring-glow-spread) var(--ring-glow),
+      /* soft shadows */ 0 10px 15px -3px rgb(0 0 0 / 0.1),
+      0 4px 6px -4px rgb(0 0 0 / 0.1);
+  }
+}
+
+/* Remove glow/ambient shadows when the ring is gray */
+.avatar-circle.no-glow {
+  /* Keep the colored ring and the thin black outer edge only */
   box-shadow: 0 0 0 var(--ring-width) var(--tw-ring-color),
-    /* colored ring (8px) */ 0 0 0 calc(var(--ring-width) + 1px) #000,
-    /* outer black edge (1px) */ 0 10px 15px -3px rgb(0, 0, 0),
-    /* soft shadows */ 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    0 0 0 calc(var(--ring-width) + 1px) #000;
+}
+
+@supports (color: color-mix(in oklab, #000 50%, transparent)) {
+  /* Ensure the override also wins in browsers that support color-mix */
+  .avatar-circle.no-glow {
+    box-shadow: 0 0 0 var(--ring-width) var(--tw-ring-color),
+      0 0 0 calc(var(--ring-width) + 1px) #000;
+  }
 }
 
 /* Sizes applied to .avatar-stack wrapper */
@@ -212,3 +252,19 @@
   margin-top: 16px;
 }
 
+/* ===== Social Disgrace Styles =====
+/* Grayscale the avatar image when disgraced */
+.avatar-circle.is-disgraced .avatar-img {
+  filter: grayscale(1) brightness(0.98) contrast(1.05);
+  transition: filter 200ms ease-in-out;
+}
+
+.player-name-box.is-disgraced {
+  /* Keep original base styles and add a subtle pattern */
+  opacity: 0.6;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgb(0 0 0 / 0.06) 0 4px,
+    transparent 4px 8px
+  );
+}
