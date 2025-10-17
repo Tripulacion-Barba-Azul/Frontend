@@ -350,8 +350,8 @@ export default function EffectManager({
           sendEffectResponse("andThenThereWasOneMore", {
             playerId: actualPlayerId,
             secretId: selSecret,
-            stolenPlayerId: selPlayer2, // player who receives the hidden secret
-            selectedPlayerId: selPlayer1, // player we stole from
+            stolenPlayerId: selPlayer1, // player who receives the hidden secret
+            selectedPlayerId: selPlayer2, // player we stole from
           });
         }
         break;
