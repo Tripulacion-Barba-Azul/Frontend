@@ -55,6 +55,20 @@ vi.mock("./StartGameButton/StartGameButton", () => ({
   },
 }));
 
+vi.mock("./AbandonGameButton/AbandonGameButton", () => ({
+  default: function MockAbandonGameButton({ isOwner, playerId, gameId }) {
+    if (isOwner) {
+      return null; // Don't render for owner
+    }
+    
+    return (
+      <button data-testid="abandon-game-button">
+        Leave Game
+      </button>
+    );
+  },
+}));
+
 vi.mock("./CancelGameButton/CancelGameButton", () => ({
   default: function MockCancelGameButton({
     disabled,
@@ -87,7 +101,7 @@ describe("Lobby Component", () => {
     ],
   };
 
-  // Mock WebSocket
+  // Mock WebSocket with addEventListener/removeEventListener
   const mockWs = {
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
@@ -116,6 +130,12 @@ describe("Lobby Component", () => {
       ok: true,
       json: () => Promise.resolve(mockGameData),
     });
+    // Reset mock WebSocket methods
+    mockWs.addEventListener.mockClear();
+    mockWs.removeEventListener.mockClear();
+    mockWs.close.mockClear();
+    mockWs.send.mockClear();
+    mockWs.onmessage = null;
   });
 
   describe("Renderizado básico", () => {
@@ -181,6 +201,8 @@ describe("Lobby Component", () => {
 
       await waitFor(() => {
         expect(screen.getByTestId("start-game-button")).toBeInTheDocument();
+        // Owner should NOT see abandon game button
+        expect(screen.queryByTestId("abandon-game-button")).not.toBeInTheDocument();
       });
 
       unmount();
@@ -197,6 +219,8 @@ describe("Lobby Component", () => {
         expect(
           screen.queryByTestId("start-game-button")
         ).not.toBeInTheDocument();
+        // Non-owner should see abandon game button
+        expect(screen.getByTestId("abandon-game-button")).toBeInTheDocument();
       });
     });
   });
@@ -895,8 +919,8 @@ describe("Lobby Component", () => {
     });
   });
 
-  describe("Funcionalidad WebSocket y notificaciones de cancelación", () => {
-    test("configura correctamente el event listener del WebSocket", async () => {
+  describe("WebSocket handling", () => {
+    test("sets up WebSocket event listener on mount", async () => {
       const ownerProps = {
         id: 1,
         playerId: 5,
@@ -908,13 +932,122 @@ describe("Lobby Component", () => {
 
       await waitFor(() => {
         expect(mockWs.addEventListener).toHaveBeenCalledWith(
-          'message',
+          "message",
           expect.any(Function)
         );
       });
     });
 
-    test("no configura event listener si no hay WebSocket", async () => {
+    test("cleans up WebSocket event listener on unmount", async () => {
+      const ownerProps = {
+        id: 1,
+        playerId: 5,
+        playerName: "Owner_test_2",
+        ...defaultProps,
+      };
+
+      const { unmount } = renderWithRouter(<Lobby {...ownerProps} />);
+
+      await waitFor(() => {
+        expect(mockWs.addEventListener).toHaveBeenCalled();
+      });
+
+      unmount();
+
+      expect(mockWs.removeEventListener).toHaveBeenCalledWith(
+        "message",
+        expect.any(Function)
+      );
+    });
+
+    test("handles playerExit WebSocket message", async () => {
+      const mockGameDataAfterExit = {
+        ...mockGameData,
+        players: [
+          { playerId: 5, playerName: "Owner_test_2" },
+          // Player_test_1 has left
+        ],
+      };
+
+      // Mock initial fetch
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockGameData),
+      });
+
+      const ownerProps = {
+        id: 1,
+        playerId: 5,
+        playerName: "Owner_test_2",
+        ...defaultProps,
+      };
+
+      renderWithRouter(<Lobby {...ownerProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Current Players \(2\)/)).toBeInTheDocument();
+      });
+
+      // Get the message handler that was registered
+      const messageHandler = mockWs.addEventListener.mock.calls.find(
+        call => call[0] === "message"
+      )[1];
+
+      // Mock the fetch call that will be triggered by playerExit message
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockGameDataAfterExit),
+      });
+
+      // Simulate playerExit message
+      const mockEvent = {
+        data: JSON.stringify({ event: "playerExit" })
+      };
+
+      messageHandler(mockEvent);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Current Players \(1\)/)).toBeInTheDocument();
+      });
+    });
+
+    test("ignores invalid WebSocket messages", async () => {
+      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const ownerProps = {
+        id: 1,
+        playerId: 5,
+        playerName: "Owner_test_2",
+        ...defaultProps,
+      };
+
+      renderWithRouter(<Lobby {...ownerProps} />);
+
+      await waitFor(() => {
+        expect(mockWs.addEventListener).toHaveBeenCalled();
+      });
+
+      // Get the message handler
+      const messageHandler = mockWs.addEventListener.mock.calls.find(
+        call => call[0] === "message"
+      )[1];
+
+      // Simulate invalid JSON message
+      const mockEvent = {
+        data: "invalid json"
+      };
+
+      messageHandler(mockEvent);
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Error processing WebSocket message in Lobby:",
+        expect.any(Error)
+      );
+
+      consoleSpy.mockRestore();
+    });
+
+    test("does not set up event listener when ws prop is null", () => {
       const propsWithoutWs = {
         id: 1,
         playerId: 5,
@@ -926,9 +1059,7 @@ describe("Lobby Component", () => {
 
       renderWithRouter(<Lobby {...propsWithoutWs} />);
 
-      await waitFor(() => {
-        expect(mockWs.addEventListener).not.toHaveBeenCalled();
-      });
+      expect(mockWs.addEventListener).not.toHaveBeenCalled();
     });
 
     test("muestra modal de cancelación cuando recibe evento gameDeleted via WebSocket", async () => {
@@ -957,11 +1088,10 @@ describe("Lobby Component", () => {
         })
       };
 
-      // Obtener el handler del addEventListener mock
-      const addEventListenerCall = mockWs.addEventListener.mock.calls.find(
+      // Obtener el handler del addEventListener mock (ahora solo hay uno que maneja ambos eventos)
+      const messageHandler = mockWs.addEventListener.mock.calls.find(
         call => call[0] === 'message'
-      );
-      const messageHandler = addEventListenerCall[1];
+      )[1];
 
       // Ejecutar el handler
       messageHandler(messageEvent);
@@ -999,10 +1129,10 @@ describe("Lobby Component", () => {
         })
       };
 
-      const addEventListenerCall = mockWs.addEventListener.mock.calls.find(
+      // Obtener el handler del addEventListener mock
+      const messageHandler = mockWs.addEventListener.mock.calls.find(
         call => call[0] === 'message'
-      );
-      const messageHandler = addEventListenerCall[1];
+      )[1];
       messageHandler(messageEvent);
 
       // Verificar que NO se muestra el modal de cancelación
@@ -1043,7 +1173,7 @@ describe("Lobby Component", () => {
       // Verificar que se loggeó el error
       await waitFor(() => {
         expect(consoleSpy).toHaveBeenCalledWith(
-          'Error processing websocket message in Lobby:',
+          'Error processing WebSocket message in Lobby:',
           expect.any(Error)
         );
       });
@@ -1091,10 +1221,10 @@ describe("Lobby Component", () => {
         })
       };
 
-      const addEventListenerCall = mockWs.addEventListener.mock.calls.find(
+      // Obtener el handler del addEventListener mock
+      const messageHandler = mockWs.addEventListener.mock.calls.find(
         call => call[0] === 'message'
-      );
-      const messageHandler = addEventListenerCall[1];
+      )[1];
       messageHandler(messageEvent);
 
       // Esperar a que aparezca el modal
@@ -1196,6 +1326,38 @@ describe("Lobby Component", () => {
         'message',
         expect.any(Function)
       );
+    });
+  });
+
+  describe("AbandonGameButton integration", () => {
+    test("shows AbandonGameButton for non-owner players", async () => {
+      const playerProps = {
+        id: 1,
+        playerId: 3,
+        playerName: "Player_test_1",
+        ...defaultProps,
+      };
+
+      renderWithRouter(<Lobby {...playerProps} />);
+
+      await waitFor(() => {
+        expect(screen.getByTestId("abandon-game-button")).toBeInTheDocument();
+      });
+    });
+
+    test("does not show AbandonGameButton for owner", async () => {
+      const ownerProps = {
+        id: 1,
+        playerId: 5,
+        playerName: "Owner_test_2",
+        ...defaultProps,
+      };
+
+      renderWithRouter(<Lobby {...ownerProps} />);
+
+      await waitFor(() => {
+        expect(screen.queryByTestId("abandon-game-button")).not.toBeInTheDocument();
+      });
     });
   });
 });
