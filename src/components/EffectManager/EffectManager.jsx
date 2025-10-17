@@ -252,8 +252,8 @@ export default function EffectManager({
 
   const ownSecrets = useMemo(() => privateData?.secrets ?? [], [privateData]);
 
-  // For discard-based events: payload.cards
-  const discardTopFive = useMemo(() => payload?.cards ?? [], [payload]);
+  // For discard-based events: payload
+  const discardTopFive = useMemo(() => payload ?? [], [payload]);
 
   /** ───────────────────────────────────────────────────────────────────────────
    * Navigation / completion per event
