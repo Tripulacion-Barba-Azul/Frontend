@@ -141,7 +141,7 @@ export default function EffectManager({
       warn("wsRef is not defined; EffectManager idle.");
       return;
     }
-  
+    console.log("EffectManager listening to WS messages");
     const listener = (event) => {
       let data;
       try {
@@ -223,11 +223,24 @@ export default function EffectManager({
     };
   
     // usar addEventListener para no pisar otros listeners
-    wsInstance.addEventListener("message", listener);
+    if (wsInstance.addEventListener) {
+      wsInstance.addEventListener('message', listener);
+    } else {
+      // fallback: some websockets only expose onmessage
+      const prev = wsInstance.onmessage;
+      wsInstance.onmessage = (event) => {
+        listener(event);
+        if (prev) prev(event);
+      };
+    }
     return () => {
-      wsInstance.removeEventListener("message", listener);
+      if (wsInstance.removeEventListener) {
+        wsInstance.removeEventListener('message', listener);
+      } else {
+
+      }
     };
-  }, [wsRef, gotoStep]); // dependemos de wsRef (ref o instancia) y gotoStep
+  }, [wsRef?.current ?? wsRef, gotoStep]); // dependemos de wsRef (ref o instancia) y gotoStep
 
   /** ───────────────────────────────────────────────────────────────────────────
    * Derived data
@@ -261,7 +274,7 @@ export default function EffectManager({
   const ownSecrets = useMemo(() => privateData?.secrets ?? [], [privateData]);
 
   // For discard-based events: payload.cards
-  const discardTopFive = useMemo(() => payload?.cards ?? [], [payload]);
+  const discardTopFive = useMemo(() => payload ?? [], [payload]);
 
   /** ───────────────────────────────────────────────────────────────────────────
    * Navigation / completion per event
