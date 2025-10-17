@@ -255,16 +255,17 @@
 /* ===== Social Disgrace Styles =====
 /* Grayscale the avatar image when disgraced */
 .avatar-circle.is-disgraced .avatar-img {
-  filter: grayscale(1) brightness(0.98) contrast(1.05);
+  filter: grayscale(1) brightness(0.98) contrast(0.85);
   transition: filter 200ms ease-in-out;
 }
 
 .player-name-box.is-disgraced {
   /* Keep original base styles and add a subtle pattern */
   opacity: 0.6;
+  color: #f4f1b4;
   background-image: repeating-linear-gradient(
     45deg,
-    rgb(0 0 0 / 0.06) 0 4px,
+    rgba(255, 205, 139, 0.24) 0 4px,
     transparent 4px 8px
   );
 }

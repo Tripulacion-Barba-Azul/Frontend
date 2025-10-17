@@ -165,21 +165,35 @@ function Lobby(props) {
   return (
     <div className="Lobby">
       <h2>
-        Game name: {currentGame.name}{" "}
-        {props.isConnected && <span style={{ color: "green" }}>Connected</span>}
+        {currentGame.name}{" "}
       </h2>
-      <h2>Game creator: {currentGame.creator}</h2>
-      <h2>
-        Min: {currentGame.minPlayers}, Max: {currentGame.maxPlayers}
-      </h2>
+      <div className="progress-section">
+      <div className="progress-bar">
+          <div
+            className={`progress-fill ${
+              players.length >= currentGame.maxPlayers
+                ? 'progress-red'
+                : players.length >= currentGame.minPlayers
+                ? 'progress-yellow'
+                : 'progress-green'
+            }`}
+            style={{
+              width: `${(players.length / currentGame.maxPlayers) * 100}%`,
+            }}
+          ></div>
+        </div>
+        <div className="progress-labels">
+          <span>Min: {currentGame.minPlayers}</span>
+          <span>Players: {players.length}</span>
+          <span>Max: {currentGame.maxPlayers}</span>
+        </div>
+      </div>
 
       <div className="players-section">
         <h3>
-          Current Players ({players.length})
           {hasMaximumPlayers && (
             <span className="full-lobby-badge"> - GAME FULL</span>
           )}
-          :
         </h3>
         <ul className="players-list">
           {players.length > 0 ? (
@@ -199,7 +213,7 @@ function Lobby(props) {
           )}
         </ul>
         {isOwner && (
-          <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', marginTop: 25,}}>
             <StartGameButton
               disabled={!hasMinimumPlayers}
               gameId={props.id}
