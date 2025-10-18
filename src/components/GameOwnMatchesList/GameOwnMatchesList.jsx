@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { Users, User, Clock, Play, RefreshCw } from "lucide-react";
+import { Users, User, Play, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import "./GameOwnMatchesList.css";
 
 import { getCookie } from "../../utils/cookies";
-import { filterOwnInProgress, parseOwnPairsMap } from "./ownGames";
+import { filterOwnInProgress, parseOwnPairsMap } from "./ownGamesLogic";
 
 /**
  * GameOwnMatchesList
  * Visual-only list of the user's active matches.
  * Filters using a cookie (kept up to date by the backend) that contains pairs (gameId, playerId).
  * On click, navigates to: /game/{gameId}?playerId={playerId}
+ *
+ * NOTE: In this app, all listed games already belong to the user,
+ * so the action button is always enabled (no "Game is full" state).
  */
 
 // Change this if your backend uses a different cookie name
@@ -33,7 +36,6 @@ export default function GameOwnMatchesList() {
 
       const res = await fetch(apiGamesList, {
         method: "GET",
-        body: JSON.stringify({ activeGames: true }),
         headers: { "Content-Type": "application/json" },
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -48,7 +50,6 @@ export default function GameOwnMatchesList() {
         maxPlayers: game.maxPlayers,
         currentPlayers: game.actualPlayers,
         gameStatus: game.gameStatus,
-        canJoin: game.actualPlayers < game.maxPlayers,
       }));
 
       // Cookie -> filter to own + inProgress and build gameId->playerId map
@@ -149,24 +150,13 @@ export default function GameOwnMatchesList() {
                   </div>
                 </div>
 
+                {/* Always enabled: you already belong to all listed games */}
                 <button
                   onClick={() => handleOpenMatch(m.id)}
-                  disabled={!m.canJoin}
-                  className={`own-joinBtn ${
-                    m.canJoin ? "own-joinEnabled" : "own-joinDisabled"
-                  }`}
+                  className="own-joinBtn own-joinEnabled"
                 >
-                  {m.canJoin ? (
-                    <>
-                      <Play className="own-btnIcon" />
-                      Open game
-                    </>
-                  ) : (
-                    <>
-                      <Clock className="own-btnIcon" />
-                      Game is full
-                    </>
-                  )}
+                  <Play className="own-btnIcon" />
+                  Resume game
                 </button>
               </div>
             </div>
