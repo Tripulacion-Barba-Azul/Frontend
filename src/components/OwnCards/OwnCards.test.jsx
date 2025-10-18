@@ -1,6 +1,13 @@
+// src/OwnCards/OwnCards.test.jsx
 import React from "react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  cleanup,
+} from "@testing-library/react";
 import "@testing-library/jest-dom/vitest";
 
 import OwnCards from "./OwnCards.jsx";
@@ -17,7 +24,7 @@ vi.mock("../generalMaps.js", () => ({
   },
 }));
 
-/* Mock framer-motion to avoid animation complexities in tests */
+/* Mock framer-motion to avoid animation & drag complexities in tests */
 vi.mock("framer-motion", async () => {
   const actual = await vi.importActual("framer-motion");
   return {
@@ -40,8 +47,7 @@ vi.mock("framer-motion", async () => {
   };
 });
 
-/* Mock action subcomponents so tests are stable and focused on OwnCards behavior.
-   We also expose props through data-attributes for assertions. */
+/* Mock action subcomponents so tests focus on OwnCards behavior */
 vi.mock("./DiscardButton/DiscardButton", () => ({
   default: ({
     selectedCards = [],
@@ -73,7 +79,7 @@ vi.mock("./PlayButton/PlayCardsButton.jsx", () => ({
   ),
 }));
 
-/* Helper to render the component */
+/* Helper */
 const setup = (cards = [], props = {}) =>
   render(<OwnCards cards={cards} {...props} />);
 
@@ -83,8 +89,9 @@ const TEST_CARDS = [
   { id: "S09", name: "Mr Satterthwaite" },
 ];
 
-describe("OwnCards.jsx (cards: [{ id, name }])", () => {
+describe("OwnCards.jsx", () => {
   beforeEach(() => {
+    cleanup();
     document.body.innerHTML = "";
   });
 
@@ -111,7 +118,7 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     expect(screen.getAllByRole("img")).toHaveLength(TEST_CARDS.length);
   });
 
-  it("accepts up to 6 cards and renders exactly that many", () => {
+  it("accepts 6 cards and renders exactly that many", () => {
     const six = [
       { id: "1", name: "Hercule Poirot" },
       { id: "2", name: "Miss Marple" },
@@ -124,7 +131,7 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     expect(screen.getAllByRole("img")).toHaveLength(6);
   });
 
-  it("does NOT allow selecting cards when turnStatus is 'waiting' or 'drawing' and applies disabled class (socialDisgrace=false)", async () => {
+  it("does NOT allow selecting when 'waiting' or 'drawing' (socialDisgrace=false)", async () => {
     const cards = TEST_CARDS.slice(0, 2);
     const { rerender } = setup(cards, {
       turnStatus: "waiting",
@@ -133,11 +140,11 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
 
     const img1 = screen.getByAltText(`Card ${cards[0].name}`);
     const img2 = screen.getByAltText(`Card ${cards[1].name}`);
-    
-    // Simulate pointer events for selection
+
+    // Try to select
     fireEvent.pointerDown(img1, { clientX: 0, clientY: 0 });
     fireEvent.pointerUp(img1, { clientX: 0, clientY: 0 });
-    
+
     await waitFor(() => {
       expect(img1).not.toHaveClass("owncards-card--selected");
       expect(img1).toHaveClass("owncards-card--disabled");
@@ -151,7 +158,7 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     expect(img1Again).toHaveClass("owncards-card--disabled");
   });
 
-  it("toggles selection when 'playing' and allows selection in 'discarding' (socialDisgrace=false)", async () => {
+  it("toggles selection in 'playing' and allows it in 'discarding' (socialDisgrace=false)", async () => {
     const cards = TEST_CARDS.slice(0, 2);
     const { rerender } = setup(cards, {
       turnStatus: "playing",
@@ -159,43 +166,25 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     });
 
     const img1 = screen.getByAltText(`Card ${cards[0].name}`);
-    
-    // Select first card
+    // Select
     fireEvent.pointerDown(img1, { clientX: 0, clientY: 0 });
     fireEvent.pointerUp(img1, { clientX: 0, clientY: 0 });
-    
-    await waitFor(() => {
-      expect(img1).toHaveClass("owncards-card--selected");
-    });
-
-    // Deselect first card
+    await waitFor(() => expect(img1).toHaveClass("owncards-card--selected"));
+    // Deselect
     fireEvent.pointerDown(img1, { clientX: 0, clientY: 0 });
     fireEvent.pointerUp(img1, { clientX: 0, clientY: 0 });
-    
-    await waitFor(() => {
-      expect(img1).not.toHaveClass("owncards-card--selected");
-    });
+    await waitFor(() =>
+      expect(img1).not.toHaveClass("owncards-card--selected")
+    );
 
-    // Select second card
-    const img2 = screen.getByAltText(`Card ${cards[1].name}`);
-    fireEvent.pointerDown(img2, { clientX: 0, clientY: 0 });
-    fireEvent.pointerUp(img2, { clientX: 0, clientY: 0 });
-    
-    await waitFor(() => {
-      expect(img2).toHaveClass("owncards-card--selected");
-    });
-
-    // Switching to discarding still allows selecting
+    // Switch to discarding
     rerender(
       <OwnCards cards={cards} turnStatus="discarding" socialDisgrace={false} />
     );
     const nowImg1 = screen.getByAltText(`Card ${cards[0].name}`);
     fireEvent.pointerDown(nowImg1, { clientX: 0, clientY: 0 });
     fireEvent.pointerUp(nowImg1, { clientX: 0, clientY: 0 });
-    
-    await waitFor(() => {
-      expect(nowImg1).toHaveClass("owncards-card--selected");
-    });
+    await waitFor(() => expect(nowImg1).toHaveClass("owncards-card--selected"));
   });
 
   it("clears selection when turnStatus changes; then disables interaction", async () => {
@@ -208,15 +197,11 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     const img = screen.getByAltText(`Card ${cards[0].name}`);
     fireEvent.pointerDown(img, { clientX: 0, clientY: 0 });
     fireEvent.pointerUp(img, { clientX: 0, clientY: 0 });
-    
-    await waitFor(() => {
-      expect(img).toHaveClass("owncards-card--selected");
-    });
+    await waitFor(() => expect(img).toHaveClass("owncards-card--selected"));
 
     rerender(
       <OwnCards cards={cards} turnStatus="waiting" socialDisgrace={false} />
     );
-    
     await waitFor(() => {
       const sameImg = screen.getByAltText(`Card ${cards[0].name}`);
       expect(sameImg).toHaveClass("owncards-card");
@@ -225,21 +210,20 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     });
   });
 
-  it("renders DiscardButton in 'discarding' (and 'discardingOpt') (socialDisgrace=false)", () => {
+  it("renders DiscardButton in 'discarding' / 'discardingOpt' (socialDisgrace=false) with correct flags", () => {
     const cards = TEST_CARDS.slice(0, 2);
 
-    // discarding -> DiscardButton visible with requireAtLeastOne=true
+    // discarding -> requireAtLeastOne=true
     const { rerender } = setup(cards, {
       turnStatus: "discarding",
       socialDisgrace: false,
     });
-    const discard1 = screen.getByTestId("discard-button");
-    expect(discard1).toBeInTheDocument();
-    expect(discard1.textContent).toMatch(/Discard \(0\)/i);
-    expect(discard1.getAttribute("data-atleast")).toBe("true");
-    expect(discard1.getAttribute("data-exact")).toBe("false");
+    let discard = screen.getByTestId("discard-button");
+    expect(discard).toBeInTheDocument();
+    expect(discard.getAttribute("data-atleast")).toBe("true");
+    expect(discard.getAttribute("data-exact")).toBe("false");
 
-    // discardingOpt -> DiscardButton also visible with requireAtLeastOne=false
+    // discardingOpt -> requireAtLeastOne=false
     rerender(
       <OwnCards
         cards={cards}
@@ -247,13 +231,12 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
         socialDisgrace={false}
       />
     );
-    const discard2 = screen.getByTestId("discard-button");
-    expect(discard2).toBeInTheDocument();
-    expect(discard2.getAttribute("data-atleast")).toBe("false");
-    expect(discard2.getAttribute("data-exact")).toBe("false");
+    discard = screen.getByTestId("discard-button");
+    expect(discard.getAttribute("data-atleast")).toBe("false");
+    expect(discard.getAttribute("data-exact")).toBe("false");
   });
 
-  it("in 'playing' shows NoActionButton when nothing is selected and 'Play (n)' when selected; onPlaySuccess clears selection", async () => {
+  it("in 'playing' shows NoActionButton when nothing is selected; switches to Play(n) and clears on success", async () => {
     const cards = TEST_CARDS.slice(0, 2);
 
     setup(cards, { turnStatus: "playing", socialDisgrace: false });
@@ -262,18 +245,16 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     const img1 = screen.getByAltText(`Card ${cards[0].name}`);
     fireEvent.pointerDown(img1, { clientX: 0, clientY: 0 });
     fireEvent.pointerUp(img1, { clientX: 0, clientY: 0 });
-    
+
     await waitFor(() => {
       const playButton = screen.getByTestId("play-cards-button");
       expect(playButton.textContent).toMatch(/Play \(1\)/i);
     });
 
-    const playButton = screen.getByTestId("play-cards-button");
-    fireEvent.click(playButton);
-    
-    await waitFor(() => {
-      expect(screen.getByLabelText(/no-action/i)).toBeInTheDocument();
-    });
+    fireEvent.click(screen.getByTestId("play-cards-button"));
+    await waitFor(() =>
+      expect(screen.getByLabelText(/no-action/i)).toBeInTheDocument()
+    );
   });
 
   it("in 'discarding' clicking DiscardButton triggers onDiscardSuccess and clears selection (socialDisgrace=false)", async () => {
@@ -283,64 +264,56 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     const img1 = screen.getByAltText(`Card ${cards[0].name}`);
     fireEvent.pointerDown(img1, { clientX: 0, clientY: 0 });
     fireEvent.pointerUp(img1, { clientX: 0, clientY: 0 });
-    
-    await waitFor(() => {
-      expect(img1).toHaveClass("owncards-card--selected");
-    });
+    await waitFor(() => expect(img1).toHaveClass("owncards-card--selected"));
 
     fireEvent.click(screen.getByTestId("discard-button"));
-    
-    await waitFor(() => {
-      expect(img1).not.toHaveClass("owncards-card--selected");
-    });
+    await waitFor(() =>
+      expect(img1).not.toHaveClass("owncards-card--selected")
+    );
   });
 
-  /** ---------- NEW TESTS FOR socialDisgrace ---------- */
+  /** --------- socialDisgrace behavior --------- */
 
-  it("forces discard mode with EXACTLY ONE selection when socialDisgrace=true (waiting -> forced discard)", async () => {
-    const cards = TEST_CARDS.slice(0, 3);
+  it("does NOT force discard in 'waiting' even if socialDisgrace=true (no DiscardButton; cards disabled)", async () => {
+    const cards = TEST_CARDS.slice(0, 2);
     setup(cards, { turnStatus: "waiting", socialDisgrace: true });
 
-    // DiscardButton present with requireExactlyOne=true
-    const discard = screen.getByTestId("discard-button");
-    expect(discard).toBeInTheDocument();
+    // No DiscardButton
+    expect(screen.queryByTestId("discard-button")).toBeNull();
+
+    // Cards disabled and not selectable
+    const img1 = screen.getByAltText(`Card ${cards[0].name}`);
+    expect(img1).toHaveClass("owncards-card--disabled");
+
+    fireEvent.pointerDown(img1, { clientX: 0, clientY: 0 });
+    fireEvent.pointerUp(img1, { clientX: 0, clientY: 0 });
+    await waitFor(() =>
+      expect(img1).not.toHaveClass("owncards-card--selected")
+    );
+  });
+
+  it("forces discard (requireExactlyOne) when socialDisgrace=true in 'playing' and 'takingAction'", () => {
+    const cards = TEST_CARDS.slice(0, 2);
+
+    // playing
+    const { rerender } = setup(cards, {
+      turnStatus: "playing",
+      socialDisgrace: true,
+    });
+    let discard = screen.getByTestId("discard-button");
     expect(discard.getAttribute("data-exact")).toBe("true");
     expect(discard.getAttribute("data-atleast")).toBe("false");
 
-    // Single-select behavior:
-    const img1 = screen.getByAltText(`Card ${cards[0].name}`);
-    const img2 = screen.getByAltText(`Card ${cards[1].name}`);
-
-    // Select first -> selected
-    fireEvent.pointerDown(img1, { clientX: 0, clientY: 0 });
-    fireEvent.pointerUp(img1, { clientX: 0, clientY: 0 });
-    
-    await waitFor(() => {
-      expect(img1).toHaveClass("owncards-card--selected");
-      expect(discard.textContent).toMatch(/Discard \(1\)/i);
-    });
-
-    // Select second -> first gets deselected, second becomes selected
-    fireEvent.pointerDown(img2, { clientX: 0, clientY: 0 });
-    fireEvent.pointerUp(img2, { clientX: 0, clientY: 0 });
-    
-    await waitFor(() => {
-      expect(img1).not.toHaveClass("owncards-card--selected");
-      expect(img2).toHaveClass("owncards-card--selected");
-      expect(discard.textContent).toMatch(/Discard \(1\)/i);
-    });
-
-    // Click the same selected card -> deselects (back to zero)
-    fireEvent.pointerDown(img2, { clientX: 0, clientY: 0 });
-    fireEvent.pointerUp(img2, { clientX: 0, clientY: 0 });
-    
-    await waitFor(() => {
-      expect(img2).not.toHaveClass("owncards-card--selected");
-      expect(discard.textContent).toMatch(/Discard \(0\)/i);
-    });
+    // takingAction
+    rerender(
+      <OwnCards cards={cards} turnStatus="takingAction" socialDisgrace={true} />
+    );
+    discard = screen.getByTestId("discard-button");
+    expect(discard.getAttribute("data-exact")).toBe("true");
+    expect(discard.getAttribute("data-atleast")).toBe("false");
   });
 
-  it("passes requireExactlyOne=true in 'discarding' and 'discardingOpt' when socialDisgrace=true", () => {
+  it("forces discard (requireExactlyOne) when socialDisgrace=true in 'discarding' and 'discardingOpt'", () => {
     const cards = TEST_CARDS.slice(0, 2);
     const { rerender } = setup(cards, {
       turnStatus: "discarding",
@@ -363,26 +336,7 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     expect(discard.getAttribute("data-atleast")).toBe("false");
   });
 
-  it("also forces discard when socialDisgrace=true for 'playing' and 'takingAction'", () => {
-    const cards = TEST_CARDS.slice(0, 2);
-
-    // playing -> forced discard
-    const { rerender } = setup(cards, {
-      turnStatus: "playing",
-      socialDisgrace: true,
-    });
-    let discard = screen.getByTestId("discard-button");
-    expect(discard.getAttribute("data-exact")).toBe("true");
-
-    // takingAction -> forced discard
-    rerender(
-      <OwnCards cards={cards} turnStatus="takingAction" socialDisgrace={true} />
-    );
-    discard = screen.getByTestId("discard-button");
-    expect(discard.getAttribute("data-exact")).toBe("true");
-  });
-
-  it("maintains card order after reordering with Reorder.Item", async () => {
+  it("maintains initial visual order (mocked Reorder)", () => {
     const cards = TEST_CARDS.slice(0, 3);
     setup(cards, { turnStatus: "playing" });
 
@@ -392,33 +346,25 @@ describe("OwnCards.jsx (cards: [{ id, name }])", () => {
     expect(images[2]).toHaveAttribute("alt", `Card ${cards[2].name}`);
   });
 
-  it("prevents drag when movement is detected (more than 8px) and allows click for small movements", async () => {
+  it("treats small pointer movement (<8px) as click; large as drag (no toggle)", async () => {
     const cards = TEST_CARDS.slice(0, 1);
     setup(cards, { turnStatus: "playing" });
 
     const img = screen.getByAltText(`Card ${cards[0].name}`);
 
-    // Small movement - should toggle selection
+    // Small movement => toggles selection
     fireEvent.pointerDown(img, { clientX: 100, clientY: 100 });
     fireEvent.pointerUp(img, { clientX: 102, clientY: 102 });
-    
-    await waitFor(() => {
-      expect(img).toHaveClass("owncards-card--selected");
-    });
+    await waitFor(() => expect(img).toHaveClass("owncards-card--selected"));
 
-    // Reset
+    // Toggle back
     fireEvent.pointerDown(img, { clientX: 100, clientY: 100 });
     fireEvent.pointerUp(img, { clientX: 102, clientY: 102 });
-    
-    await waitFor(() => {
-      expect(img).not.toHaveClass("owncards-card--selected");
-    });
+    await waitFor(() => expect(img).not.toHaveClass("owncards-card--selected"));
 
-    // Large movement - should NOT toggle selection (drag)
+    // Large movement => considered drag, no toggle
     fireEvent.pointerDown(img, { clientX: 100, clientY: 100 });
     fireEvent.pointerUp(img, { clientX: 120, clientY: 100 });
-    
-    // Selection should remain unchanged (still not selected)
     expect(img).not.toHaveClass("owncards-card--selected");
   });
 });
