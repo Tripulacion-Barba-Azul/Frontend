@@ -3,7 +3,7 @@ import { Users, User, Clock, Play, RefreshCw } from "lucide-react";
 import "./GameMatchesList.css";
 import { useNavigate } from "react-router-dom";
 
-const apiGamesList = "http://localhost:8000/games";
+const apiGamesList = "http://localhost:8000/games?activeGames=false";
 
 const GameMatchesList = () => {
   const [matches, setMatches] = useState([]);
@@ -22,7 +22,6 @@ const GameMatchesList = () => {
 
       const response = await fetch(apiGamesList, {
         method: "GET",
-        body: JSON.stringify({ activeGames: false }),
         headers: {
           "Content-Type": "application/json",
         },

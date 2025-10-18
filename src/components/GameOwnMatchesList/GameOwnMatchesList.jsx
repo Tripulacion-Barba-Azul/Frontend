@@ -17,7 +17,7 @@ import { filterOwnInProgress, parseOwnPairsMap } from "./ownGamesLogic";
 const OWN_PAIRS_COOKIE = "playersGames";
 
 // Your existing endpoint to fetch games (we keep it as-is)
-const apiGamesList = "http://localhost:8000/games";
+const apiGamesList = "http://localhost:8000/games?activeGames=true";
 
 // Debug tag for cleaner logs
 const DTAG = "[GameOwnMatchesList]";
@@ -44,9 +44,8 @@ export default function GameOwnMatchesList() {
       // Request
       const res = await fetch(apiGamesList, {
         method: "GET",
-        body: JSON.stringify({ activeGames: true }),
         headers: { "Content-Type": "application/json" },
-        credentials: "include", // in case backend reads cookies/session
+        credentials: "include",
       });
       console.log(`${DTAG} response`, { status: res.status, ok: res.ok });
 
