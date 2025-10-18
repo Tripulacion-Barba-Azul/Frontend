@@ -111,7 +111,7 @@ export default function EffectManager({
 
       const body = { event: eventName, ...responsePayload };
       log("POST", url, body);
-
+      resetFlow();
       try {
         const response = await fetch(url, {
           method: "POST",
@@ -125,7 +125,6 @@ export default function EffectManager({
       } catch (err) {
         error("POST error:", err?.message ?? err);
       } finally {
-        resetFlow();
       }
     },
     [gameId, resetFlow]
@@ -351,8 +350,8 @@ export default function EffectManager({
           sendEffectResponse("andThenThereWasOneMore", {
             playerId: actualPlayerId,
             secretId: selSecret,
-            stolenPlayerId: selPlayer2, // player who receives the hidden secret
-            selectedPlayerId: selPlayer1, // player we stole from
+            stolenPlayerId: selPlayer1, // player who receives the hidden secret
+            selectedPlayerId: selPlayer2, // player we stole from
           });
         }
         break;
@@ -452,7 +451,7 @@ export default function EffectManager({
   const promptText = useMemo(() => {
     switch (currentEvent) {
       case "selectAnyPlayer":
-        return "Select any player to discard all their NotSoFast cards";
+        return "Select any player";
       case "andThenThereWasOneMore":
         if (step === "selectPlayer")
           return "Select one player to steal a secret from";

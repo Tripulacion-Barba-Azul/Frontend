@@ -13,22 +13,22 @@ export default function CreateGameForm() {
     PlayerBirthday: "1990-01-01",
     Avatar: "1",
   });
+
   const [formErrors, setFormErrors] = useState({});
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const navigate = useNavigate();
 
   const validate = (values) => {
     const errors = {};
-    
-    // Game Name validation
     if (!values.GameName) {
       errors.GameName = "The game must have a name!";
     } else if (values.GameName.length > 20) {
-      errors.GameName = "Name of the game is too long! Must be less than 20 characters";
+      errors.GameName =
+        "Name of the game is too long! Must be less than 20 characters";
     }
-    
-    // Min Players validation - keep as string for validation
+
     if (!values.MinPlayers) {
       errors.MinPlayers = "Must specify minimum players";
     } else {
@@ -36,11 +36,11 @@ export default function CreateGameForm() {
       if (isNaN(minPlayers)) {
         errors.MinPlayers = "Must be a number!";
       } else if (minPlayers < 2 || minPlayers > 6) {
-        errors.MinPlayers = "Out of range! The game needs between 2 and 6 players to be played";
+        errors.MinPlayers =
+          "Out of range! The game needs between 2 and 6 players to be played";
       }
     }
-    
-    // Max Players validation - keep as string for validation
+
     if (!values.MaxPlayers) {
       errors.MaxPlayers = "Must specify maximum players";
     } else {
@@ -48,18 +48,17 @@ export default function CreateGameForm() {
       if (isNaN(maxPlayers)) {
         errors.MaxPlayers = "Must be a number!";
       } else if (maxPlayers < 2 || maxPlayers > 6) {
-        errors.MaxPlayers = "Out of range! The game needs between 2 and 6 players to be played";
+        errors.MaxPlayers =
+          "Out of range! The game needs between 2 and 6 players to be played";
       }
     }
-    
-    // Player Name validation
+
     if (!values.PlayerName) {
       errors.PlayerName = "You must have a name!";
     } else if (values.PlayerName.length > 20) {
       errors.PlayerName = "Name too long! Must be less than 20 characters";
     }
-    
-    // Player Birthday validation
+
     if (!values.PlayerBirthday) {
       errors.PlayerBirthday = "You must say your birthday!";
     } else {
@@ -69,8 +68,7 @@ export default function CreateGameForm() {
         errors.PlayerBirthday = "Date cannot be in the future";
       }
     }
-    
-    // Cross-validation of min/max players
+
     if (!errors.MinPlayers && !errors.MaxPlayers) {
       const minPlayers = Number(values.MinPlayers);
       const maxPlayers = Number(values.MaxPlayers);
@@ -79,54 +77,59 @@ export default function CreateGameForm() {
         errors.MaxPlayers = "Inconsistent with Min. Players";
       }
     }
-    
+
     return errors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Prevent multiple fast submits
+    if (submitting) return;
 
     const errors = validate(settings);
     setFormErrors(errors);
+    if (Object.keys(errors).length > 0) return;
 
-    if (Object.keys(errors).length === 0) {
-      const requestData = {
-        player_info: {
-          playerName: settings.PlayerName,
-          birthDate: String(settings.PlayerBirthday),
-          avatar: settings.Avatar ? Number(settings.Avatar) : undefined,
-        },
-        game_info: {
-          gameName: settings.GameName,
-          minPlayers: Number(settings.MinPlayers),
-          maxPlayers: Number(settings.MaxPlayers),
-        },
-      };
+    setSubmitting(true); // lock UI
 
-      async function postData() {
-        try {
-          const response = await fetch("http://localhost:8000/games", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(requestData),
-          });
+    const requestData = {
+      player_info: {
+        playerName: settings.PlayerName,
+        birthDate: String(settings.PlayerBirthday),
+        avatar: settings.Avatar ? Number(settings.Avatar) : undefined,
+      },
+      game_info: {
+        gameName: settings.GameName,
+        minPlayers: Number(settings.MinPlayers),
+        maxPlayers: Number(settings.MaxPlayers),
+      },
+    };
 
-          if (!response.ok) {
-            console.error("Error en la solicitud:", response.statusText);
-            navigate(`/`);
-          } else {
-            const data = await response.json();
-            const fetchedId = data.gameId;
-            const fetchedPlayerId = data.ownerId;
-            navigate(`/game/${fetchedId}?playerId=${fetchedPlayerId}`);
-          }
-        } catch (error) {
-          console.error("Error en la solicitud:", error);
-          navigate(`/`);
-        }
+    try {
+      const response = await fetch("http://localhost:8000/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestData),
+      });
+
+      if (!response.ok) {
+        console.error("Request failed:", response.statusText);
+        setSubmitting(false); // unlock on failure
+        navigate(`/`);
+        return;
       }
 
-      postData();
+      const data = await response.json();
+      const fetchedId = data.gameId;
+      const fetchedPlayerId = data.ownerId;
+
+      // Navigation will unmount the component; no need to unlock
+      navigate(`/game/${fetchedId}?playerId=${fetchedPlayerId}`);
+    } catch (error) {
+      console.error("Request error:", error);
+      setSubmitting(false); // unlock on failure
+      navigate(`/`);
     }
   };
 
@@ -146,7 +149,9 @@ export default function CreateGameForm() {
               </div>
               <fieldset className="form-section">
                 <div className="form-group">
-                  <label htmlFor="gameName" className="form-label">Game Name</label>
+                  <label htmlFor="gameName" className="form-label">
+                    Game Name
+                  </label>
                   <input
                     id="gameName"
                     type="text"
@@ -160,10 +165,12 @@ export default function CreateGameForm() {
                     <p className="error-message">{formErrors.GameName}</p>
                   </div>
                 </div>
-                  
+
                 <div className="form-row">
                   <div className="form-group">
-                    <label htmlFor="minPlayers" className="form-label">Minimum Players</label>
+                    <label htmlFor="minPlayers" className="form-label">
+                      Minimum Players
+                    </label>
                     <input
                       id="minPlayers"
                       type="number"
@@ -175,13 +182,15 @@ export default function CreateGameForm() {
                       }
                       className="form-input"
                     />
-                    <div className="error-container">                    
+                    <div className="error-container">
                       <p className="error-message">{formErrors.MinPlayers}</p>
                     </div>
                   </div>
-                    
+
                   <div className="form-group">
-                    <label htmlFor="maxPlayers" className="form-label">Maximum Players</label>
+                    <label htmlFor="maxPlayers" className="form-label">
+                      Maximum Players
+                    </label>
                     <input
                       id="maxPlayers"
                       type="number"
@@ -193,14 +202,14 @@ export default function CreateGameForm() {
                       }
                       className="form-input"
                     />
-                    <div className="error-container">                    
+                    <div className="error-container">
                       <p className="error-message">{formErrors.MaxPlayers}</p>
                     </div>
                   </div>
                 </div>
               </fieldset>
             </div>
-                    
+
             {/* Player Information Column */}
             <div className="form-column">
               <div className="column-header">
@@ -208,7 +217,9 @@ export default function CreateGameForm() {
               </div>
               <fieldset className="form-section">
                 <div className="form-group">
-                  <label htmlFor="yourName" className="form-label">Your Name</label>
+                  <label htmlFor="yourName" className="form-label">
+                    Your Name
+                  </label>
                   <input
                     id="yourName"
                     type="text"
@@ -218,27 +229,32 @@ export default function CreateGameForm() {
                     }
                     className="form-input"
                   />
-                  <div className="error-container">                    
+                  <div className="error-container">
                     <p className="error-message">{formErrors.PlayerName}</p>
                   </div>
                 </div>
-                  
+
                 <div className="form-group">
-                  <label htmlFor="yourBirthday" className="form-label">Your Birthday</label>
+                  <label htmlFor="yourBirthday" className="form-label">
+                    Your Birthday
+                  </label>
                   <input
                     id="yourBirthday"
                     type="date"
                     value={settings.PlayerBirthday}
                     onChange={(e) =>
-                      setSettings({ ...settings, PlayerBirthday: e.target.value })
+                      setSettings({
+                        ...settings,
+                        PlayerBirthday: e.target.value,
+                      })
                     }
                     className="form-input"
                   />
-                  <div className="error-container">                    
+                  <div className="error-container">
                     <p className="error-message">{formErrors.PlayerBirthday}</p>
                   </div>
                 </div>
-                  
+
                 <div className="form-group">
                   <label className="form-label">Your Avatar</label>
                   <div className="avatar-row">
@@ -246,20 +262,32 @@ export default function CreateGameForm() {
                       type="button"
                       className="choose-avatar-button"
                       onClick={() => setShowAvatarPicker(true)}
+                      disabled={submitting} // optional: lock while submitting
                     >
                       Choose <br /> Avatar
                     </button>
-                  
+
                     <div className="avatar-preview">
-                      <img src={AVATAR_MAP[settings.Avatar]} alt="Selected avatar" />                
+                      <img
+                        src={AVATAR_MAP[settings.Avatar]}
+                        alt="Selected avatar"
+                      />
                     </div>
                   </div>
                 </div>
               </fieldset>
             </div>
           </div>
-                  
-          <button type="submit" className="create-game-submit-button">Create Game</button>
+
+          <button
+            type="submit"
+            className="create-game-submit-button"
+            disabled={submitting}
+            aria-busy={submitting}
+            aria-disabled={submitting}
+          >
+            {submitting ? "Creating..." : "Create Game"}
+          </button>
         </form>
 
         <AvatarPicker

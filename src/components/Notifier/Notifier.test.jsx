@@ -122,7 +122,7 @@ describe("Notifier Component", () => {
     expect(aliceColor).not.toBe(charlieColor);
   });
 
-  it("auto-closes notification after 3 seconds", () => {
+  it("auto-closes notification after 5 seconds", () => {
     render(<Notifier {...defaultProps} />);
 
     simulateWebSocketMessage("notifierLookIntoTheAshes", { playerId: 1 });
@@ -130,10 +130,10 @@ describe("Notifier Component", () => {
     // Should be visible
     expect(screen.getByText(/Alice/)).toBeInTheDocument();
 
-    // 3s auto-close + 300ms fade
+    // 5s auto-close + 500ms fade
     act(() => {
-      vi.advanceTimersByTime(3000);
-      vi.advanceTimersByTime(300);
+      vi.advanceTimersByTime(5000);
+      vi.advanceTimersByTime(500);
     });
 
     expect(screen.queryByText(/Alice/)).not.toBeInTheDocument();

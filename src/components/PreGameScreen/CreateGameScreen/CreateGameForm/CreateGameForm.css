@@ -28,7 +28,7 @@
   font-size: 3rem;
   color: #f4e1a3;
   margin-bottom: 0.5rem;
-  font-family: 'Metropolis';
+  font-family: "Metropolis";
 }
 
 .create-game-form {
@@ -58,7 +58,7 @@
 .section-title {
   font-size: 2rem;
   color: #f4e1a3;
-  font-family: 'Metropolis';
+  font-family: "Metropolis";
   margin: 0;
 }
 
@@ -94,7 +94,7 @@
   margin-bottom: 0.5rem; /* Reduced */
   font-weight: 500;
   color: #f4e1a3;
-  font-family: 'Metropolis', sans-serif;
+  font-family: "Metropolis", sans-serif;
   font-size: 1rem; /* Slightly smaller */
 }
 
@@ -106,7 +106,7 @@
   background-color: #252525e4;
   color: #f4e1a3;
   font-size: 1rem; /* Slightly smaller */
-  font-family: 'Metropolis', sans-serif;
+  font-family: "Metropolis", sans-serif;
   transition: all 0.3s ease;
 }
 
@@ -145,7 +145,7 @@
 .error-message {
   color: #ef4444;
   font-size: 0.875rem;
-  font-family: 'Metropolis', sans-serif;
+  font-family: "Metropolis", sans-serif;
 }
 
 .avatar-row {
@@ -168,7 +168,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-family: 'Metropolis';
+  font-family: "Metropolis";
 }
 
 .choose-avatar-button:hover:not(:disabled) {
@@ -217,11 +217,9 @@
   z-index: 10;
   display: block;
   margin: 0 auto;
-  transition: 
-    background-color 0.25s ease,
-    transform 0.2s ease,
+  transition: background-color 0.25s ease, transform 0.2s ease,
     box-shadow 0.25s ease;
-  font-family: 'Metropolis';
+  font-family: "Metropolis";
 }
 
 .create-game-submit-button:hover {
@@ -237,6 +235,71 @@
 .create-game-submit-button:focus {
   outline: none;
   box-shadow: 0 0px 50px #f4e1a3cc;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .create-game-wrapper {
+    max-width: 100%;
+  }
+
+  .create-game-form {
+    padding: 1.5rem;
+  }
+
+  .form-columns {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .create-game-title {
+    font-size: 2rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+  }
+
+  .avatar-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .create-game-submit-button {
+    width: 200px;
+    height: 60px;
+    font-size: 20px;
+  }
+
+  .form-group {
+    min-height: 4rem; /* Smaller on mobile */
+  }
+
+  .error-container {
+    min-height: 1rem; /* Smaller on mobile */
+  }
+}
+
+/* Disable interactions and tone down visuals while submitting */
+.create-game-submit-button:disabled {
+  background-color: rgba(163, 34, 34, 0.45);
+  color: rgba(244, 225, 163, 0.65);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  pointer-events: none; /* ignore hover/active */
+}
+
+.choose-avatar-button:disabled {
+  background-color: rgba(163, 34, 34, 0.35);
+  color: rgba(244, 225, 163, 0.3);
+  cursor: not-allowed;
+  transform: none;
+  pointer-events: none;
 }
 
 /* Responsive design */
