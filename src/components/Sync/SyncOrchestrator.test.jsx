@@ -41,6 +41,9 @@ const DrawDraftCardButtonMock = vi.fn((props) => {
   lastDrawDraftProps = props;
   return <div data-testid="DrawDraftCardButtonMock" />;
 });
+const BackToHomeButtonMock = vi.fn(() => {
+  return <div data-testid="BackToHomeButtonMock" />;
+});
 
 // Wire mocks to the same import paths used by SyncOrchestrator.jsx
 vi.mock("../Board/Board.jsx", () => ({ default: (p) => BoardMock(p) }));
@@ -61,6 +64,9 @@ vi.mock("../ViewMySecrets/ViewMySecrets.jsx", () => ({
 }));
 vi.mock("../DrawDraftCardButton/DrawDraftCardButton.jsx", () => ({
   default: (p) => DrawDraftCardButtonMock(p),
+}));
+vi.mock("../BackToHomeButton/BackToHomeButton.jsx", () => ({
+  default: () => BackToHomeButtonMock(),
 }));
 
 import SyncOrchestrator from "./SyncOrchestrator.jsx";
@@ -137,15 +143,16 @@ beforeEach(() => {
   ViewMyCardsMock.mockClear();
   ViewMySecretsMock.mockClear();
   DrawDraftCardButtonMock.mockClear();
+  BackToHomeButtonMock.mockClear();
 });
 
-describe("SyncOrchestrator (children props & draft draw button)", () => {
-  it("passes correct props to all children including DrawDraftCardButton, deriving turnStatus from public players", () => {
+describe("SyncOrchestrator (children props & back button)", () => {
+  it("passes correct props to all children and renders BackToHomeButton", () => {
     const CURRENT_PLAYER_ID = 1;
     const publicData = makePublicData();
     const privateData = makePrivateData();
 
-    render(
+    const { getByTestId } = render(
       <SyncOrchestrator
         publicData={publicData}
         privateData={privateData}
@@ -182,13 +189,16 @@ describe("SyncOrchestrator (children props & draft draw button)", () => {
     expect(ViewMySecretsMock).toHaveBeenCalledTimes(1);
     expect(lastViewMySecretsProps.secrets).toEqual(privateData.secrets);
 
-    // DrawDraftCardButton (new)
+    // DrawDraftCardButton
     expect(DrawDraftCardButtonMock).toHaveBeenCalledTimes(1);
-    expect(lastDrawDraftProps.cards).toEqual(publicData.draftCards); // empty at start
+    expect(lastDrawDraftProps.cards).toEqual(publicData.draftCards);
     expect(lastDrawDraftProps.turnStatus).toBe("playing");
+
+    // NEW: Back to home button appears
+    expect(getByTestId("BackToHomeButtonMock")).toBeInTheDocument();
   });
 
-  it("updates children (including DrawDraftCardButton) when upstream props change", () => {
+  it("updates children when upstream props change", () => {
     const CURRENT_PLAYER_ID = 1;
 
     const initialPublic = makePublicData();
@@ -243,6 +253,7 @@ describe("SyncOrchestrator (children props & draft draw button)", () => {
     expect(ViewMyCardsMock).toHaveBeenCalledTimes(2);
     expect(ViewMySecretsMock).toHaveBeenCalledTimes(2);
     expect(DrawDraftCardButtonMock).toHaveBeenCalledTimes(2);
+    expect(BackToHomeButtonMock).toHaveBeenCalledTimes(2);
 
     // Deck & discard updates
     expect(lastDeckProps.number).toBe(9);
