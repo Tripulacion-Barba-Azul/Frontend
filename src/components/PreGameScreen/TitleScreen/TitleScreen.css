@@ -15,15 +15,15 @@
 /* Move title higher */
 .title-image {
   width: 100%;
-  max-width: 750px;
-  margin-bottom: -100px; /* space between title and characters */
-  transform: translateY(-6vh); /* pushes title up relative to screen */
+  max-width: 39.06vw; /* 750px */
+  margin-bottom: -5.21vw; /* -100px */
+  transform: translateY(-6vh); /* already in vh - perfect! */
 }
 
 /* Center characters vertically overall */
 .characters-image {
   width: 100%;
-  max-width: 450px;
+  max-width: 23.44vw; /* 450px */
   position: relative;
   z-index: 1;
   filter: brightness(0.95);
@@ -33,9 +33,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
-  margin: 20px 0;
-  transform: translateY(-3vh); /* lift buttons slightly to balance layout */
+  gap: 0.52vw; /* 10px */
+  margin: 1.04vw 0; /* 20px */
+  transform: translateY(-1.6vw); /* already in vh - perfect! */
 }
-
-
