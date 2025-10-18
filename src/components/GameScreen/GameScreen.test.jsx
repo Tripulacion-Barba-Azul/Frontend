@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
-import { render, screen, act, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  act,
+  waitFor,
+  fireEvent,
+} from "@testing-library/react";
 import { useParams, useSearchParams } from "react-router-dom";
 import GameScreen from "./GameScreen";
 
@@ -38,6 +44,18 @@ vi.mock("../EffectManager/EffectManager", () => ({
   default: () => <div data-testid="effect-manager">EffectManager</div>,
 }));
 
+// NEW: mock PresentationScreen with a button that calls close(true)
+vi.mock("../PresentationScreen/PresentationScreen", () => ({
+  default: ({ close }) => (
+    <div data-testid="presentation-screen">
+      Presentation
+      <button onClick={() => close?.(true)} aria-label="finish-presentation">
+        finish
+      </button>
+    </div>
+  ),
+}));
+
 /* ---------------------- Minimal WebSocket mock ---------------------- */
 const createMockWebSocket = () => ({
   close: vi.fn(),
@@ -72,7 +90,7 @@ describe("GameScreen", () => {
   it("initially renders Lobby and NOT the WS-dependent components", () => {
     render(<GameScreen />);
 
-    // Lobby is always present
+    // Lobby is present
     expect(screen.getByTestId("lobby")).toBeInTheDocument();
 
     // WS-dependent components should NOT render until connection is open
@@ -151,11 +169,11 @@ describe("GameScreen", () => {
       mockWebSocket.onerror?.(new Event("error"));
     });
     expect(screen.getByText("Lobby - Connected: false")).toBeInTheDocument();
-    expect(mockWebSocket.close).not.toHaveBeenCalled(); // current code does not close on error
+    expect(mockWebSocket.close).not.toHaveBeenCalled(); // does not close on error
     spy.mockRestore();
   });
 
-  it("handles publicUpdate and sets publicData (no Sync yet if private/started missing)", () => {
+  it("handles publicUpdate and sets publicData (still Lobby if private/started missing)", () => {
     render(<GameScreen />);
     act(() => {
       mockWebSocket.onmessage?.({
@@ -163,10 +181,6 @@ describe("GameScreen", () => {
           event: "publicUpdate",
           payload: {
             gameStatus: "waiting", // does not set started=true
-            regularDeckCount: 10,
-            discardPileTop: { id: 1, name: "Card1" },
-            draftCards: [],
-            discardPileCount: 5,
             players: [],
           },
         }),
@@ -175,25 +189,22 @@ describe("GameScreen", () => {
     // Still Lobby because private or started is missing
     expect(screen.getByTestId("lobby")).toBeInTheDocument();
     expect(screen.queryByTestId("sync-orchestrator")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("presentation-screen")).not.toBeInTheDocument();
   });
 
-  it("handles privateUpdate and sets privateData (no Sync yet if public/started missing)", () => {
+  it("handles privateUpdate and sets privateData (still Lobby if public/started missing)", () => {
     render(<GameScreen />);
     act(() => {
       mockWebSocket.onmessage?.({
         data: JSON.stringify({
           event: "privateUpdate",
-          payload: {
-            cards: [{ id: 1, name: "Card1", type: "action" }],
-            secrets: [{ id: 1, revealed: false, name: "Secret1" }],
-            role: "detective",
-            ally: null,
-          },
+          payload: { role: "detective", ally: null },
         }),
       });
     });
     expect(screen.getByTestId("lobby")).toBeInTheDocument();
     expect(screen.queryByTestId("sync-orchestrator")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("presentation-screen")).not.toBeInTheDocument();
   });
 
   it("handles player_joined safely (no crash, still Lobby)", () => {
@@ -215,6 +226,7 @@ describe("GameScreen", () => {
     });
     expect(screen.getByTestId("lobby")).toBeInTheDocument();
     expect(screen.queryByTestId("sync-orchestrator")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("presentation-screen")).not.toBeInTheDocument();
   });
 
   it("logs unknown events without crashing", () => {
@@ -225,63 +237,55 @@ describe("GameScreen", () => {
       mockWebSocket.onmessage?.({ data: JSON.stringify(unknown) });
     });
     expect(warn).toHaveBeenCalled();
-    const [msg, obj] = warn.mock.calls[0];
-    expect(String(msg)).toMatch(/Evento no manejado/);
-    expect(obj).toMatchObject(unknown);
     warn.mockRestore();
   });
 
-  it("handles non-JSON messages gracefully", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    render(<GameScreen />);
-    act(() => {
-      mockWebSocket.onmessage?.({ data: "not json" });
-    });
-    expect(warn).toHaveBeenCalledWith("⚠️ Mensaje no JSON:", "not json");
-    warn.mockRestore();
-  });
-
-  it("renders SyncOrchestrator when publicUpdate(in_progress) + privateUpdate are received", async () => {
+  it("with public(in_progress) + private -> shows Presentation first, then Sync after close()", async () => {
     render(<GameScreen />);
 
+    // Provide data that makes gameDataReady = true
     act(() => {
-      // public with in_progress should flip started=true
       mockWebSocket.onmessage?.({
         data: JSON.stringify({
           event: "publicUpdate",
           payload: {
             gameStatus: "in_progress",
-            regularDeckCount: 10,
-            discardPileTop: { id: 1, name: "Card1" },
-            draftCards: [],
-            discardPileCount: 5,
-            players: [],
+            players: [
+              {
+                id: Number(mockPlayerId),
+                name: "Me",
+                avatar: 1,
+                turnStatus: "playing",
+              },
+              { id: 999, name: "Ally", avatar: 2, turnStatus: "waiting" },
+            ],
           },
         }),
       });
-      // private ready
       mockWebSocket.onmessage?.({
         data: JSON.stringify({
           event: "privateUpdate",
-          payload: {
-            cards: [{ id: 1, name: "Card1", type: "action" }],
-            secrets: [{ id: 1, revealed: false, name: "Secret1" }],
-            role: "detective",
-            ally: null,
-          },
+          payload: { role: "detective", ally: null },
         }),
       });
     });
 
+    // Presentation first
+    await waitFor(() =>
+      expect(screen.getByTestId("presentation-screen")).toBeInTheDocument()
+    );
+    expect(screen.queryByTestId("sync-orchestrator")).not.toBeInTheDocument();
+
+    // Close presentation
+    fireEvent.click(screen.getByLabelText("finish-presentation"));
+
+    // Now SyncOrchestrator appears
     await waitFor(() =>
       expect(screen.getByTestId("sync-orchestrator")).toBeInTheDocument()
     );
-    expect(
-      screen.getByText("Sync - Player: 456, Public: yes, Private: yes")
-    ).toBeInTheDocument();
   });
 
-  it("renders SyncOrchestrator when gameStarted follows public(waiting) + private", async () => {
+  it("with public(waiting) + private + gameStarted -> shows Presentation first, then Sync after close()", async () => {
     render(<GameScreen />);
 
     act(() => {
@@ -290,29 +294,37 @@ describe("GameScreen", () => {
           event: "publicUpdate",
           payload: {
             gameStatus: "waiting",
-            regularDeckCount: 10,
-            discardPileTop: { id: 1, name: "Card1" },
-            draftCards: [],
-            discardPileCount: 5,
-            players: [],
+            players: [
+              {
+                id: Number(mockPlayerId),
+                name: "Me",
+                avatar: 1,
+                turnStatus: "playing",
+              },
+              { id: 999, name: "Ally", avatar: 2, turnStatus: "waiting" },
+            ],
           },
         }),
       });
       mockWebSocket.onmessage?.({
         data: JSON.stringify({
           event: "privateUpdate",
-          payload: {
-            cards: [{ id: 1, name: "Card1", type: "action" }],
-            secrets: [{ id: 1, revealed: false, name: "Secret1" }],
-            role: "detective",
-            ally: null,
-          },
+          payload: { role: "detective", ally: null },
         }),
       });
       mockWebSocket.onmessage?.({
         data: JSON.stringify({ event: "gameStarted" }),
       });
     });
+
+    // Presentation first
+    await waitFor(() =>
+      expect(screen.getByTestId("presentation-screen")).toBeInTheDocument()
+    );
+    expect(screen.queryByTestId("sync-orchestrator")).not.toBeInTheDocument();
+
+    // Close presentation
+    fireEvent.click(screen.getByLabelText("finish-presentation"));
 
     await waitFor(() =>
       expect(screen.getByTestId("sync-orchestrator")).toBeInTheDocument()

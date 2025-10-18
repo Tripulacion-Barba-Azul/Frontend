@@ -1,4 +1,3 @@
-// PresentationScreen.test.jsx
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import React from "react";
@@ -6,33 +5,28 @@ import PresentationScreen from "./PresentationScreen";
 import "@testing-library/jest-dom";
 import { act } from "react-dom/test-utils";
 
-// Mock avatar map to avoid real asset lookups
+// Mock avatar map
 vi.mock("../generalMaps", () => ({
-  AVATAR_MAP: {
-    1: "/avatars/1.png",
-    2: "/avatars/2.png",
-  },
+  AVATAR_MAP: { 1: "/avatars/1.png", 2: "/avatars/2.png" },
 }));
 
 beforeEach(() => {
   vi.useFakeTimers();
 });
-
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
   vi.useRealTimers();
 });
 
-const makeClose = () => vi.fn();
-
-// Helpers
 const murdererPlayer = { name: "PlayerOne", role: "murderer" };
 const accomplicePlayer = { name: "PlayerTwo", role: "accomplice" };
 const detectivePlayer = { name: "Sherlock", role: "detective" };
 
-describe("PresentationScreen", () => {
-  it("renders murderer view with ally chip and colored names", () => {
+const makeClose = () => vi.fn();
+
+describe("PresentationScreen (simplified)", () => {
+  it("renders murderer view with ally chip and proper names", () => {
     const close = makeClose();
     render(
       <PresentationScreen
@@ -42,23 +36,27 @@ describe("PresentationScreen", () => {
       />
     );
 
-    // Card image alt includes role
     expect(screen.getByAltText(/murderer card/i)).toBeInTheDocument();
 
-    // Player name styled as murderer
-    const playerStrong = screen.getByText("PlayerOne");
-    expect(playerStrong).toHaveClass("role-name", "role-murderer");
+    // Player name (unique)
+    expect(screen.getByText("PlayerOne")).toHaveClass(
+      "role-name",
+      "role-murderer"
+    );
 
-    // Ally name styled as accomplice
-    const allyStrong = screen.getByText("Helper");
+    // Ally name appears twice (text + chip). Tomamos el que tiene la clase role-name.
+    const allyStrong =
+      screen
+        .getAllByText("Helper")
+        .find((el) => el.classList.contains("role-name")) || null;
+    expect(allyStrong).toBeInTheDocument();
     expect(allyStrong).toHaveClass("role-name", "role-accomplice");
 
-    // Ally chip container present (outside textbox)
-    expect(document.querySelector(".ally-chipWrap")).toBeInTheDocument();
+    // Avatar visible (chip)
     expect(document.querySelector(".ally-avatar-circle")).toBeInTheDocument();
   });
 
-  it("renders accomplice view with ally chip (murderer) and proper classes", () => {
+  it("renders accomplice view with murderer ally", () => {
     const close = makeClose();
     render(
       <PresentationScreen
@@ -69,17 +67,23 @@ describe("PresentationScreen", () => {
     );
 
     expect(screen.getByAltText(/accomplice card/i)).toBeInTheDocument();
+    expect(screen.getByText("PlayerTwo")).toHaveClass(
+      "role-name",
+      "role-accomplice"
+    );
 
-    const playerStrong = screen.getByText("PlayerTwo");
-    expect(playerStrong).toHaveClass("role-name", "role-accomplice");
-
-    const allyStrong = screen.getByText("Boss");
+    // “Boss” aparece en texto y chip ⇒ elegimos el que tiene .role-name
+    const allyStrong =
+      screen
+        .getAllByText("Boss")
+        .find((el) => el.classList.contains("role-name")) || null;
+    expect(allyStrong).toBeInTheDocument();
     expect(allyStrong).toHaveClass("role-name", "role-murderer");
 
-    expect(document.querySelector(".ally-chipWrap")).toBeInTheDocument();
+    expect(document.querySelector(".ally-avatar-circle")).toBeInTheDocument();
   });
 
-  it("renders detective view with single textbox (detective-box) and no ally chip", () => {
+  it("detective view uses single textbox (detective-box) and no ally avatar", () => {
     const close = makeClose();
     render(
       <PresentationScreen
@@ -90,20 +94,19 @@ describe("PresentationScreen", () => {
     );
 
     expect(screen.getByAltText(/detective card/i)).toBeInTheDocument();
-
-    // Only one main textbox should have the detective-box class
-    const detectiveBox = document.querySelector(".textBox.detective-box");
-    expect(detectiveBox).toBeInTheDocument();
-
-    // No ally chip column
-    expect(document.querySelector(".ally-chipWrap")).not.toBeInTheDocument();
-
-    // Detective name styled as white role
-    const name = screen.getByText("Sherlock");
-    expect(name).toHaveClass("role-name", "role-detective");
+    expect(
+      document.querySelector(".textBox.detective-box")
+    ).toBeInTheDocument();
+    expect(
+      document.querySelector(".ally-avatar-circle")
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("Sherlock")).toHaveClass(
+      "role-name",
+      "role-detective"
+    );
   });
 
-  it("does not render ally chip when ally has no avatar (but keeps right text)", () => {
+  it("when ally has NO avatar, keeps ally name text but does NOT render an avatar", () => {
     const close = makeClose();
     render(
       <PresentationScreen
@@ -113,11 +116,13 @@ describe("PresentationScreen", () => {
       />
     );
 
-    // Right text still renders ally name
-    expect(screen.getByText("NoPic")).toBeInTheDocument();
-
-    // But chip (avatar + name plate component) is not rendered
-    expect(document.querySelector(".ally-chipWrap")).not.toBeInTheDocument();
+    // El texto del aliado sigue
+    const allyStrong =
+      screen
+        .getAllByText("NoPic")
+        .find((el) => el.classList.contains("role-name")) || null;
+    expect(allyStrong).toBeInTheDocument();
+    // Pero no hay avatar
     expect(
       document.querySelector(".ally-avatar-circle")
     ).not.toBeInTheDocument();
@@ -133,12 +138,10 @@ describe("PresentationScreen", () => {
       />
     );
 
-    const btn = screen.getByRole("button", { name: /i am ready/i });
-    fireEvent.click(btn);
+    fireEvent.click(screen.getByRole("button", { name: /i am ready/i }));
     expect(close).toHaveBeenCalledTimes(1);
     expect(close).toHaveBeenCalledWith(true);
 
-    // Advance timers beyond 20s to verify it's not called again
     await act(async () => {
       vi.advanceTimersByTime(21000);
     });
@@ -155,14 +158,10 @@ describe("PresentationScreen", () => {
       />
     );
 
-    // Not yet
     expect(close).not.toHaveBeenCalled();
-
-    // After 20s
     await act(async () => {
       vi.advanceTimersByTime(20000);
     });
-
     expect(close).toHaveBeenCalledTimes(1);
     expect(close).toHaveBeenCalledWith(true);
   });
