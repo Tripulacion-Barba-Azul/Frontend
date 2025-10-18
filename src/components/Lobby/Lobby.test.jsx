@@ -243,7 +243,7 @@ describe("Lobby Component", () => {
       renderWithRouter(<Lobby {...defaultProps} />);
 
       await waitFor(() => {
-        expect(screen.getByText("- GAME FULL")).toBeInTheDocument();
+        expect(screen.getByText("- GAME IS FULL -")).toBeInTheDocument();
       });
     });
   });

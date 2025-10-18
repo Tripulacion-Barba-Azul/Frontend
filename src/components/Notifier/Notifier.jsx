@@ -335,26 +335,20 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     );
     const secret = targetPlayer?.secrets?.find((s) => s.id === secretId);
 
-    // For reveal events, create a revealed secret card
-    const displayCard = secret
-      ? {
-          id: secret.id,
-          name: secret.name,
-          isSecret: true,
-          revealed: secret.revealed,
-        }
-      : null;
-
     if (selectedPlayerId === playerId) {
       setCurrentNotification({
         text: `${playerName} revealed one of their own secrets`,
-        cards: displayCard ? [displayCard] : [],
+        cards: [
+          { id: secret.id, name: secret.name, revealed: true, isSecret: true },
+        ],
         setImage: null,
       });
     } else {
       setCurrentNotification({
         text: `${playerName} revealed ${targetName}'s secret`,
-        cards: displayCard ? [displayCard] : [],
+        cards: [
+          { id: secret.id, name: secret.name, revealed: true, isSecret: true },
+        ],        
         setImage: null,
       });
     }
@@ -371,26 +365,20 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     );
     const secret = targetPlayer?.secrets?.find((s) => s.id === secretId);
 
-    // For force reveal events, create a revealed secret card
-    const displayCard = secret
-      ? {
-          id: secret.id,
-          name: secret.name,
-          isSecret: true,
-          revealed: true,
-        }
-      : null;
-
     if (selectedPlayerId === playerId) {
       setCurrentNotification({
         text: `${playerName} revealed one of their own secrets`,
-        cards: displayCard ? [displayCard] : [],
+        cards: [
+          { id: secret.id, name: secret.name, revealed: true, isSecret: true },
+        ],        
         setImage: null,
       });
     } else {
       setCurrentNotification({
         text: `${playerName} told ${targetName} to reveal a secret`,
-        cards: displayCard ? [displayCard] : [],
+        cards: [
+          { id: secret.id, name: secret.name, revealed: true, isSecret: true },
+        ],
         setImage: null,
       });
     }

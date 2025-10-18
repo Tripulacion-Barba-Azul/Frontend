@@ -1,16 +1,16 @@
 .CancelGameButton {
-    width: 220px;
-    height: 70px;
+    width: 11.46vw; /* 220px */
+    height: 3.65vw; /* 70px */
     padding: 0;
     font-family: 'Metropolis';
-    font-size: 25px;
+    font-size: 1.30vw; /* 25px */
     font-weight: 500;
-    border-radius: 12px;
+    border-radius: 0.63vw; /* 12px */
     border: 1px solid rgba(0, 0, 0, 0.2);
     cursor: pointer;
     user-select: none;
     pointer-events: auto;
-    margin: 7px;
+    margin: 0.36vw; /* 7px */
     z-index: 10;
     transition:
         background-color 0.25s ease,

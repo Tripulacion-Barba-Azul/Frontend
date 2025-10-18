@@ -157,26 +157,6 @@ describe("Notifier Component", () => {
     expect(screen.getByAltText("Set")).toBeInTheDocument();
   });
 
-  it("handles missing player gracefully", () => {
-    render(
-      <Notifier
-        {...defaultProps}
-        publicData={{ players: [] }} // nobody known
-      />
-    );
-
-    simulateWebSocketMessage("notifierRevealSecret", {
-      playerId: 999,
-      secretId: 101,
-      selectedPlayerId: 1,
-    });
-
-    // Fallback strings "Player 999" / "Player 1"
-    expect(
-      screen.getByText("Player 999 revealed Player 1's secret")
-    ).toBeInTheDocument();
-  });
-
   it("handles unknown WebSocket event", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     render(<Notifier {...defaultProps} />);

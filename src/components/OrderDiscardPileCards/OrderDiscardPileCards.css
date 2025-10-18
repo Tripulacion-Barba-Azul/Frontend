@@ -46,6 +46,7 @@
 .odp-panel {
   position: relative;
   max-height: 88vh;
+  min-width: 55vw;
   max-width: 94vw;
   background: linear-gradient(
     180deg,
@@ -60,6 +61,8 @@
   overflow: hidden;
   pointer-events: auto;
   border: 1px solid var(--odp-border);
+  list-style: none;
+
 }
 
 /* Per-column width rules: width = N*cardW + (N-1)*gap + 2*padX */
@@ -223,6 +226,8 @@
   transform: scale(1.06) rotate(0.5deg);
   box-shadow: 0 14px 26px rgba(0, 0, 0, 0.45);
   border-color: var(--odp-gold-2);
+  max-width: var(--odp-card-w);
+
 }
 
 .odp-card.is-drop-target {

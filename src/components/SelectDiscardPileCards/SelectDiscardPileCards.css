@@ -41,6 +41,7 @@
   justify-content: center; /* centrado */
   align-items: center;
 }
+
 .sdp-title {
   margin: 0;
   color: #e6d7a6; /* dorado suave */
@@ -54,22 +55,27 @@
 /* --- Contenido --- */
 .sdp-content {
   padding: 20px;
-  overflow: auto;
+  overflow: hidden;
+  display: flex;
+  justify-content: center; /* Center the grid */
 }
+
 .sdp-empty {
   padding: 28px;
   text-align: center;
   color: #beb6a6;
 }
 
-/* Grid: mantenemos cartas grandes. El JSX ya fuerza 1 fila si hay ≤5 cartas */
+/* Grid: fixed width cards, centered */
 .sdp-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  display: flex;
+  justify-content: center;
   gap: 25px;
+  flex-wrap: wrap;
+  max-width: 100%;
 }
 
-/* Tarjeta: bloques gris oscuro, borde tenue; selección con borde dorado */
+/* Tarjeta: fixed size based on 5-card layout */
 .sdp-card {
   position: relative;
   background: #2f2f2f;
@@ -80,12 +86,17 @@
   transform: scale(1);
   transform-origin: center;
   transition: transform 120ms ease, border-color 80ms ease, box-shadow 80ms ease;
+  /* Fixed width based on panel width divided by 5 cards + gaps */
+  width: 220px; /* Adjust this value based on your card image aspect ratio */
+  flex-shrink: 0; /* Prevent shrinking */
 }
+
 .sdp-card:hover {
   transform: translateY(-2px) scale(1.02);
   border-color: #6a6a6a;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
 }
+
 .sdp-card.selected {
   border-color: #d6b16a;
   box-shadow: 0 0 0 2px rgba(214, 177, 106, 0.45) inset,
@@ -127,6 +138,7 @@
   background: rgb(163, 34, 34); /* burdeos */
   box-shadow: 0 6px 16px rgba(90, 44, 44, 0.45);
 }
+
 .sdp-confirm:disabled {
   background: rgba(163, 34, 34, 0.35);
   color: rgba(244, 225, 163, 0.3);
@@ -134,6 +146,30 @@
   cursor: not-allowed;
   box-shadow: none;
 }
+
 .sdp-confirm:not(:disabled):hover {
   filter: brightness(1.06);
+}
+
+/* Responsive: adjust card size for smaller screens */
+@media (max-width: 1400px) {
+  .sdp-card {
+    width: calc((94vw - 140px) / 5); /* Dynamically calculate based on viewport */
+  }
+}
+
+@media (max-width: 900px) {
+  .sdp-card {
+    width: 180px; /* Smaller fixed size for tablets */
+  }
+}
+
+@media (max-width: 600px) {
+  .sdp-card {
+    width: 150px; /* Even smaller for mobile */
+  }
+  
+  .sdp-grid {
+    gap: 15px;
+  }
 }
