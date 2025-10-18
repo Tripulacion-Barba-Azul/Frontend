@@ -1,0 +1,48 @@
+/* Root wrapper (keeps any extra layout classes passed via className) */
+.bmp-root {
+  position: relative;
+}
+
+/* Floating launcher button — image-only (no border/bg/shadow) */
+.bmp-btn {
+  position: fixed;
+  bottom: 1rem; /* same as Tailwind bottom-4 */
+  left: 1835px; /* matches the previous 'left-460' intent */
+  z-index: 50;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  border: none;
+  background: none;
+  border-radius: 9999px; /* focus ring looks rounded */
+  width: 60px; /* hardcoded size */
+  height: 60px; /* hardcoded size */
+}
+
+/* Accessible focus ring */
+.bmp-btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 2px;
+}
+
+/* Icon image: no extra chrome, smooth hover grow + soft white glow */
+.bmp-icon {
+  display: block;
+  width: 60px; /* hardcoded size */
+  height: 60px; /* hardcoded size */
+  pointer-events: none; /* click lands on the button */
+  transition: transform 150ms ease-out, filter 150ms ease-out;
+  will-change: transform;
+  filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0)); /* no dark ring */
+}
+
+/* Hover/active animations (mirror music icon behavior) */
+.bmp-btn:hover .bmp-icon,
+.bmp-btn:focus-visible .bmp-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.55));
+}
+
+.bmp-btn:active .bmp-icon {
+  transform: scale(0.95);
+}

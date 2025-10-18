@@ -7,6 +7,7 @@ import GameEndScreen from "../GameEndScreen/GameEndSreen";
 import Notifier from "../Notifier/Notifier";
 import EffectManager from "../EffectManager/EffectManager";
 import PresentationScreen from "../PresentationScreen/PresentationScreen";
+import BackgroundMusicPlayer from "../BackgroundMusicPlayer/BackgroundMusicPlayer";
 
 export default function GameScreen() {
   const { gameId } = useParams();
@@ -133,20 +134,29 @@ export default function GameScreen() {
   return (
     <>
       {gameDataReady ? (
-        !gamePresented ? (
-          // Show PresentationScreen first
-          <PresentationScreen
-            actualPlayer={presentationActualPlayer}
-            ally={presentationAlly}
-            close={setGamePresented} // Presentation calls close(true)
+        <>
+          {/* Mounted once for both PresentationScreen and SyncOrchestrator */}
+          <BackgroundMusicPlayer
+            src="/Music/BoardMusic.mp3" // put your 30s loop here
+            // sources={["/audio/bgm.mp3","/audio/bgm.ogg"]} // optional fallback
+            volume={0.4} // tweak if needed
+            persistKey="bgm-muted" // shared preference across sessions
           />
-        ) : (
-          <SyncOrchestrator
-            publicData={publicData}
-            privateData={privateData}
-            currentPlayerId={currentPlayerId}
-          />
-        )
+
+          {!gamePresented ? (
+            <PresentationScreen
+              actualPlayer={presentationActualPlayer}
+              ally={presentationAlly}
+              close={setGamePresented}
+            />
+          ) : (
+            <SyncOrchestrator
+              publicData={publicData}
+              privateData={privateData}
+              currentPlayerId={currentPlayerId}
+            />
+          )}
+        </>
       ) : (
         <Lobby
           id={parseInt(gameId)}
@@ -158,7 +168,6 @@ export default function GameScreen() {
         />
       )}
 
-      {/* Only render WebSocket-dependent components after it's ready */}
       {isConnected && wsRef.current && (
         <>
           <Notifier
@@ -166,14 +175,12 @@ export default function GameScreen() {
             actualPlayerId={currentPlayerId}
             wsRef={wsRef}
           />
-
           <EffectManager
             publicData={publicData}
             privateData={privateData}
             actualPlayerId={currentPlayerId}
             wsRef={wsRef}
           />
-
           <GameEndScreen websocket={wsRef.current} />
         </>
       )}

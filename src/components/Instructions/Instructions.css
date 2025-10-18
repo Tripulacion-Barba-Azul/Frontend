@@ -1,27 +1,47 @@
-/* Launcher (image only, hover zoom) */
+/* Launcher (image-only, same look as music icon: no border/bg/shadow on button) */
 .ins-launcher {
   position: fixed;
-  bottom: 30px;
-  left: 30px;
+  bottom: 20px; /* keep your current placement */
+  left: 25px; /* adjust if you want to separate from music icon */
   padding: 0;
   border: 0;
-  background: none;
+  background: none; /* no button chrome */
   cursor: pointer;
-  z-index: 40;
-}
-.ins-launcherImg {
-  width: 48px;
-  height: 48px;
-  display: block;
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
-  transition: transform 0.15s ease;
+  z-index: 50; /* match music icon stacking */
+  outline: none; /* we provide focus-visible below */
 }
 
+/* PNG only: fixed size, smooth hover grow + soft white glow */
+.ins-launcherImg {
+  width: 52px; /* hardcoded size to match music icon */
+  height: 52px;
+  display: block;
+  border-radius: 0; /* ensure PNG circle is not clipped */
+  pointer-events: none; /* let the button receive the click */
+  transition: transform 0.15s ease, filter 0.15s ease;
+  filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0)); /* no dark ring by default */
+}
+
+/* Hover/active states mirror music icon behavior */
 .ins-launcher:hover .ins-launcherImg,
 .ins-launcher:focus-visible .ins-launcherImg {
-  transform: scale(1.08);
+  transform: scale(1.1);
+  filter: drop-shadow(
+    0 0 10px rgba(255, 255, 255, 0.55)
+  ); /* subtle white glow */
 }
+
+.ins-launcher:active .ins-launcherImg {
+  transform: scale(0.95);
+}
+
+/* Accessible focus outline on the button (not the image) */
+.ins-launcher:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 3px;
+}
+
+/* --------- Modal styles remain as you had them --------- */
 
 /* Overlay */
 .ins-overlay {
@@ -186,11 +206,9 @@
 }
 .ins-left {
   left: 18px;
-  right: auto;
 }
 .ins-right {
   right: 18px;
-  left: auto;
 }
 
 /* Visible circular button */
@@ -208,13 +226,12 @@
   box-sizing: border-box;
   transition: all 0.3s ease;
 }
-
 .ins-arrow:hover::after {
   border-color: #f4e1a3;
   filter: brightness(1.2);
 }
 
-/* Chevron centered inside the circle */
+/* Chevron centered */
 .ins-arrow::before {
   content: "";
   position: absolute;
@@ -234,19 +251,14 @@
   transform: translate(-70%, -50%) rotate(45deg);
 }
 
-/* Additional styling for better integration */
-.ins-modal * {
-  box-sizing: border-box;
-}
-
-/* Focus states for accessibility */
+/* Focus states for a11y */
 .ins-close:focus-visible,
 .ins-arrow:focus-visible {
   outline: 2px solid #f4e1a3;
   outline-offset: 2px;
 }
 
-/* Smooth transitions for all interactive elements */
+/* Smooth transitions */
 .ins-modal,
 .ins-close,
 .ins-frame,

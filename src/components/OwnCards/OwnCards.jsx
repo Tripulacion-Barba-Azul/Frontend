@@ -20,9 +20,7 @@ export default function OwnCards({
     setOrderedCards((prev) => {
       const prevIds = prev.map((c) => c.id);
       const newOnes = cards.filter((c) => !prevIds.includes(c.id));
-      const stillPresent = prev.filter((c) =>
-        cards.some((n) => n.id === c.id)
-      );
+      const stillPresent = prev.filter((c) => cards.some((n) => n.id === c.id));
       return [...stillPresent, ...newOnes];
     });
   }, [cards]);
@@ -30,7 +28,8 @@ export default function OwnCards({
   useEffect(() => setSelectedIds(new Set()), [cards, turnStatus]);
 
   const isDrawingPhase = turnStatus === "drawing";
-  const isForcedDiscard = socialDisgrace && !isDrawingPhase;
+  const isForcedDiscard =
+    socialDisgrace && !isDrawingPhase && !(turnStatus === "waiting");
 
   const canSelect =
     isForcedDiscard ||
@@ -102,14 +101,14 @@ export default function OwnCards({
               >
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ 
-                    opacity: 1, 
+                  animate={{
+                    opacity: 1,
                     scale: 1,
                   }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   transition={{
                     duration: 0.1,
-                    ease: "easeOut"
+                    ease: "easeOut",
                   }}
                 >
                   <img
