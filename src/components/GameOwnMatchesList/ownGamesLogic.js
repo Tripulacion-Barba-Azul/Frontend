@@ -1,6 +1,6 @@
-// src/GameOwnMatchesList/ownGamesLogic.js
 // Helpers to extract "own games" from a cookie and filter a list accordingly.
-// This version includes verbose console logs for debugging.
+// This version is robust to weird encodings (octal escapes like \054) and double-encoded JSON.
+// Code comments in English.
 
 /** Debug toggle: set window.DOTC_DEBUG = false in DevTools to silence logs. */
 const DEBUG =
@@ -10,15 +10,12 @@ const DTAG = "[ownGamesLogic]";
 /** Safe debug logger */
 function dlog(...args) {
   if (!DEBUG) return;
-  // Avoid logging massive payloads by default
   try {
     console.log(DTAG, ...args);
-  } catch {
-    /* ignore */
-  }
+  } catch { /* noop */ }
 }
 
-/** Returns a shortened preview for large strings/arrays/objects. */
+/** Short preview for logging. */
 function preview(value, max = 200) {
   try {
     if (typeof value === "string") {
@@ -31,52 +28,118 @@ function preview(value, max = 200) {
   }
 }
 
+/** Replace octal escapes like \054 with their ASCII char (comma). */
+function unescapeOctal(str) {
+  if (typeof str !== "string") return str;
+  return str.replace(/\\([0-7]{3})/g, (_, oct) =>
+    String.fromCharCode(parseInt(oct, 8))
+  );
+}
+
+/** Strip surrounding quotes if the whole string is quoted. */
+function stripOuterQuotes(str) {
+  if (typeof str !== "string") return str;
+  if ((str.startsWith('"') && str.endsWith('"')) ||
+      (str.startsWith("'") && str.endsWith("'"))) {
+    return str.slice(1, -1);
+  }
+  return str;
+}
+
+/**
+ * Try hard to obtain a JS value (Array/Object) out of a messy cookie string.
+ * Steps:
+ *  - raw
+ *  - decodeURIComponent(raw)
+ *  - unescapeOctal(raw)
+ *  - unescapeOctal(decodeURIComponent(raw))
+ * For each candidate, also try with outer quotes stripped,
+ * and if JSON.parse -> string, parse again once (handles nested JSON-as-string).
+ */
+function parseCookieJSON(raw) {
+  if (!raw) return null;
+
+  const candidates = new Set();
+
+  const push = (s) => {
+    if (typeof s === "string" && s.length) candidates.add(s);
+  };
+
+  push(raw);
+  try { push(decodeURIComponent(raw)); } catch {}
+  push(unescapeOctal(raw));
+  try { push(unescapeOctal(decodeURIComponent(raw))); } catch {}
+
+  // plus versions without outer quotes
+  [...candidates].forEach((c) => push(stripOuterQuotes(c)));
+
+  dlog("parseCookieJSON: candidates", Array.from(candidates).map(preview));
+
+  for (const c of candidates) {
+    try {
+      const v = JSON.parse(c);
+      // If it parsed to a string that itself looks like JSON, try one more pass.
+      if (typeof v === "string") {
+        const s2 = unescapeOctal(stripOuterQuotes(v));
+        try {
+          const v2 = JSON.parse(s2);
+          dlog("parseCookieJSON success (nested)", { candidate: preview(c) });
+          return v2;
+        } catch {
+          // fallthrough; we still might accept primitive strings (unlikely useful here)
+        }
+      }
+      dlog("parseCookieJSON success", { candidate: preview(c) });
+      return v;
+    } catch {
+      // try next candidate
+    }
+  }
+  dlog("parseCookieJSON failed for all candidates");
+  return null;
+}
+
+/** Get array part from various shapes: array directly or object.{games|playersGames|pairs|data}. */
+function extractArrayPayload(data) {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === "object") {
+    for (const key of ["games", "playersGames", "pairs", "data"]) {
+      const arr = data[key];
+      if (Array.isArray(arr)) return arr;
+    }
+  }
+  return null;
+}
+
+/** Number coercion guard; returns null if not a finite number. */
+function toNumSafe(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
 /**
  * Accepts raw cookie string and returns a Set<number> of gameIds.
- * Cookie may contain:
- *   - [["123","456"],["789","111"]]  // [gameId, playerId]
- *   - [{ "gameId": 123, "playerId": 456 }, ...]
- * Values can be string or number; we coerce to Number safely.
+ * Supports items like:
+ *   - [{ gameId, playerId }, ...]
+ *   - [["123","45"], ...]
+ * Works even if the cookie used octal escapes like \054 for commas.
  */
 export function parseOwnPairsCookie(raw) {
-  dlog("parseOwnPairsCookie: raw cookie len/snippet", {
+  dlog("parseOwnPairsCookie: raw len/snippet", {
     length: raw?.length ?? 0,
     snippet: typeof raw === "string" ? preview(raw) : raw,
   });
 
   const ids = new Set();
-  if (!raw) {
-    dlog("parseOwnPairsCookie: no cookie provided -> empty Set");
+  const data = parseCookieJSON(raw);
+  dlog("parseOwnPairsCookie: parsed", preview(data));
+  const arr = extractArrayPayload(data);
+  if (!arr) {
+    dlog("parseOwnPairsCookie: no array payload -> empty Set");
     return ids;
   }
 
-  let data = null;
-  let parseMode = "direct";
-  try {
-    data = JSON.parse(raw);
-  } catch {
-    // support already-encoded JSON in case backend double-encodes
-    try {
-      data = JSON.parse(decodeURIComponent(raw));
-      parseMode = "decodedURIComponent";
-    } catch {
-      dlog("parseOwnPairsCookie: failed to parse cookie JSON");
-      return ids;
-    }
-  }
-
-  dlog("parseOwnPairsCookie: parsed data", {
-    parseMode,
-    isArray: Array.isArray(data),
-    preview: preview(data),
-  });
-
-  if (!Array.isArray(data)) {
-    dlog("parseOwnPairsCookie: data is not an array -> empty Set");
-    return ids;
-  }
-
-  for (const item of data) {
+  for (const item of arr) {
     if (Array.isArray(item)) {
       const gameId = toNumSafe(item[0]);
       if (gameId != null) ids.add(gameId);
@@ -90,15 +153,67 @@ export function parseOwnPairsCookie(raw) {
     size: ids.size,
     ids: Array.from(ids).slice(0, 50),
   });
-
   return ids;
+}
+
+/**
+ * Builds a Map<gameId:number, playerId:number> from the cookie value.
+ * Accepts either: [["123","45"], ...] or [{gameId:123, playerId:45}, ...]
+ */
+export function parseOwnPairsMap(raw) {
+  dlog("parseOwnPairsMap: raw len/snippet", {
+    length: raw?.length ?? 0,
+    snippet: typeof raw === "string" ? preview(raw) : raw,
+  });
+
+  const map = new Map();
+  const data = parseCookieJSON(raw);
+  dlog("parseOwnPairsMap: parsed", preview(data));
+  const arr = extractArrayPayload(data);
+  if (!arr) {
+    dlog("parseOwnPairsMap: no array payload -> empty Map");
+    return map;
+  }
+
+  for (const item of arr) {
+    if (Array.isArray(item)) {
+      const gid = toNumSafe(item[0]);
+      const pid = toNumSafe(item[1]);
+      if (gid != null && pid != null) map.set(gid, pid);
+    } else if (item && typeof item === "object") {
+      const gid = toNumSafe(item.gameId);
+      const pid = toNumSafe(item.playerId);
+      if (gid != null && pid != null) map.set(gid, pid);
+    }
+  }
+
+  dlog("parseOwnPairsMap: result", {
+    size: map.size,
+    entries: Array.from(map.entries()).slice(0, 50),
+  });
+  return map;
+}
+
+/** Convenience: returns the playerId (number) for a given gameId or null. */
+export function getPlayerIdForGame(cookieRaw, gameId) {
+  const nGid = toNumSafe(gameId);
+  dlog("getPlayerIdForGame: lookup", { gameId, nGid });
+
+  const map = parseOwnPairsMap(cookieRaw);
+  const pid = map.get(nGid);
+
+  dlog("getPlayerIdForGame: result", {
+    gameId: nGid,
+    playerId: pid,
+    found: typeof pid === "number" && Number.isFinite(pid),
+  });
+
+  return typeof pid === "number" && Number.isFinite(pid) ? pid : null;
 }
 
 /** Normalizes status to detect “in progress” across variants. */
 export function isInProgress(status) {
-  const s = String(status ?? "")
-    .toLowerCase()
-    .trim();
+  const s = String(status ?? "").toLowerCase().trim();
   const result =
     s === "in_progress" ||
     s === "inprogress" ||
@@ -137,92 +252,8 @@ export function filterOwnInProgress(allMatches, cookieRaw) {
   return result;
 }
 
-/**
- * Builds a Map<gameId:number, playerId:number> from the cookie value.
- * Accepts either: [["123","45"], ...] or [{gameId:123, playerId:45}, ...]
- */
-export function parseOwnPairsMap(raw) {
-  dlog("parseOwnPairsMap: raw cookie len/snippet", {
-    length: raw?.length ?? 0,
-    snippet: typeof raw === "string" ? preview(raw) : raw,
-  });
-
-  const map = new Map();
-  if (!raw) {
-    dlog("parseOwnPairsMap: no cookie provided -> empty Map");
-    return map;
-  }
-
-  let data = null;
-  let parseMode = "direct";
-  try {
-    data = JSON.parse(raw);
-  } catch {
-    try {
-      data = JSON.parse(decodeURIComponent(raw));
-      parseMode = "decodedURIComponent";
-    } catch {
-      dlog("parseOwnPairsMap: failed to parse cookie JSON");
-      return map;
-    }
-  }
-
-  dlog("parseOwnPairsMap: parsed data", {
-    parseMode,
-    isArray: Array.isArray(data),
-    preview: preview(data),
-  });
-
-  if (!Array.isArray(data)) {
-    dlog("parseOwnPairsMap: data is not an array -> empty Map");
-    return map;
-  }
-
-  for (const item of data) {
-    if (Array.isArray(item)) {
-      const gid = toNumSafe(item[0]);
-      const pid = toNumSafe(item[1]);
-      if (gid != null && pid != null) map.set(gid, pid);
-    } else if (item && typeof item === "object") {
-      const gid = toNumSafe(item.gameId);
-      const pid = toNumSafe(item.playerId);
-      if (gid != null && pid != null) map.set(gid, pid);
-    }
-  }
-
-  dlog("parseOwnPairsMap: result", {
-    size: map.size,
-    entries: Array.from(map.entries()).slice(0, 50),
-  });
-
-  return map;
-}
-
-/** Convenience: returns the playerId (number) for a given gameId or null. */
-export function getPlayerIdForGame(cookieRaw, gameId) {
-  const nGid = toNumSafe(gameId);
-  dlog("getPlayerIdForGame: lookup", { gameId, nGid });
-
-  const map = parseOwnPairsMap(cookieRaw);
-  const pid = map.get(nGid);
-
-  dlog("getPlayerIdForGame: result", {
-    gameId: nGid,
-    playerId: pid,
-    found: typeof pid === "number" && Number.isFinite(pid),
-  });
-
-  return typeof pid === "number" && Number.isFinite(pid) ? pid : null;
-}
-
-/** Number coercion guard; returns null if not a finite number. */
-function toNumSafe(v) {
-  const n = Number(v);
-  return Number.isFinite(n) ? n : null;
-}
-
 /* ------------------------------
- * Example cookie (decoded JSON):
+ * Example cookie (decoded JSON, recommended):
  * [
  *   { "gameId": 1,  "playerId": 5  },
  *   { "gameId": 42, "playerId": 12 }
@@ -233,4 +264,7 @@ function toNumSafe(v) {
  * Alternative (tuples):
  * Decoded:  [["1","5"],["42","12"]]
  * Encoded:  DOTC_OWN_PAIRS=%5B%5B%221%22%2C%225%22%5D%2C%5B%2242%22%2C%2212%22%5D%5D
+ *
+ * This parser also tolerates odd encodings with octal escapes like "\054" for commas,
+ * and JSON nested as a string (stringified twice).
  * ------------------------------ */
