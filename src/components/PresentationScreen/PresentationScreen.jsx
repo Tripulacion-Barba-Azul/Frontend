@@ -8,23 +8,18 @@ import { AVATAR_MAP } from "../generalMaps";
  * Props:
  * - actualPlayer: { name: string; role: "murderer" | "accomplice" | "detective" | string }
  * - ally?: { name: string; avatar?: number|string } | null
- * - close: (v: boolean) => void     // NEW: parent setter to hide this screen from outside
+ * - close: (v: boolean) => void
+ * - soloAsSingleBox?: boolean   // NEW: when true, murderer/accomplice render as a single box if there's NO ally (detective is always single)
  *
- * Behavior:
- * - murderer:
- *    - shows murdererSrc image
- *    - left text box: murdererOwnText (player name in red)
- *    - right text box: murdererOtherText (ally name in orange if present)
- *    - ally chip: to the RIGHT, outside the textbox
- * - accomplice:
- *    - shows accompliceSrc image
- *    - left text box: accompliceOwnText (player name in orange)
- *    - right text box: accompliceOtherText (ally name in red if present)
+ * Behavior (unchanged when an ally exists):
+ * - murderer/accomplice:
+ *    - shows role image
+ *    - left text box: role overview
+ *    - right text box: ally description
  *    - ally chip: to the RIGHT, outside the textbox
  * - detective:
- *    - shows detectiveSrc image
- *    - single text box with detectiveText (player name in white)
- *    - placement controlled ONLY by CSS via `.detective-box { left/right: ...px }`
+ *    - shows detective image
+ *    - single text box only (placement controlled by .solo-box/.detective-box)
  *
  * Extra:
  * - "I am ready" calls close(true) immediately.
@@ -34,6 +29,7 @@ export default function PresentationScreen({
   actualPlayer,
   ally = null,
   close,
+  soloAsSingleBox = true, // default enabled to match the requested behavior
 }) {
   const timeoutRef = useRef(null);
 
@@ -63,6 +59,13 @@ export default function PresentationScreen({
   const allyName = ally?.name ?? null;
   const role = String(actualPlayer?.role || "detective").toLowerCase();
   const isDetective = role === "detective";
+
+  /** Flag: should we collapse to a single box? */
+  const shouldSolo =
+    isDetective ||
+    (soloAsSingleBox &&
+      !ally &&
+      (role === "murderer" || role === "accomplice"));
 
   /** Colored name inline */
   const Name = ({ name, role }) => (
@@ -117,9 +120,11 @@ export default function PresentationScreen({
         <Name name={playerName} role="murderer" />, you are the murderer.
         <br />
         <br /> Your goal is to escape without being caught. When the deck runs
-        out of cards, you escape and win the game. <br /> Use your cards wisely
-        to buy time and mislead the other players. Beware, detectives may find
-        you suspicious if you are not careful.
+        out of cards, you escape and win the game. <br /> Beware, detectives may
+        find you suspicious if you are not careful. <br></br>
+        <span style={{ fontWeight: 700, fontStyle: "italic" }}>
+          Use your cards wisely to buy time and mislead the other players.
+        </span>
       </p>
     );
     rightContent = (
@@ -148,9 +153,11 @@ export default function PresentationScreen({
         <br />
         <br />
         Your goal is to help the murderer escape. When the deck runs out of
-        cards, both of you escape and win the game. <br /> Work together to buy
-        time and mislead the other players. But beware, detectives may find you
-        suspicious if you are not careful.
+        cards, both of you escape and win the game. <br /> But beware,
+        detectives may find you suspicious if you are not careful. <br></br>{" "}
+        <span style={{ fontWeight: 700, fontStyle: "italic" }}>
+          Work together to buy time and mislead the other players.
+        </span>
       </p>
     );
     rightContent = (
@@ -177,6 +184,7 @@ export default function PresentationScreen({
         escape. <br />
         You win if you reveal the murderer’s secret card before the deck runs
         out. Use your skills to gather clues and identify suspicious subjects.{" "}
+        <br></br>
         <span style={{ fontWeight: 700, fontStyle: "italic" }}>
           Time is crucial. Trust no one.
         </span>
@@ -187,6 +195,8 @@ export default function PresentationScreen({
   }
 
   const hasRightChip = Boolean(rightChip);
+  const showRightContent = Boolean(rightContent) && !shouldSolo;
+  const showRightChip = hasRightChip && !shouldSolo;
 
   const handleReady = () => {
     if (timeoutRef.current) {
@@ -220,25 +230,28 @@ export default function PresentationScreen({
         </div>
 
         {/* Texts area */}
-        <div className={`textRow ${hasRightChip ? "textRow--withChip" : ""}`}>
+        <div className={`textRow ${showRightChip ? "textRow--withChip" : ""}`}>
           <div
-            className={`textBox ${
-              isDetective && !rightContent ? "detective-box" : ""
-            }`}
+            className={`textBox ${shouldSolo ? "solo-box" : ""}`}
             data-variant="big"
-            data-det={isDetective ? "true" : "false"}
+            data-det={
+              isDetective ? "true" : "false"
+            } /* keep legacy flag for CSS */
+            data-solo={
+              shouldSolo ? "true" : "false"
+            } /* new generic flag for single-box layout */
           >
             {leftContent}
           </div>
 
-          {rightContent && (
+          {showRightContent && (
             <div className="textBox" data-variant="small">
               {rightContent}
             </div>
           )}
 
           {/* Ally chip OUTSIDE the textbox, to the RIGHT */}
-          {hasRightChip && <div className="ally-chipWrap">{rightChip}</div>}
+          {showRightChip && <div className="ally-chipWrap">{rightChip}</div>}
         </div>
 
         {/* Ready button row */}

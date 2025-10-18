@@ -25,7 +25,7 @@ const detectivePlayer = { name: "Sherlock", role: "detective" };
 
 const makeClose = () => vi.fn();
 
-describe("PresentationScreen (simplified)", () => {
+describe("PresentationScreen", () => {
   it("renders murderer view with ally chip and proper names", () => {
     const close = makeClose();
     render(
@@ -36,6 +36,7 @@ describe("PresentationScreen (simplified)", () => {
       />
     );
 
+    // Card image alt
     expect(screen.getByAltText(/murderer card/i)).toBeInTheDocument();
 
     // Player name (unique)
@@ -44,7 +45,7 @@ describe("PresentationScreen (simplified)", () => {
       "role-murderer"
     );
 
-    // Ally name appears twice (text + chip). Tomamos el que tiene la clase role-name.
+    // Ally name appears in the narrative paragraph; pick the strong role-name element
     const allyStrong =
       screen
         .getAllByText("Helper")
@@ -52,8 +53,13 @@ describe("PresentationScreen (simplified)", () => {
     expect(allyStrong).toBeInTheDocument();
     expect(allyStrong).toHaveClass("role-name", "role-accomplice");
 
-    // Avatar visible (chip)
+    // Avatar visible (ally chip)
     expect(document.querySelector(".ally-avatar-circle")).toBeInTheDocument();
+
+    // When there is a chip, the row should include the chip layout modifier
+    expect(
+      document.querySelector(".textRow.textRow--withChip")
+    ).toBeInTheDocument();
   });
 
   it("renders accomplice view with murderer ally", () => {
@@ -72,7 +78,6 @@ describe("PresentationScreen (simplified)", () => {
       "role-accomplice"
     );
 
-    // “Boss” aparece en texto y chip ⇒ elegimos el que tiene .role-name
     const allyStrong =
       screen
         .getAllByText("Boss")
@@ -81,9 +86,12 @@ describe("PresentationScreen (simplified)", () => {
     expect(allyStrong).toHaveClass("role-name", "role-murderer");
 
     expect(document.querySelector(".ally-avatar-circle")).toBeInTheDocument();
+    expect(
+      document.querySelector(".textRow.textRow--withChip")
+    ).toBeInTheDocument();
   });
 
-  it("detective view uses single textbox (detective-box) and no ally avatar", () => {
+  it("detective view uses single textbox (solo-box) and no ally avatar", () => {
     const close = makeClose();
     render(
       <PresentationScreen
@@ -94,16 +102,72 @@ describe("PresentationScreen (simplified)", () => {
     );
 
     expect(screen.getByAltText(/detective card/i)).toBeInTheDocument();
-    expect(
-      document.querySelector(".textBox.detective-box")
-    ).toBeInTheDocument();
+
+    // Single text box with the 'solo-box' helper class
+    const solo = document.querySelector(".textBox.solo-box");
+    expect(solo).toBeInTheDocument();
+
+    // No ally avatar
     expect(
       document.querySelector(".ally-avatar-circle")
     ).not.toBeInTheDocument();
+
+    // Name styling
     expect(screen.getByText("Sherlock")).toHaveClass(
       "role-name",
       "role-detective"
     );
+  });
+
+  it("murderer WITHOUT ally renders as a single textbox (solo-box) with no right column or chip", () => {
+    const close = makeClose();
+    render(
+      <PresentationScreen
+        actualPlayer={murdererPlayer}
+        ally={null}
+        close={close}
+        // soloAsSingleBox defaults to true; keep explicit for clarity
+        soloAsSingleBox={true}
+      />
+    );
+
+    expect(screen.getByAltText(/murderer card/i)).toBeInTheDocument();
+    // Only one text box present
+    const boxes = document.querySelectorAll(".textBox");
+    expect(boxes.length).toBe(1);
+    expect(boxes[0].classList.contains("solo-box")).toBe(true);
+
+    // No ally chip or chip layout class
+    expect(
+      document.querySelector(".ally-avatar-circle")
+    ).not.toBeInTheDocument();
+    expect(
+      document.querySelector(".textRow.textRow--withChip")
+    ).not.toBeInTheDocument();
+  });
+
+  it("accomplice WITHOUT ally renders as a single textbox (solo-box) with no right column or chip", () => {
+    const close = makeClose();
+    render(
+      <PresentationScreen
+        actualPlayer={accomplicePlayer}
+        ally={null}
+        close={close}
+        soloAsSingleBox={true}
+      />
+    );
+
+    expect(screen.getByAltText(/accomplice card/i)).toBeInTheDocument();
+    const boxes = document.querySelectorAll(".textBox");
+    expect(boxes.length).toBe(1);
+    expect(boxes[0].classList.contains("solo-box")).toBe(true);
+
+    expect(
+      document.querySelector(".ally-avatar-circle")
+    ).not.toBeInTheDocument();
+    expect(
+      document.querySelector(".textRow.textRow--withChip")
+    ).not.toBeInTheDocument();
   });
 
   it("when ally has NO avatar, keeps ally name text but does NOT render an avatar", () => {
@@ -116,13 +180,14 @@ describe("PresentationScreen (simplified)", () => {
       />
     );
 
-    // El texto del aliado sigue
+    // Ally name still appears in text (role-colored strong element)
     const allyStrong =
       screen
         .getAllByText("NoPic")
         .find((el) => el.classList.contains("role-name")) || null;
     expect(allyStrong).toBeInTheDocument();
-    // Pero no hay avatar
+
+    // But no chip avatar is rendered
     expect(
       document.querySelector(".ally-avatar-circle")
     ).not.toBeInTheDocument();
