@@ -262,6 +262,7 @@ describe("GameScreen", () => {
           },
         }),
       });
+      // private ready
       mockWebSocket.onmessage?.({
         data: JSON.stringify({
           event: "privateUpdate",
@@ -283,6 +284,9 @@ describe("GameScreen", () => {
     await waitFor(() =>
       expect(screen.getByTestId("sync-orchestrator")).toBeInTheDocument()
     );
+    expect(
+      screen.getByText("Sync - Player: 456, Public: yes, Private: yes")
+    ).toBeInTheDocument();
   });
 
   it("with public(waiting) + private + gameStarted -> shows Presentation first, then Sync after close()", async () => {

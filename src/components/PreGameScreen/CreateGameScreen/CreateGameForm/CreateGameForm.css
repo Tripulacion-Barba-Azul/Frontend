@@ -301,3 +301,50 @@
   transform: none;
   pointer-events: none;
 }
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .create-game-wrapper {
+    max-width: 100%;
+  }
+  
+  .create-game-form {
+    padding: 1.5rem;
+  }
+  
+  .form-columns {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .create-game-title {
+    font-size: 2rem;
+  }
+  
+  .section-title {
+    font-size: 1.5rem;
+  }
+  
+  .avatar-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .create-game-submit-button {
+    width: 200px;
+    height: 60px;
+    font-size: 20px;
+  }
+  
+  .form-group {
+    min-height: 4rem; /* Smaller on mobile */
+  }
+  
+  .error-container {
+    min-height: 1rem; /* Smaller on mobile */
+  }
+}
