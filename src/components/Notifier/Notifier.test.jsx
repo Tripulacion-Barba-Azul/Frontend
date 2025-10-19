@@ -56,6 +56,13 @@ describe("Notifier Component", () => {
     ],
   };
 
+  // Helper function to check if text content includes multiple fragments
+  const expectTextContent = (textToFind) => {
+    const element = document.querySelector(".notifier-text");
+    expect(element).toBeInTheDocument();
+    expect(element.textContent).toContain(textToFind);
+  };
+
   const wsMock = { addEventListener: vi.fn(), removeEventListener: vi.fn() };
 
   const defaultProps = {
@@ -179,5 +186,444 @@ describe("Notifier Component", () => {
     });
 
     expect(document.querySelector(".notifier-overlay")).not.toBeInTheDocument();
+  });
+
+  it("does not close when clicking on notification content", () => {
+    render(<Notifier {...defaultProps} />);
+
+    simulateWebSocketMessage("notifierNoEffect", {});
+    const content = document.querySelector(".notifier-content");
+    expect(content).toBeInTheDocument();
+
+    act(() => {
+      fireEvent.click(content);
+    });
+
+    // Should still be visible
+    expect(document.querySelector(".notifier-overlay")).toBeInTheDocument();
+  });
+
+  it("handles notifierAndThenThereWasOneMore - player takes own secret and hides it", () => {
+    render(<Notifier {...defaultProps} />);
+
+    simulateWebSocketMessage("notifierAndThenThereWasOneMore", {
+      playerId: 1,
+      secretId: 101,
+      secretName: "You are the murderer",
+      stolenPlayerId: 1,
+      giftedPlayerId: 1,
+    });
+
+    expectTextContent("Alice took one of their revealed secrets");
+    expectTextContent("and hid it");
+    expect(screen.getByAltText("You are the murderer")).toBeInTheDocument();
+  });
+
+  it("handles notifierAndThenThereWasOneMore - player takes own secret and gives to another", () => {
+    render(<Notifier {...defaultProps} />);
+
+    simulateWebSocketMessage("notifierAndThenThereWasOneMore", {
+      playerId: 1,
+      secretId: 101,
+      secretName: "You are the murderer",
+      stolenPlayerId: 1,
+      giftedPlayerId: 2,
+    });
+
+    expectTextContent("Alice took one of their own secrets");
+    expectTextContent("gave it to");
+    expectTextContent("Bob");
+    expectTextContent("Now the secret is hidden");
+  });
+
+  it("handles notifierAndThenThereWasOneMore - player steals from another", () => {
+    render(<Notifier {...defaultProps} />);
+
+    simulateWebSocketMessage("notifierAndThenThereWasOneMore", {
+      playerId: 1,
+      secretId: 102,
+      secretName: "Just a Fantasy",
+      stolenPlayerId: 2,
+      giftedPlayerId: 1,
+    });
+
+    expectTextContent("Alice stole a secret from");
+    expectTextContent("Bob");
+    expectTextContent("Now the secret is hidden");
+  });
+
+  it("handles notifierAndThenThereWasOneMore - player takes and gives back to same person", () => {
+    render(<Notifier {...defaultProps} />);
+
+    simulateWebSocketMessage("notifierAndThenThereWasOneMore", {
+      playerId: 1,
+      secretId: 102,
+      secretName: "Just a Fantasy",
+      stolenPlayerId: 2,
+      giftedPlayerId: 2,
+    });
+
+    expectTextContent("Alice took a secret from");
+    expectTextContent("Bob");
+    expectTextContent("gave it back to them");
+    expectTextContent("Now the secret is hidden");
+  });
+
+  it("handles notifierAndThenThereWasOneMore - player takes from one and gives to third person", () => {
+    render(<Notifier {...defaultProps} />);
+
+    simulateWebSocketMessage("notifierAndThenThereWasOneMore", {
+      playerId: 1,
+      secretId: 102,
+      secretName: "Just a Fantasy",
+      stolenPlayerId: 2,
+      giftedPlayerId: 3,
+    });
+
+    expectTextContent("Alice took a secret from");
+    expectTextContent("Bob");
+    expectTextContent("gave it to");
+    expectTextContent("Charlie");
+    expectTextContent("Now the secret is hidden");
+  });
+
+  it("handles notifierRevealSecret - player reveals own secret", () => {
+    render(<Notifier {...defaultProps} />);
+
+    simulateWebSocketMessage("notifierRevealSecret", {
+      playerId: 1,
+      secretId: 101,
+      selectedPlayerId: 1,
+    });
+
+    expectTextContent("Alice revealed one of their own secrets");
+  });
+
+  it("handles notifierRevealSecret - player reveals another's secret", () => {
+    render(<Notifier {...defaultProps} />);
+
+    simulateWebSocketMessage("notifierRevealSecret", {
+      playerId: 1,
+      secretId: 102,
+      selectedPlayerId: 2,
+    });
+
+    expectTextContent("Alice revealed");
+    expectTextContent("Bob's secret");
+  });
+
+  it("handles notifierRevealSecretForce - player reveals own secret", () => {
+    render(<Notifier {...defaultProps} />);
+
+    simulateWebSocketMessage("notifierRevealSecretForce", {
+      playerId: 1,
+      secretId: 101,
+      selectedPlayerId: 1,
+    });
+
+    expectTextContent("Alice revealed one of their own secrets");
+  });
+
+  it("handles notifierRevealSecretForce - player forces another to reveal", () => {
+    render(<Notifier {...defaultProps} />);
+
+    simulateWebSocketMessage("notifierRevealSecretForce", {
+      playerId: 1,
+      secretId: 102,
+      selectedPlayerId: 2,
+    });
+
+    expectTextContent("Alice told");
+    expectTextContent("Bob");
+    expectTextContent("to reveal a secret");
+  });
+
+  it("handles notifierSatterthwaiteWild - player shows own secret", () => {
+    render(<Notifier {...defaultProps} />);
+
+    simulateWebSocketMessage("notifierSatterthwaiteWild", {
+      playerId: 1,
+      secretId: 101,
+      secretName: "You are the murderer",
+      selectedPlayerId: 1,
+    });
+
+    expectTextContent("Alice showed one of their own secrets");
+    expectTextContent("remains hidden");
+  });
+
+  it("handles notifierSatterthwaiteWild - player steals secret", () => {
+    render(<Notifier {...defaultProps} />);
+
+    simulateWebSocketMessage("notifierSatterthwaiteWild", {
+      playerId: 1,
+      secretId: 102,
+      secretName: "Just a Fantasy",
+      selectedPlayerId: 2,
+    });
+
+    expectTextContent("Alice stole one of");
+    expectTextContent("Bob's secrets");
+    expectTextContent("now hidden");
+  });
+
+  it("handles notifierHideSecret - player hides another's secret", () => {
+    render(<Notifier {...defaultProps} />);
+
+    simulateWebSocketMessage("notifierHideSecret", {
+      playerId: 1,
+      secretId: 102,
+      selectedPlayerId: 2,
+    });
+
+    expectTextContent("Alice hid one of");
+    expectTextContent("Bob's secrets");
+  });
+
+  it("handles notifierHideSecret - player hides own secret", () => {
+    render(<Notifier {...defaultProps} />);
+
+    simulateWebSocketMessage("notifierHideSecret", {
+      playerId: 1,
+      secretId: 101,
+      selectedPlayerId: 1,
+    });
+
+    expectTextContent("Alice hid one of their secrets");
+  });
+
+  it("handles notifierDelayTheMurderersEscape", () => {
+    render(<Notifier {...defaultProps} />);
+
+    simulateWebSocketMessage("notifierDelayTheMurderersEscape", {
+      playerId: 2,
+    });
+
+    expectTextContent("Bob took cards from the discard pile");
+    expectTextContent("put them on top of the deck");
+  });
+
+  it("handles discardEvent", () => {
+    render(<Notifier {...defaultProps} />);
+
+    simulateWebSocketMessage("discardEvent", {
+      playerId: 1,
+      cards: [
+        { id: 1, name: "Hercule Poirot" },
+        { id: 2, name: "Miss Marple" }
+      ],
+    });
+
+    expectTextContent("Alice discarded 2 cards");
+    expect(screen.getByAltText("Hercule Poirot")).toBeInTheDocument();
+    expect(screen.getByAltText("Miss Marple")).toBeInTheDocument();
+  });
+
+  it("handles cardsPlayed with different action types", () => {
+    render(<Notifier {...defaultProps} />);
+
+    // Test "set" action type
+    simulateWebSocketMessage("cardsPlayed", {
+      playerId: 1,
+      cards: [{ id: 1, name: "Hercule Poirot" }],
+      actionType: "set",
+    });
+    expectTextContent("played a set of detectives");
+
+    // Clear and test "event" action type
+    act(() => {
+      document.querySelector(".notifier-overlay")?.click();
+      vi.advanceTimersByTime(300);
+    });
+    
+    simulateWebSocketMessage("cardsPlayed", {
+      playerId: 1,
+      cards: [{ id: 1, name: "Not so Fast!" }],
+      actionType: "event",
+    });
+    expectTextContent("played an event card");
+
+    // Clear and test default action type
+    act(() => {
+      document.querySelector(".notifier-overlay")?.click();
+      vi.advanceTimersByTime(300);
+    });
+    
+    simulateWebSocketMessage("cardsPlayed", {
+      playerId: 1,
+      cards: [{ id: 1, name: "Hercule Poirot" }],
+      actionType: "unknown",
+    });
+    expectTextContent("played cards");
+  });
+
+  it("handles player not found scenarios", () => {
+    render(<Notifier {...defaultProps} />);
+
+    simulateWebSocketMessage("notifierCardsOffTheTable", {
+      playerId: 999, // Non-existent player
+      quantity: 1,
+      selectedPlayerId: 998, // Non-existent player
+    });
+
+    expect(screen.getByText(/Player 999/)).toBeInTheDocument();
+    expect(screen.getByText(/Player 998/)).toBeInTheDocument();
+  });
+
+  it("handles set not found scenarios", () => {
+    render(<Notifier {...defaultProps} />);
+
+    simulateWebSocketMessage("notifierStealSet", {
+      playerId: 1,
+      stolenPlayerId: 2,
+      setId: 999, // Non-existent set
+    });
+
+    expect(screen.getByText(/Set 999/)).toBeInTheDocument();
+  });
+
+  it("handles secret cards with different revealed states", () => {
+    render(<Notifier {...defaultProps} />);
+
+    // Test unrevealed secret
+    simulateWebSocketMessage("notifierHideSecret", {
+      playerId: 1,
+      secretId: 101,
+      selectedPlayerId: 1,
+    });
+
+    const secretImages = document.querySelectorAll('img[src="/Cards/05-secret_front.png"]');
+    expect(secretImages.length).toBeGreaterThan(0);
+  });
+
+  it("handles WebSocket JSON parsing error", () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    render(<Notifier {...defaultProps} />);
+
+    const handler = wsMock.addEventListener.mock.calls.find(
+      (c) => c[0] === "message"
+    )?.[1];
+    
+    if (handler) {
+      act(() => {
+        handler({ data: "invalid json" });
+      });
+    }
+
+    expect(consoleSpy).toHaveBeenCalledWith("Error processing websocket message:", expect.any(Error));
+    consoleSpy.mockRestore();
+  });
+
+  it("handles null wsRef", () => {
+    render(<Notifier {...defaultProps} wsRef={{ current: null }} />);
+    // Should not crash
+  });
+
+  it("handles undefined wsRef", () => {
+    render(<Notifier {...defaultProps} wsRef={null} />);
+    // Should not crash
+  });
+
+  it("handles null publicData", () => {
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    render(<Notifier {...defaultProps} publicData={null} />);
+    
+    simulateWebSocketMessage("notifierCardsOffTheTable", {
+      playerId: 1,
+      quantity: 1,
+      selectedPlayerId: 2,
+    });
+    
+    // Should catch the error but not crash the application
+    expect(consoleSpy).toHaveBeenCalledWith("Error processing websocket message:", expect.any(Error));
+    
+    // No notification should be rendered due to error
+    const notifierElement = document.querySelector(".notifier-text");
+    expect(notifierElement).toBeNull();
+    
+    consoleSpy.mockRestore();
+  });
+
+  it("handles player colors cycling through available colors", () => {
+    const manyPlayers = Array.from({ length: 8 }, (_, i) => ({
+      id: i + 1,
+      name: `Player${i + 1}`,
+      secrets: [],
+      sets: [],
+    }));
+
+    render(<Notifier {...defaultProps} publicData={{ players: manyPlayers }} />);
+
+    simulateWebSocketMessage("notifierCardsOffTheTable", {
+      playerId: 7, // Should cycle back to color index 0
+      quantity: 1,
+      selectedPlayerId: 8, // Should use color index 1  
+    });
+
+    const spans = Array.from(document.querySelectorAll(".notifier-text span"));
+    expect(spans.length).toBeGreaterThanOrEqual(2);
+    
+    // First player (index 6) should use color index 0 (same as player at index 0)
+    // Last player (index 7) should use color index 1 (same as player at index 1)
+    const firstPlayerSpan = spans.find((s) => s.textContent === "Player7");
+    const lastPlayerSpan = spans.find((s) => s.textContent === "Player8");
+    expect(firstPlayerSpan.style.color).toBe("rgb(230, 25, 75)"); // #e6194B
+    expect(lastPlayerSpan.style.color).toBe("rgb(60, 180, 75)"); // #3cb44b
+  });
+
+  it("handles Beresford set name transformation", () => {
+    const dataWithBeresfords = {
+      players: [
+        {
+          id: 1,
+          name: "Alice",
+          secrets: [],
+          sets: [
+            { setId: 1, setName: "Tommy Beresford", cards: [] },
+            { setId: 2, setName: "Tuppence Beresford", cards: [] }
+          ],
+        },
+      ],
+    };
+
+    render(<Notifier {...defaultProps} publicData={dataWithBeresfords} />);
+
+    simulateWebSocketMessage("notifierStealSet", {
+      playerId: 1,
+      stolenPlayerId: 1,
+      setId: 1,
+    });
+
+    expect(screen.getByText(/The Beresfords/)).toBeInTheDocument();
+  });
+
+  it("displays secret cards with proper fallback images", () => {
+    render(<Notifier {...defaultProps} />);
+
+    // Test revealed secret with known name
+    simulateWebSocketMessage("notifierRevealSecret", {
+      playerId: 1,
+      secretId: 101,
+      selectedPlayerId: 1,
+    });
+
+    // Should use the secret map for revealed secrets
+    // The secret should be found in publicData and rendered
+    expect(document.querySelector('img')).toBeInTheDocument();
+  });
+
+  it("renders nothing when no current notification", () => {
+    const { container } = render(<Notifier {...defaultProps} />);
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("cleans up WebSocket listener on unmount", () => {
+    const { unmount } = render(<Notifier {...defaultProps} />);
+    
+    expect(wsMock.addEventListener).toHaveBeenCalledWith("message", expect.any(Function));
+    
+    unmount();
+    
+    expect(wsMock.removeEventListener).toHaveBeenCalledWith("message", expect.any(Function));
   });
 });

@@ -3,20 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
-// --- Constants mock: isolate from real assets and provide safe defaults ---
-vi.mock("./playerBadgeConstants.js", () => ({
-  SIZES: { big: "badge-big", small: "badge-small" },
-  RING_COLORS: {
-    gray: "rgba(128,128,128,0.70)",
-    black: "rgba(0,0,0,0.70)",
-    blue: "rgba(0,0,255,0.70)",
-  },
-  NAME_BG_COLORS: { white: "#ffffff", red: "#ff0000" },
-  AVATAR_MAP: {
-    1: "/Board/Avatars/avatar_barba-azul.png",
-    robot: "/Board/Avatars/avatar_robotito.png",
-  },
-}));
+// No longer mocking constants - use real ones for coverage
 
 // --- Child mocks: keep PlayerBadge focused ---
 // CardCount
@@ -49,7 +36,7 @@ vi.mock("../SetsGrid/SetsGrid.jsx", () => ({
 }));
 
 import PlayerBadge from "./PlayerBadge.jsx";
-import { RING_COLORS, NAME_BG_COLORS } from "./playerBadgeConstants.js";
+import { SIZES, RING_COLORS, NAME_BG_COLORS } from "./playerBadgeConstants.js";
 
 beforeEach(() => {
   lastSetsProps = null;
@@ -74,11 +61,11 @@ describe("PlayerBadge (updated)", () => {
   });
 
   it("applies ring color via CSS var --tw-ring-color on avatar circle", () => {
-    render(<PlayerBadge name="Carol" ringColor="blue" />);
+    render(<PlayerBadge name="Carol" ringColor="emerald" />);
     const img = screen.getByRole("img", { name: "Avatar of Carol" });
     const circle = img.closest(".avatar-circle");
     expect(circle?.style.getPropertyValue("--tw-ring-color")).toBe(
-      RING_COLORS.blue
+      RING_COLORS.emerald
     );
   });
 
@@ -86,12 +73,12 @@ describe("PlayerBadge (updated)", () => {
     const { rerender } = render(<PlayerBadge name="P1" size="small" />);
     let img = screen.getByRole("img", { name: "Avatar of P1" });
     let stack = img.closest(".avatar-stack");
-    expect(stack).toHaveClass("badge-small");
+    expect(stack).toHaveClass(SIZES.small);
 
     rerender(<PlayerBadge name="P1" size="big" />);
     img = screen.getByRole("img", { name: "Avatar of P1" });
     stack = img.closest(".avatar-stack");
-    expect(stack).toHaveClass("badge-big");
+    expect(stack).toHaveClass(SIZES.big);
   });
 
   it("renders CardCount only when numCards is a number >= 0; hides it when null", () => {
@@ -180,5 +167,95 @@ describe("PlayerBadge (updated)", () => {
     expect(stack).toHaveClass("position-down");
     expect(sg.getAttribute("data-pos")).toBe("doubleHorizontal");
     expect(lastSetsProps?.position).toBe("doubleHorizontal");
+  });
+
+  // Test all RING_COLORS constants
+  it("applies all RING_COLORS values correctly", () => {
+    const ringColors = Object.keys(RING_COLORS);
+    
+    ringColors.forEach((colorKey, index) => {
+      render(<PlayerBadge name={`Test${index}`} ringColor={colorKey} />);
+      const img = screen.getByRole("img", { name: `Avatar of Test${index}` });
+      const circle = img.closest(".avatar-circle");
+      expect(circle?.style.getPropertyValue("--tw-ring-color")).toBe(
+        RING_COLORS[colorKey]
+      );
+    });
+  });
+
+  // Test all NAME_BG_COLORS constants
+  it("applies all NAME_BG_COLORS values correctly", () => {
+    const bgColors = Object.keys(NAME_BG_COLORS);
+    
+    bgColors.forEach((colorKey, index) => {
+      render(<PlayerBadge name={`BGTest${index}`} nameBgColor={colorKey} />);
+      const nameBox = screen.getByText(`BGTest${index}`);
+      expect(nameBox.style.getPropertyValue("--name-bg")).toBe(
+        NAME_BG_COLORS[colorKey]
+      );
+    });
+  });
+
+  // Test that constants are properly exported and have expected structure
+  it("validates that constants are properly exported", () => {
+    // Test SIZES object structure
+    expect(SIZES).toBeDefined();
+    expect(typeof SIZES).toBe('object');
+    expect(SIZES.big).toBe("badge-big");
+    expect(SIZES.small).toBe("badge-small");
+
+    // Test RING_COLORS object structure
+    expect(RING_COLORS).toBeDefined();
+    expect(typeof RING_COLORS).toBe('object');
+    expect(Object.keys(RING_COLORS)).toEqual([
+      "emerald", "lime", "amber", "lightAmber", "red", "gray"
+    ]);
+    
+    // Verify all ring colors are valid hex colors
+    Object.values(RING_COLORS).forEach(color => {
+      expect(color).toMatch(/^#[0-9a-f]{6}$/i);
+    });
+
+    // Test NAME_BG_COLORS object structure
+    expect(NAME_BG_COLORS).toBeDefined();
+    expect(typeof NAME_BG_COLORS).toBe('object');
+    expect(Object.keys(NAME_BG_COLORS)).toEqual([
+      "white", "red", "orange"
+    ]);
+    
+    // Verify all bg colors are valid hex colors
+    Object.values(NAME_BG_COLORS).forEach(color => {
+      expect(color).toMatch(/^#[0-9a-f]{6}$/i);
+    });
+  });
+
+  // Test specific color values to ensure they match expected values
+  it("validates specific constant values", () => {
+    expect(RING_COLORS.emerald).toBe("#10b981");
+    expect(RING_COLORS.lime).toBe("#84cc16");
+    expect(RING_COLORS.amber).toBe("#f59e0b");
+    expect(RING_COLORS.lightAmber).toBe("#fbbf24");
+    expect(RING_COLORS.red).toBe("#ef4444");
+    expect(RING_COLORS.gray).toBe("#9ca3af");
+    
+    expect(NAME_BG_COLORS.white).toBe("#f4f1b4");
+    expect(NAME_BG_COLORS.red).toBe("#d12222");
+    expect(NAME_BG_COLORS.orange).toBe("#ff5900");
+  });
+
+  // Test edge cases with constants
+  it("handles missing or invalid color keys gracefully", () => {
+    // Test with undefined ring color - should not crash
+    render(<PlayerBadge name="EdgeTest1" ringColor="nonexistent" />);
+    const img = screen.getByRole("img", { name: "Avatar of EdgeTest1" });
+    const circle = img.closest(".avatar-circle");
+    // Component passes the invalid value directly, so it becomes the CSS value
+    expect(circle?.style.getPropertyValue("--tw-ring-color")).toBe("nonexistent");
+
+    // Test with undefined name bg color - component falls back to white default
+    render(<PlayerBadge name="EdgeTest2" nameBgColor="nonexistent" />);
+    const nameBox = screen.getByText("EdgeTest2");
+    // Component falls back to white when nameBgColor key doesn't exist in NAME_BG_COLORS
+    expect(nameBox.style.getPropertyValue("--name-bg")).toBe(NAME_BG_COLORS.white);
   });
 });
