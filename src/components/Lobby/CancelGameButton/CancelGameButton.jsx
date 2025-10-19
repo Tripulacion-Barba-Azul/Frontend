@@ -6,14 +6,11 @@ function CancelGameButton({ disabled, gameId, actualPlayerId, onCancelGame}){
         if (disabled) return;
         
         try {
-            const response = await fetch(`http://localhost:8000/games/${gameId}/delete`, {
+            const response = await fetch(`http://localhost:8000/games/${gameId}/delete?player_id=${actualPlayerId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    playerId: actualPlayerId
-                })
             });
 
             if (!response.ok) {
