@@ -6,6 +6,7 @@ import RegularDeck from "../RegularDeck/RegularDeck.jsx";
 import ViewMyCards from "../ViewMyCards/ViewMyCards.jsx";
 import ViewMySecrets from "../ViewMySecrets/ViewMySecrets.jsx";
 import DrawDraftCardButton from "../DrawDraftCardButton/DrawDraftCardButton.jsx";
+import BackToHomeButton from "./BackToHomeButton/BackToHomeButton.jsx";
 
 export default function SyncOrchestrator({
   publicData,
@@ -32,7 +33,10 @@ export default function SyncOrchestrator({
       <div className="absolute inset-0">
         {/* Regular Deck */}
         <div className="absolute inset-0">
-          <RegularDeck number={publicData.regularDeckCount} turnStatus={turnStatus} />
+          <RegularDeck
+            number={publicData.regularDeckCount}
+            turnStatus={turnStatus}
+          />
         </div>
 
         {/* Discard Pile */}
@@ -51,20 +55,35 @@ export default function SyncOrchestrator({
         />
 
         {/* View My Cards */}
-        <div className="fixed left-105 bottom-45 z-50 pointer-events-auto">
-          <ViewMyCards cards={privateData.cards} />
+        <div
+          className="fixed z-50 pointer-events-auto"
+          style={{
+            right: "24.2vw",
+            bottom: "7.8vw"
+          }}
+        >          
+        <ViewMyCards cards={privateData.cards} />
         </div>
 
         {/* View My Secrets */}
-        <div className="fixed right-421 bottom-27 z-50 pointer-events-auto">
+        <div
+          className="fixed z-50 pointer-events-auto"
+          style={{
+            right: "87.9271vw",
+            bottom: "4.1vw"
+          }}
+        >
           <ViewMySecrets secrets={privateData.secrets} />
         </div>
 
-        {/* Draw Draft Cards  */}
+        {/* Draw Draft Cards */}
         <DrawDraftCardButton
           cards={publicData.draftCards}
           turnStatus={turnStatus}
         />
+
+        {/* Back to home button */}
+        <BackToHomeButton />
       </div>
     </div>
   );

@@ -110,6 +110,7 @@ export default function CreateGameForm() {
       const response = await fetch("http://localhost:8000/games", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: 'include',
         body: JSON.stringify(requestData),
       });
 

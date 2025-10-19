@@ -14,14 +14,11 @@ export default function AbandonGameButton({ isOwner, playerId, gameId }) {
     setLoading(true);
 
     try {
-      const response = await fetch(`http://localhost:8000/games/${gameId}/exit`, {
+      const response = await fetch(`http://localhost:8000/games/${gameId}/exit?player_id=${playerId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          playerId: parseInt(playerId),
-        }),
       });
 
       if (!response.ok) {

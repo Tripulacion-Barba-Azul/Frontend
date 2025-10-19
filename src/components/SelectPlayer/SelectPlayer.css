@@ -1,107 +1,106 @@
 .selectplayer-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 200;
-  }
-  
-  .selectplayer-content {
-    background: #1e1e1e;
-    color: white;
-    border-radius: 18px;
-    padding: 30px 75px;
-    width: 50vw;              
-    max-width: 1200px;        
-    max-height: 90vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    box-shadow: 0 0 35px rgba(0, 0, 0, 0.6);
-  }
-  
-  .selectplayer-text {
-    margin-bottom: 24px;
-    color: #f4e1a3;
-    text-align: center;
-    font-size: 2rem;
-    font-family: "Metropolis";
-  }
-  
-  .selectplayer-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 30px;
-    width: 100%;
-    justify-content: center; /* This will center the items */
-    align-items: center;
-    margin-bottom: 30px;
-  }
-  
-  .selectplayer-item {
-    background: #2a2a2a;
-    border-radius: 12px;
-    padding: 12px;
-    text-align: center;
-    cursor: pointer;
-    width: 200px; /* Fixed width */
-    transition: background 0.15s, transform 0.15s;
-    /* Remove max-width since we're using fixed width */
-  }
-  
-  .selectplayer-item:hover {
-    background: #3a3a3a;
-    transform: scale(1.30);
-  }
-  
-  .selectplayer-item.selected {
-    outline: 3px solid #f4e1a3;
-    background: #333;
-    transform: scale(1.30);
-  }
-  
-  .selectplayer-avatar {
-    width: 100%;
-    max-width: 160px;
-    height: auto;
-    max-height: 160px;
-    aspect-ratio: 1 / 1;
-    border-radius: 50%;
-    object-fit: cover;
-    display: block;
-    margin: 0 auto;
-  }
-  
-  .selectplayer-name {
-    margin-top: 8px;
-    color: #f4e1a3;
-    font-size: 0.85rem;
-    font-family: "Metropolis";
-    text-align: center;
-    word-break: break-word;
-  }
-  
-  .selectplayer-confirm {
-    background-color: rgb(163, 34, 34);
-    border: none;
-    color: #f4e1a3;
-    padding: 12px 24px;
-    font-size: 1.1rem;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: background 0.3s;
-  }
-  
-  .selectplayer-confirm:disabled {
-    background-color: rgba(163, 34, 34, 0.35);
-    color: rgba(244, 225, 163, 0.3);
-    cursor: not-allowed;
-  }
-  
-  .selectplayer-confirm:hover:not(:disabled) {
-    background: rgb(115, 23, 23);
-  }
-  
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.selectplayer-content {
+  background: #1e1e1e;
+  color: white;
+  border-radius: 0.9375vw;        /* 18px -> 0.9375vw */
+  padding: 1.5625vw 3.9063vw;     /* 30px 75px -> vw */
+  width: 50vw;
+  max-width: 62.5vw;              /* 1200px -> 62.5vw */
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 0 1.8229vw rgba(0, 0, 0, 0.6); /* 35px -> 1.8229vw */
+}
+
+.selectplayer-text {
+  margin-bottom: 1.25vw;           /* 24px -> 1.25vw */
+  color: #f4e1a3;
+  text-align: center;
+  font-size: 2.0833vw;             /* 40px -> 2.0833vw */
+  font-family: "Metropolis";
+}
+
+.selectplayer-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5625vw;                   /* 30px -> 1.5625vw */
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.5625vw;         /* 30px -> 1.5625vw */
+}
+
+.selectplayer-item {
+  background: #2a2a2a;
+  border-radius: 0.625vw;           /* 12px -> 0.625vw */
+  padding: 0.625vw;                 /* 12px -> 0.625vw */
+  text-align: center;
+  cursor: pointer;
+  width: 10.4167vw;                 /* 200px -> 10.4167vw */
+  transition: background 0.15s, transform 0.15s;
+}
+
+.selectplayer-item:hover {
+  background: #3a3a3a;
+  transform: scale(1.3);
+}
+
+.selectplayer-item.selected {
+  outline: 0.1563vw solid #f4e1a3; /* 3px -> 0.1563vw */
+  background: #333;
+  transform: scale(1.3);
+}
+
+.selectplayer-avatar {
+  width: 8.3333vw;                  /* 160px -> 8.3333vw */
+  max-width: 8.3333vw;              /* 160px -> 8.3333vw */
+  height: auto;
+  max-height: 8.3333vw;             /* 160px -> 8.3333vw */
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 0 auto;
+}
+
+.selectplayer-name {
+  margin-top: 0.4167vw;             /* 8px -> 0.4167vw */
+  color: #f4e1a3;
+  font-size: 0.8854vw;              /* 17px -> 0.8854vw */
+  font-family: "Metropolis";
+  text-align: center;
+  word-break: break-word;
+}
+
+.selectplayer-confirm {
+  background-color: rgb(163, 34, 34);
+  border: none;
+  color: #f4e1a3;
+  padding: 0.625vw 1.25vw;           /* 12px 24px -> vw */
+  font-family: "Metropolis";
+  font-size: 0.8729vw;               /* 11px -> 0.5729vw */
+  border-radius: 0.5208vw;           /* 10px -> 0.5208vw */
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.selectplayer-confirm:disabled {
+  background-color: rgba(163, 34, 34, 0.35);
+  color: rgba(244, 225, 163, 0.3);
+  cursor: not-allowed;
+}
+
+.selectplayer-confirm:hover:not(:disabled) {
+  background: rgb(115, 23, 23);
+}

@@ -1,0 +1,32 @@
+.BackToHomeButton {
+  position: fixed;
+  top: 0.5vw; /* 24px → 24/1920*100 */
+  left: 0.5vw; /* 24px */
+  z-index: 60;
+  cursor: pointer;
+  user-select: none;
+  pointer-events: auto;
+  margin: 0;
+  transition: background-color 0.25s ease, transform 0.2s ease,
+    box-shadow 0.25s ease;
+}
+
+.BackToHomeButton__icon {
+  height: 3.65vw; 
+  object-fit: contain;
+}
+
+.BackToHomeButton__icon:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 8px #f6e4aae1)
+}
+
+.BackToHomeButton__icon:active {
+  transform: scale(0.95);
+  filter: drop-shadow(0 0 8px #f6e4aae1)
+}
+
+.BackToHomeButton__icon:focus-visible {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 8px #f6e4aae1)
+}
