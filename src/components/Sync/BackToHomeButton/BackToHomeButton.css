@@ -1,47 +1,32 @@
-/* Floating button placed at top-left of the table */
 .BackToHomeButton {
   position: fixed;
-  top: 24px;
-  left: 24px;
+  top: 0.5vw; /* 24px → 24/1920*100 */
+  left: 0.5vw; /* 24px */
   z-index: 60;
-
-  /* Visual style aligned with TitleScreen buttons */
-  width: 11.46vw; /* ≈220px on 1920px width */
-  height: 4.2vw; /* ≈70px on 1920px width */
-  min-width: 180px; /* guard for small viewports */
-  min-height: 56px;
-
-  padding: 0;
-  color: #f4e1a3;
-  background-color: rgb(163, 34, 34);
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  border-radius: 0.63vw; /* ≈12px */
   cursor: pointer;
-  font-size: 1.5vw;
-  line-height: 1;
   user-select: none;
   pointer-events: auto;
   margin: 0;
-  font-family: "Metropolis", sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-
   transition: background-color 0.25s ease, transform 0.2s ease,
     box-shadow 0.25s ease;
 }
 
-.BackToHomeButton:hover {
-  background-color: rgb(140, 25, 25);
+.BackToHomeButton__icon {
+  height: 3.65vw; 
+  object-fit: contain;
+}
+
+.BackToHomeButton__icon:hover {
   transform: scale(1.05);
-  box-shadow: 0 0 2.6vw #f4e1a3cc; /* ≈50px glow */
+  filter: drop-shadow(0 0 8px #f6e4aae1)
 }
 
-.BackToHomeButton:active {
-  transform: scale(0.97);
-  box-shadow: 0 0 2.6vw #f4e1a3cc;
+.BackToHomeButton__icon:active {
+  transform: scale(0.95);
+  filter: drop-shadow(0 0 8px #f6e4aae1)
 }
 
-.BackToHomeButton:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.6);
-  outline-offset: 3px;
+.BackToHomeButton__icon:focus-visible {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 8px #f6e4aae1)
 }

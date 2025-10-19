@@ -17,7 +17,7 @@ export default function OwnGamesButton() {
   return (
     <div>
       <button onClick={handleClick} className="OwnGamesButton">
-        My Games
+         My Games 
       </button>
     </div>
   );

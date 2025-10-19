@@ -1,14 +1,14 @@
 /* Same style language as Create/Join buttons */
 .OwnGamesButton {
-  width: 16.46vw; /* 220px */
-  height: 4.2vw; /* 70px */
+  width: 11vw; /* 220px */
+  height: 3vw; /* 70px */
   padding: 0;
-  color: #f4e1a3;
-  background-color: rgb(163, 34, 34);
+  color: #000;
+  background-color: #f4e1a3;
   border: 1px solid rgba(0, 0, 0, 0.2);
   border-radius: 0.63vw; /* 12px */
   cursor: pointer;
-  font-size: 1.5vw;
+  font-size: 1.3vw;
   user-select: none;
   pointer-events: auto;
   margin: 0.36vw; /* 7px */

@@ -9,16 +9,17 @@ import { useNavigate } from "react-router-dom";
 export default function BackToHomeButton() {
   const navigate = useNavigate();
   const handleClick = () => navigate("/");
-
   return (
     <button
       type="button"
       className="BackToHomeButton"
       onClick={handleClick}
-      aria-label="Back to home"
-      title="Back to home"
     >
-      Back to home
+      <img 
+        src="/Icons/exit.png" 
+        alt="" 
+        className="BackToHomeButton__icon"
+      />
     </button>
   );
 }
