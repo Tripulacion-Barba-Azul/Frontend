@@ -3,14 +3,19 @@
 /* Root container for the badge */
 .player-badge {
   /* Extra vertical separation to avoid overlay shadow overlap */
-  @apply flex flex-col items-center gap-3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.625vw; /* gap-3 -> 12px */
 }
 
 /* Name plate displayed above the avatar */
 /* Modern name plate with edge transparency */
 .player-name-box {
-  @apply font-medium leading-none px-4 py-2;
-  background: 
+  font-weight: 500; /* font-medium */
+  line-height: 1; /* leading-none */
+  padding: 0.417vw 0.833vw; /* px-4 py-2 -> 8px 16px */
+  background:
     linear-gradient(
       90deg,
       transparent 0%,
@@ -23,24 +28,22 @@
       rgba(255, 255, 255, 0.4) 0%,
       transparent 70%
     );
-  
   font-family: "Metropolis";
   font-weight: 200;
   color: #1a1a1a;
-  
+  font-size: 0.8vw;
   position: relative;
   z-index: 10;
-  top: 2px;
-
+  top: 0.15vw;
+  max-width: 11.9vw;
+  height: 1.65vw;
   transition: all 0.2s ease-in-out;
-
   /* --- Correct text shadows --- */
   text-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.25),   /* subtle depth */
-    0 2px 4px rgba(0, 0, 0, 0.15),   /* diffuse softness */
-    0 0 6px rgba(78, 26, 21, 0.481); /* your warm glow tone (#f4e1a3) */
+    0 0.052vw 0.104vw rgba(0, 0, 0, 0.25), /* 1px,2px */
+    0 0.104vw 0.208vw rgba(0, 0, 0, 0.15), /* 2px,4px */
+    0 0 0.313vw rgba(78, 26, 21, 0.481); /* 6px glow */
 }
-
 
 /* ===== Avatar + overlays stack ===== */
 .avatar-stack {
@@ -56,13 +59,9 @@
 
   /* Ring color is set inline via style={{ ["--tw-ring-color"]: ringCol }} */
   --tw-ring-color: rgb(51 65 85 / 0.7);
-
-  /* Ring thickness */
-  --ring-width: 5px;
-
-  /* Subtle colored glow (fallback values) */
-  --ring-glow-blur: 30px;
-  --ring-glow-spread: 15px;
+  --ring-width: 0.26vw; /* 5px */
+  --ring-glow-blur: 1.563vw; /* 30px */
+  --ring-glow-spread: 0.781vw; /* 15px */
 
   /* Thin black inner edge between the image and the ring */
   border: 1px solid #000;
@@ -110,23 +109,27 @@
   }
 }
 
-/* Sizes applied to .avatar-stack wrapper */
 .badge-small {
-  @apply w-28 h-28 text-lg;
-} /* 112x112 */
-.badge-big {
-  @apply w-38 h-38 text-lg;
-} /* 152x152 */
-
-/* Avatar image fills the circle */
-.avatar-img {
-  @apply w-full h-full object-cover;
+  width: 5.833vw; /* 112px */
+  height: 5.833vw;
+  font-size: 1.146vw; /* text-lg approx 22px */
 }
 
-/* Placeholder style (when no image source is provided) */
+.badge-big {
+  width: 7.917vw; /* 152px */
+  height: 7.917vw;
+  font-size: 1.146vw;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .avatar-placeholder {
-  @apply select-none;
-  color: rgb(51 65 85 / 0.8);
+  user-select: none;
+  color: rgba(51,65,85,0.8);
 }
 
 /* ===== Overlays controlled by CSS variables ===== */
@@ -164,9 +167,6 @@
   /* remove width/height: let content size naturally */
   width: max-content;
   height: max-content;
-
-  /* optional small gap */
-  margin-left: 16px;  /* spacing from avatar */
 }
 
 /* ===== POSITION PRESETS (hardcoded offsets) =====
@@ -175,81 +175,55 @@
 /* ----- SMALL (112x112) ----- */
 .avatar-stack.badge-small.position-right {
   /* CardCount: bottom-right (slightly outside) */
-  --cc-right: 20px;
-  --cc-bottom: -75px;
+  --cc-left: 2vw;
+  --cc-bottom: -3.8vw;
 
   /* Secrets: top-right */
-  --sec-right: -73px;
-  --sec-top: -70px;
+  --sec-right: -3.8vw;
+  --sec-top: -3.73vw;
 
-  /* SetsGrid: to the right side of the avatar */
-  --sets-left: 100%;      /* anchor to right edge */
-  --sets-top: 0;
-  --sets-transform: translateX(16px);
 }
 
 .avatar-stack.badge-small.position-left {
   /* CardCount: bottom-left */
-  --cc-left: 40px;
-  --cc-bottom: -72px;
+  --cc-left: 2vw;
+  --cc-bottom: -3.8vw;
 
   /* Secrets: top-left */
-  --sec-left: -73px;
-  --sec-top: -70px;
+  --sec-left: -3.8vw;
+  --sec-top: -3.73vw;
 
-  /* SetsGrid: to the left side of the avatar */
-  --sets-right: 100%;     /* anchor to left edge */
-  --sets-top: 0;
-  --sets-transform: translateX(-16px);
 }
 
 .avatar-stack.badge-small.position-up {
   /* CardCount: centered above (approx) */
-  --cc-left: 125px;
-  --cc-top: 25px;
+  --cc-left: 7vw;
+  --cc-top: 1.7vw;
 
   /* Secrets: top-right to avoid overlap */
-  --sec-right: 135px;
-  --sec-top: -70px;
+  --sec-right: 7.1vw;
+  --sec-top: -3.7vw;
 
-  /* SetsGrid: above the avatar (left-aligned) */
-  --sets-left: 50%;       /* center horizontally */
-  --sets-bottom: 100%;
-  --sets-transform: translateX(-50%) translateY(-16px);
-}
-
-/* ----- BIG (152x152) ----- */
-.avatar-stack.badge-big.position-down {
-  /* SetsGrid: below the avatar */
-  --sets-left: 50%;       /* center horizontally */
-  --sets-top: 100%;
-  --sets-transform: translateX(-50%) translateY(16px);
 }
 
 .avatar-stack.position-right .badge-sets {
-  top: -30%;
-  left: -100%;
-  margin-left: 16px;
+  top: -1.8vw;
+  left: -5.2vw;
 }
 
 .avatar-stack.position-left .badge-sets {
-  top: -30%;
-  left: 100%;
-  margin-right: 16px;
+  top: -1.8vw;
+  left: 7.2vw;
 }
 
 .avatar-stack.position-up .badge-sets {
-  top: 100%;
-  left: 40%;
-  transform: translateX(-50%);
-  margin-bottom: 16px;
+  top: 5.8vw;
+  left: -2.7vw;
 }
 
 .avatar-stack.position-down .badge-sets {
-  top: -90%;
-  left: 450%;
-  transform: translateX(-50%);
-  margin-top: 16px;
+  top: -6vw;
+  left: 29.7vw;
 }
 
 /* ===== Social Disgrace Styles =====

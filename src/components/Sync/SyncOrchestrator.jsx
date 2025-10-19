@@ -51,12 +51,24 @@ export default function SyncOrchestrator({
         />
 
         {/* View My Cards */}
-        <div className="fixed left-105 bottom-45 z-50 pointer-events-auto">
-          <ViewMyCards cards={privateData.cards} />
+        <div
+          className="fixed z-50 pointer-events-auto"
+          style={{
+            right: "24.2vw",
+            bottom: "7.8vw"
+          }}
+        >          
+        <ViewMyCards cards={privateData.cards} />
         </div>
 
         {/* View My Secrets */}
-        <div className="fixed right-421 bottom-27 z-50 pointer-events-auto">
+        <div
+          className="fixed z-50 pointer-events-auto"
+          style={{
+            right: "87.9271vw",
+            bottom: "4.1vw"
+          }}
+        >
           <ViewMySecrets secrets={privateData.secrets} />
         </div>
 

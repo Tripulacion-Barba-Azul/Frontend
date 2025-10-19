@@ -1,116 +1,103 @@
 .notifier-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.3);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 100000;
-    cursor: pointer;
-    animation: fadeIn 0.15s ease;
-  }
-  
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100000;
+  cursor: pointer;
+  animation: fadeIn 0.15s ease;
+}
+
+.notifier-content {
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 1.042vw; /* 20px */
+  padding: 2.031vw; /* 39px */
+  max-width: 40.625vw; /* 780px */
+  max-height: 80vh;
+  text-align: center;
+  cursor: default;
+  box-shadow: 0 0 1.563vw rgba(0, 0, 0, 0.3); /* 30px */
+  animation: fadeIn 0.15s ease; /* <-- change this */
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.notifier-text {
+  color: #f4e1a3;
+  font-size: 1.510vw; /* 1.82rem -> 29.12px */
+  font-weight: bold;
+  margin-bottom: 1.354vw; /* 26px */
+  font-family: "Metropolis", sans-serif;
+  line-height: 1.4;
+}
+
+.notifier-set {
+  margin-bottom: 1.354vw; /* 26px */
+  justify-content: center;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.notifier-set img {
+  width: 5.417vw; /* 104px */
+  height: 5.417vw; /* 104px */
+  border-radius: 0.521vw; /* 10px */
+  object-fit: cover;
+}
+
+.notifier-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.016vw; /* 19.5px */
+  margin-bottom: 1.354vw; /* 26px */
+}
+
+.notifier-card {
+  width: 8.125vw; /* 156px */
+  aspect-ratio: 2 / 3;
+}
+
+.notifier-card img {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.521vw; /* 10px */
+  box-shadow: 0 0.104vw 0.417vw rgba(0, 0, 0, 0.4); /* 0 2px 8px */
+  object-fit: cover;
+}
+
+.notifier-hint {
+  color: #d1caa0;
+  font-size: 0.651vw; /* 0.78rem -> 12.48px */
+  font-style: italic;
+  opacity: 0.8;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
   .notifier-content {
-    background: rgba(0, 0, 0, 0.7);
-    border-radius: 20px;
-    padding: 39px;
-    max-width: 780px;
-    max-height: 80vh;
-    text-align: center;
-    cursor: default;
-    box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
-    animation: slideIn 0.15s ease;
-  }
-  
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-  
-  @keyframes slideIn {
-    from { 
-      opacity: 0;
-      transform: translateY(-20px) scale(0.95);
-    }
-    to { 
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
+    margin: 1.354vw; /* 26px */
+    padding: 1.354vw; /* 26px */
   }
   
   .notifier-text {
-    color: #f4e1a3;
-    font-size: 1.82rem; /* 1.4rem * 1.3 = 1.82rem */
-    font-weight: bold;
-    margin-bottom: 26px; /* 20px * 1.3 = 26px */
-    font-family: "Metropolis", sans-serif;
-    line-height: 1.4;
-  }
-  
-  .notifier-set {
-    margin-bottom: 26px; /* 20px * 1.3 = 26px */
-    justify-content: center;
-    display: flex;
-    flex-wrap: wrap;
-  }
-  
-  .notifier-set img {
-    width: 104px; /* 80px * 1.3 = 104px */
-    height: 104px; /* 80px * 1.3 = 104px */
-    border-radius: 10px; /* 8px * 1.3 ≈ 10px */
-    object-fit: cover;
-  }
-  
-  .notifier-cards {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 19.5px; /* 15px * 1.3 = 19.5px */
-    margin-bottom: 26px; /* 20px * 1.3 = 26px */
+    font-size: 1.302vw; /* 1.56rem -> 24.96px */
   }
   
   .notifier-card {
-    width: 156px; /* 120px * 1.3 = 156px */
-    aspect-ratio: 2 / 3;
+    width: 6.771vw; /* 130px */
   }
   
-  .notifier-card img {
-    width: 100%;
-    height: 100%;
-    border-radius: 10px; /* 8px * 1.3 ≈ 10px */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    object-fit: cover;
+  .notifier-set img {
+    width: 4.063vw; /* 78px */
+    height: 4.063vw; /* 78px */
   }
-  
-  .notifier-hint {
-    color: #d1caa0;
-    font-size: 0.78rem; /* 0.6rem * 1.3 = 0.78rem */
-    font-style: italic;
-    opacity: 0.8;
-  }
-  
-  /* Responsive design */
-  @media (max-width: 768px) {
-    .notifier-content {
-      margin: 26px; /* 20px * 1.3 = 26px */
-      padding: 26px; /* 20px * 1.3 = 26px */
-    }
-    
-    .notifier-text {
-      font-size: 1.56rem; /* 1.2rem * 1.3 = 1.56rem */
-    }
-    
-    .notifier-card {
-      width: 130px; /* 100px * 1.3 = 130px */
-    }
-    
-    .notifier-set img {
-      width: 78px; /* 60px * 1.3 = 78px */
-      height: 78px; /* 60px * 1.3 = 78px */
-    }
-  }
-  
- 
+}
