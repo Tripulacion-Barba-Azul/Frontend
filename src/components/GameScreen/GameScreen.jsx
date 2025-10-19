@@ -19,8 +19,9 @@ export default function GameScreen() {
   const [started, setStarted] = useState(false);
   const [refreshLobby, setRefreshLobby] = useState(0);
 
-  // NEW: has the presentation been shown/acknowledged?
+  // Has the presentation been shown/acknowledged
   const [gamePresented, setGamePresented] = useState(false);
+  const [presentationNeeded, setPresentationNeeded] = useState(false);
 
   const [publicData, setPublicData] = useState(null);
   const [privateData, setPrivateData] = useState(null);
@@ -129,6 +130,8 @@ export default function GameScreen() {
     } else {
       presentationAlly = null;
     }
+
+    setPresentationNeeded(!publicData.presentationShown && !gamePresented);
   }
 
   return (
@@ -143,7 +146,7 @@ export default function GameScreen() {
             persistKey="bgm-muted" // shared preference across sessions
           />
 
-          {!gamePresented ? (
+          {presentationNeeded ? (
             <PresentationScreen
               actualPlayer={presentationActualPlayer}
               ally={presentationAlly}
@@ -200,6 +203,7 @@ export default function GameScreen() {
 // payload: {
 //   actionStatus: "blocked" | "unblocked",
 //   gameStatus: "waiting" | "in_progress" | "finished",
+//   presentationShown: bool,
 //   regularDeckCount: int,
 //   discardPileTop: { id: int, name: string },
 //   draftCards: [{ id: int, name: string }],
