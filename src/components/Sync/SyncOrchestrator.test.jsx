@@ -1,3 +1,4 @@
+// src/Sync/SyncOrchestrator.test.jsx
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, cleanup } from "@testing-library/react";
@@ -65,7 +66,9 @@ vi.mock("../ViewMySecrets/ViewMySecrets.jsx", () => ({
 vi.mock("../DrawDraftCardButton/DrawDraftCardButton.jsx", () => ({
   default: (p) => DrawDraftCardButtonMock(p),
 }));
-vi.mock("../BackToHomeButton/BackToHomeButton.jsx", () => ({
+
+// IMPORTANT: path matches the component import in SyncOrchestrator.jsx
+vi.mock("./BackToHomeButton/BackToHomeButton.jsx", () => ({
   default: () => BackToHomeButtonMock(),
 }));
 

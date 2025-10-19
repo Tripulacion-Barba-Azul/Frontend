@@ -19,9 +19,6 @@ const OWN_PAIRS_COOKIE = "playersGames";
 // Your existing endpoint to fetch games (we keep it as-is)
 const apiGamesList = "http://localhost:8000/games?activeGames=true";
 
-// Debug tag for cleaner logs
-const DTAG = "[GameOwnMatchesList]";
-
 export default function GameOwnMatchesList() {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,30 +27,17 @@ export default function GameOwnMatchesList() {
 
   const navigate = useNavigate();
 
-  // -- Fetch & filter --------------------------------------------------------
   const fetchMatches = async (isRefresh = false) => {
-    const startedAt = new Date();
-    console.log(
-      `${DTAG} fetchMatches(${isRefresh ? "refresh" : "initial"}) start`,
-      { url: apiGamesList, at: startedAt.toISOString() }
-    );
-
     try {
       isRefresh ? setRefreshing(true) : setLoading(true);
 
-      // Request
       const res = await fetch(apiGamesList, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
-      console.log(`${DTAG} response`, { status: res.status, ok: res.ok });
-
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      // Parse
       const data = await res.json();
-      console.log(`${DTAG} raw games from API`, data);
 
       // Map server payload -> UI model; keep gameStatus for filtering
       const all = (Array.isArray(data) ? data : []).map((game) => ({
@@ -65,60 +49,26 @@ export default function GameOwnMatchesList() {
         currentPlayers: game.actualPlayers,
         gameStatus: game.gameStatus,
       }));
-      console.log(`${DTAG} mapped games`, { count: all.length, all });
 
       // Cookie -> filter to own + inProgress and build gameId->playerId map
       const cookieRaw = getCookie(OWN_PAIRS_COOKIE);
-      const cookieSnippet =
-        typeof cookieRaw === "string" ? cookieRaw.slice(0, 200) : cookieRaw;
-      console.log(`${DTAG} cookie read`, {
-        name: OWN_PAIRS_COOKIE,
-        length: cookieRaw?.length ?? 0,
-        snippet: cookieSnippet,
-      });
-
-      const map = parseOwnPairsMap(cookieRaw);
-      const entries = Array.from(map.entries());
-      console.log(`${DTAG} ownPairsMap`, {
-        size: map.size,
-        entries: entries.slice(0, 20), // avoid huge logs
-      });
-
       const ownActive = filterOwnInProgress(all, cookieRaw);
-      console.log(`${DTAG} filtered own+inProgress`, {
-        count: ownActive.length,
-        ids: ownActive.map((g) => g.id),
-        items: ownActive,
-      });
-
       setMatches(ownActive);
-      setOwnPairsMap(map);
-    } catch (err) {
-      console.error(`${DTAG} fetch error`, err);
+      setOwnPairsMap(parseOwnPairsMap(cookieRaw));
+    } catch {
       setMatches([]);
       setOwnPairsMap(new Map());
     } finally {
       isRefresh ? setRefreshing(false) : setLoading(false);
-      const finishedAt = new Date();
-      console.log(`${DTAG} fetchMatches end`, {
-        durationMs: finishedAt.getTime() - startedAt.getTime(),
-      });
     }
   };
-  // -------------------------------------------------------------------------
 
-  // Initial mount
   useEffect(() => {
-    console.log(`${DTAG} mount`);
     fetchMatches(false);
-    return () => console.log(`${DTAG} unmount`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleRefresh = () => {
-    console.log(`${DTAG} Refresh clicked`);
-    fetchMatches(true);
-  };
+  const handleRefresh = () => fetchMatches(true);
 
   // Navigate to /game/{gameId}?playerId={playerId}
   const handleOpenMatch = (matchId) => {
@@ -128,19 +78,10 @@ export default function GameOwnMatchesList() {
       typeof pid === "number" && Number.isFinite(pid)
         ? `/game/${gid}?playerId=${pid}`
         : `/game/${gid}`;
-
-    console.log(`${DTAG} Resume click`, {
-      matchId,
-      resolvedGameId: gid,
-      playerIdFromCookie: pid,
-      navigateTo: target,
-    });
-
     navigate(target);
   };
 
   if (loading) {
-    console.log(`${DTAG} render: loading`);
     return (
       <div
         className="ownmatches-loading"
@@ -154,8 +95,6 @@ export default function GameOwnMatchesList() {
       </div>
     );
   }
-
-  console.log(`${DTAG} render: ready`, { matchCount: matches.length });
 
   return (
     <div
