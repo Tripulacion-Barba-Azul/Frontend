@@ -3,14 +3,19 @@
 /* Root container for the badge */
 .player-badge {
   /* Extra vertical separation to avoid overlay shadow overlap */
-  @apply flex flex-col items-center gap-3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.625vw; /* gap-3 -> 12px */
 }
 
 /* Name plate displayed above the avatar */
 /* Modern name plate with edge transparency */
 .player-name-box {
-  @apply font-medium leading-none px-4 py-2;
-  background: 
+  font-weight: 500; /* font-medium */
+  line-height: 1; /* leading-none */
+  padding: 0.417vw 0.833vw; /* px-4 py-2 -> 8px 16px */
+  background:
     linear-gradient(
       90deg,
       transparent 0%,
@@ -23,24 +28,22 @@
       rgba(255, 255, 255, 0.4) 0%,
       transparent 70%
     );
-  
   font-family: "Metropolis";
   font-weight: 200;
   color: #1a1a1a;
-  
+  font-size: 0.8vw;
   position: relative;
   z-index: 10;
-  top: 2px;
-
+  top: 0.15vw;
+  max-width: 11.9vw;
+  height: 1.65vw;
   transition: all 0.2s ease-in-out;
-
   /* --- Correct text shadows --- */
   text-shadow:
     0 0.052vw 0.104vw rgba(0, 0, 0, 0.25), /* 1px,2px */
     0 0.104vw 0.208vw rgba(0, 0, 0, 0.15), /* 2px,4px */
-    0 0 0.313vw rgba(78, 26, 21, 0.481);   /* 6px glow */
+    0 0 0.313vw rgba(78, 26, 21, 0.481); /* 6px glow */
 }
-
 
 /* ===== Avatar + overlays stack ===== */
 .avatar-stack {
@@ -164,47 +167,65 @@
   /* remove width/height: let content size naturally */
   width: max-content;
   height: max-content;
-
-  /* optional small gap */
-  margin-left: 16px;  /* spacing from avatar */
 }
 
+/* ===== POSITION PRESETS (hardcoded offsets) =====
+   Tune the pixel values to match your layout needs.
+*/
+/* ----- SMALL (112x112) ----- */
 .avatar-stack.badge-small.position-right {
-  --cc-right: 1.042vw;  /* 20px */
-  --cc-bottom: -3.906vw; /* -75px */
-  --sec-right: -3.802vw; /* -73px */
-  --sec-top: -3.646vw;   /* -70px */
-  --sets-left: 100%;
-  --sets-top: 0;
-  --sets-transform: translateX(0.833vw); /* 16px */
+  /* CardCount: bottom-right (slightly outside) */
+  --cc-left: 2vw;
+  --cc-bottom: -3.8vw;
+
+  /* Secrets: top-right */
+  --sec-right: -3.8vw;
+  --sec-top: -3.73vw;
+
 }
 
 .avatar-stack.badge-small.position-left {
-  --cc-left: 2.083vw;   /* 40px */
-  --cc-bottom: -3.75vw; /* -72px */
-  --sec-left: -3.802vw; /* -73px */
-  --sec-top: -3.646vw;
-  --sets-right: 100%;
-  --sets-top: 0;
-  --sets-transform: translateX(-0.833vw);
+  /* CardCount: bottom-left */
+  --cc-left: 2vw;
+  --cc-bottom: -3.8vw;
+
+  /* Secrets: top-left */
+  --sec-left: -3.8vw;
+  --sec-top: -3.73vw;
+
 }
 
 .avatar-stack.badge-small.position-up {
-  --cc-left: 6.510vw; /* 125px */
-  --cc-top: 1.302vw;  /* 25px */
-  --sec-right: 7.031vw; /* 135px */
-  --sec-top: -3.646vw;
-  --sets-left: 50%;
-  --sets-bottom: 100%;
-  --sets-transform: translateX(-50%) translateY(-0.833vw);
+  /* CardCount: centered above (approx) */
+  --cc-left: 7vw;
+  --cc-top: 1.7vw;
+
+  /* Secrets: top-right to avoid overlap */
+  --sec-right: 7.1vw;
+  --sec-top: -3.7vw;
+
 }
 
-/* Big badge example */
-.avatar-stack.badge-big.position-down {
-  --sets-left: 50%;
-  --sets-top: 100%;
-  --sets-transform: translateX(-50%) translateY(0.833vw);
+.avatar-stack.position-right .badge-sets {
+  top: -1.8vw;
+  left: -5.2vw;
 }
+
+.avatar-stack.position-left .badge-sets {
+  top: -1.8vw;
+  left: 7.2vw;
+}
+
+.avatar-stack.position-up .badge-sets {
+  top: 5.8vw;
+  left: -2.7vw;
+}
+
+.avatar-stack.position-down .badge-sets {
+  top: -6vw;
+  left: 29.7vw;
+}
+
 /* ===== Social Disgrace Styles =====
 /* Grayscale the avatar image when disgraced */
 .avatar-circle.is-disgraced .avatar-img {
@@ -213,12 +234,12 @@
 }
 
 .player-name-box.is-disgraced {
+  /* Keep original base styles and add a subtle pattern */
   opacity: 0.6;
   color: #f4f1b4;
   background-image: repeating-linear-gradient(
     45deg,
-    rgba(255, 205, 139, 0.24) 0 0.208vw, /* 4px */
-    transparent 0.208vw 0.417vw  /* 8px */
+    rgba(255, 205, 139, 0.24) 0 4px,
+    transparent 4px 8px
   );
 }
-
