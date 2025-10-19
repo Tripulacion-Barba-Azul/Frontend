@@ -16,10 +16,6 @@ describe("CreateGameScreen", () => {
     const root = container.querySelector(".CreateGameScreen");
     expect(root).toBeInTheDocument();
 
-    // Check inline background URL only (JSDOM may omit background-size in style attr)
-    const styleAttr = root.getAttribute("style") || "";
-    expect(styleAttr).toContain("/Assets/background_pregame.jpg");
-
     // Sanity: the form from CreateGameForm is mounted
     expect(
       screen.getByRole("heading", { name: /create new game/i })

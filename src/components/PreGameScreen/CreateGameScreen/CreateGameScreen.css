@@ -4,13 +4,16 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  background: rgba(0, 0, 0, 0.7);
-  color: #ffffff;
-  font-family: 'Metropolis';
+  height: 100vh; /* exact height, not min-height */
+  position: relative; /* same as TitleScreen */
   text-align: center;
+  font-family: 'Metropolis';
+  background: url('/Assets/background_pregame.jpg') no-repeat center center fixed;
+  background-size: cover;
+  overflow-y: auto; /* allow scrolling if content is tall */
 }
 
 body {
   margin: 0;
+  overflow-x: hidden; /* prevent horizontal scroll */
 }
