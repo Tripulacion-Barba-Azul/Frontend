@@ -64,15 +64,12 @@ describe("AbandonGameButton", () => {
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
-        "http://localhost:8000/games/456/exit",
+        "http://localhost:8000/games/456/exit?player_id=123",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            playerId: 123,
-          }),
         }
       );
     });

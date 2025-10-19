@@ -1,3 +1,4 @@
+// EffectManager.test.jsx
 import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
@@ -11,22 +12,16 @@ import {
 import EffectManager from "./EffectManager";
 
 /* --------------------------- Router + child mocks --------------------------- */
-// Mock useParams for gameId replacement in endpoints
 vi.mock("react-router-dom", async () => {
   const mod = await vi.importActual("react-router-dom");
-  return {
-    ...mod,
-    useParams: vi.fn(() => ({ gameId: "42" })),
-  };
+  return { ...mod, useParams: vi.fn(() => ({ gameId: "42" })) };
 });
 
-// Mock children to be interactive test doubles (no CSS, no portals)
 vi.mock("../SelectPlayer/SelectPlayer", () => ({
   default: ({ text, players, selectedPlayerId }) => (
     <div data-testid="SelectPlayer">
       <div data-testid="sp-text">{text}</div>
       <div data-testid="sp-count">{players?.length ?? 0}</div>
-      {/* Clickable labels to choose deterministically */}
       {players?.map((p) => (
         <button
           key={p.id}
@@ -203,7 +198,7 @@ const DISCARD_CARDS = [
 
 /* --------------------------- Test helpers --------------------------- */
 function createWs() {
-  // Minimal object that EffectManager mutates: wsRef.onmessage = handler;
+  // Minimal object for fallback path: EffectManager assigns .onmessage
   return { onmessage: null };
 }
 
@@ -220,7 +215,8 @@ function sendWs(ws, payload) {
 }
 
 function getLastFetchArgs() {
-  const [url, opts] = global.fetch.mock.calls.at(-1);
+  const calls = global.fetch.mock.calls;
+  const [url, opts] = calls[calls.length - 1];
   return { url, opts, body: JSON.parse(opts.body) };
 }
 
@@ -249,7 +245,6 @@ describe("EffectManager", () => {
     await waitHandlerReady(ws);
 
     sendWs(ws, { event: "publicUpdate", payload: { x: 1 } });
-    // No subcomponent should be visible (no step started)
     expect(screen.queryByTestId("SelectPlayer")).toBeNull();
     expect(screen.queryByTestId("SelectSecret")).toBeNull();
     expect(screen.queryByTestId("SelectSet")).toBeNull();
@@ -270,7 +265,6 @@ describe("EffectManager", () => {
     await waitHandlerReady(ws);
     sendWs(ws, { event: "selectAnyPlayer" });
 
-    // Step 1: SelectPlayer with all players
     const sp = await screen.findByTestId("SelectPlayer");
     expect(sp).toBeInTheDocument();
     expect(screen.getByTestId("sp-count").textContent).toBe(
@@ -280,7 +274,6 @@ describe("EffectManager", () => {
       "select any player"
     );
 
-    // Pick Alice (id 2) -> triggers fetch
     fireEvent.click(screen.getByLabelText("pick-player-2"));
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
@@ -293,7 +286,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("stealSet: SelectPlayer (except me) -> SelectSet -> POST; supports goBack to SelectPlayer", async () => {
+  it("stealSet: SelectPlayer (except me) -> SelectSet -> POST; supports goBack", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -305,29 +298,23 @@ describe("EffectManager", () => {
     await waitHandlerReady(ws);
     sendWs(ws, { event: "stealSet" });
 
-    // Step: SelectPlayer (playersExceptMe), so length = all - 1
     const sp = await screen.findByTestId("SelectPlayer");
     expect(sp).toBeInTheDocument();
     expect(screen.getByTestId("sp-count").textContent).toBe(
       String(PUBLIC_DATA.players.length - 1)
     );
 
-    // Choose Alice (id 2)
     fireEvent.click(screen.getByLabelText("pick-player-2"));
 
-    // Step: SelectSet for Alice's sets
     const ss = await screen.findByTestId("SelectSet");
     expect(ss).toBeInTheDocument();
     expect(screen.getByTestId("ss-count").textContent).toBe("1");
 
-    // Go back to SelectPlayer
     fireEvent.click(screen.getByLabelText("go-back-selectset"));
     await screen.findByTestId("SelectPlayer");
 
-    // Choose Alice again
     fireEvent.click(screen.getByLabelText("pick-player-2"));
 
-    // Pick her set (setId 202) -> triggers fetch
     await screen.findByTestId("SelectSet");
     fireEvent.click(screen.getByLabelText("pick-set-202"));
 
@@ -342,7 +329,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("andThenThereWasOneMore: SelectPlayer -> SelectSecret(revealed=true) -> SelectPlayer2 -> POST", async () => {
+  it("andThenThereWasOneMore: P1 -> secret -> P2 -> POST (ids según implementación)", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -354,25 +341,24 @@ describe("EffectManager", () => {
     await waitHandlerReady(ws);
     sendWs(ws, { event: "andThenThereWasOneMore" });
 
-    // Select target player
+    // P1 = Alice (2)
     await screen.findByTestId("SelectPlayer");
     fireEvent.click(screen.getByLabelText("pick-player-2"));
 
-    // Must show SelectSecret with revealed=true for that playerId=2
+    // Secret revelado de Alice (200)
     const sec = await screen.findByTestId("SelectSecret");
     expect(sec).toHaveAttribute("data-revealed", "true");
     expect(sec).toHaveAttribute("data-playerid", "2");
 
-    // Go back to SelectPlayer and forward again (back flow)
+    // Back y forward de nuevo
     fireEvent.click(screen.getByLabelText("go-back-selectsecret"));
     await screen.findByTestId("SelectPlayer");
     fireEvent.click(screen.getByLabelText("pick-player-2"));
 
-    // Pick revealed secret (200), advance to SelectPlayer2
     await screen.findByTestId("SelectSecret");
     fireEvent.click(screen.getByLabelText("pick-secret-200"));
 
-    // Select the receiver player (e.g., Bob id 3)
+    // P2 = Bob (3)
     const sp2 = await screen.findByTestId("SelectPlayer");
     expect(sp2).toBeInTheDocument();
     fireEvent.click(screen.getByLabelText("pick-player-3"));
@@ -382,12 +368,16 @@ describe("EffectManager", () => {
     expect(url).toBe(
       "http://localhost:8000/play/42/actions/and-then-there-was-one-more"
     );
+
+    // IMPORTANTE: el componente envía
+    //   stolenPlayerId = primer jugador (2)
+    //   selectedPlayerId = segundo jugador (3)
     expect(body).toMatchObject({
       event: "andThenThereWasOneMore",
       playerId: 1,
       secretId: 200,
-      selectedPlayerId: 2, // from whom we stole
-      stolenPlayerId: 3, // who receives hidden
+      stolenPlayerId: 2,
+      selectedPlayerId: 3,
     });
   });
 
@@ -403,15 +393,12 @@ describe("EffectManager", () => {
     await waitHandlerReady(ws);
     sendWs(ws, { event: "revealSecret" });
 
-    // Choose target
     await screen.findByTestId("SelectPlayer");
     fireEvent.click(screen.getByLabelText("pick-player-2"));
 
-    // Should display SelectSecret with revealed=false
     const sec = await screen.findByTestId("SelectSecret");
     expect(sec).toHaveAttribute("data-revealed", "false");
 
-    // Pick hidden secret (201)
     fireEvent.click(screen.getByLabelText("pick-secret-201"));
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
@@ -425,7 +412,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("revealOwnSecret: SelectSecret(revealed=false, from privateData) with no goBack, then POST", async () => {
+  it("revealOwnSecret: SelectSecret(revealed=false) sin back, luego POST", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -437,14 +424,10 @@ describe("EffectManager", () => {
     await waitHandlerReady(ws);
     sendWs(ws, { event: "revealOwnSecret" });
 
-    // Must render SelectSecret immediately and revealed=false
     const sec = await screen.findByTestId("SelectSecret");
     expect(sec).toHaveAttribute("data-revealed", "false");
-
-    // There is no goBack in this case
     expect(screen.queryByLabelText("go-back-selectsecret")).toBeNull();
 
-    // Pick my hidden secret (500)
     fireEvent.click(screen.getByLabelText("pick-secret-500"));
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
@@ -488,7 +471,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("lookIntoTheAshes: SelectDiscardPileCards -> POST with chosen card id", async () => {
+  it("lookIntoTheAshes: SelectDiscardPileCards -> POST con id elegido", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -498,17 +481,12 @@ describe("EffectManager", () => {
       />
     );
     await waitHandlerReady(ws);
-    // IMPORTANT: payload is an ARRAY of cards (not { cards: [...] })
-    sendWs(ws, {
-      event: "lookIntoTheAshes",
-      payload: DISCARD_CARDS,
-    });
+    sendWs(ws, { event: "lookIntoTheAshes", payload: DISCARD_CARDS });
 
     const sdc = await screen.findByTestId("SelectDiscardPileCards");
     expect(sdc).toBeInTheDocument();
     expect(screen.getByTestId("sdc-count").textContent).toBe("5");
 
-    // choose card id=8003
     fireEvent.click(screen.getByLabelText("pick-card-8003"));
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
@@ -523,7 +501,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("delayTheMurderersEscape: OrderDiscardPileCards -> POST with ordered ids", async () => {
+  it("delayTheMurderersEscape: OrderDiscardPileCards -> POST con ids ordenados", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -533,7 +511,6 @@ describe("EffectManager", () => {
       />
     );
     await waitHandlerReady(ws);
-    // IMPORTANT: payload is an ARRAY of cards (not { cards: [...] })
     sendWs(ws, {
       event: "delayTheMurderersEscape",
       payload: DISCARD_CARDS.slice(0, 3),
@@ -543,7 +520,6 @@ describe("EffectManager", () => {
     expect(odpc).toBeInTheDocument();
     expect(screen.getByTestId("odpc-count").textContent).toBe("3");
 
-    // confirm order (our mock returns the current ids in order)
     fireEvent.click(screen.getByLabelText("confirm-order"));
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
@@ -558,7 +534,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("does not crash without wsRef and never posts", async () => {
+  it("does not crash without wsRef and never posts", () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -567,7 +543,6 @@ describe("EffectManager", () => {
         wsRef={null}
       />
     );
-    // No steps rendered
     expect(screen.queryByTestId("SelectPlayer")).toBeNull();
     expect(global.fetch).not.toHaveBeenCalled();
   });

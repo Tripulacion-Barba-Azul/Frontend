@@ -1,3 +1,5 @@
+/* Converted for 1920x883 viewport (1vw = 19.2px) */
+
 .join-game-container {
   width: 100%;
   padding: 0;
@@ -7,7 +9,7 @@
 
 .join-game-wrapper {
   width: 100%;
-  max-width: 800px;
+  max-width: 41.667vw; /* 800px */
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -16,58 +18,63 @@
 }
 
 .join-game-header {
-  margin-bottom: 3rem;
+  margin-bottom: 2.5vw; /* 3rem -> 48px */
   text-align: center;
 }
 
 .join-game-title {
-  font-size: 3rem;
+  font-size: 2.5vw; /* 3rem -> 48px */
   color: #f4e1a3;
-  margin-bottom: 0.5rem;
-  font-family: 'Metropolis';
+  margin-bottom: 0.417vw; /* 0.5rem -> 8px */
+  font-family: "Metropolis";
 }
 
 .join-game-form {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .form-section {
-  border: 2px solid #f4e1a30d;
-  border-radius: 12px;
-  padding: 2.5rem;
+  border: 0.104vw solid #f4e1a30d; /* 2px */
+  border-radius: 0.625vw; /* 12px */
+  padding: 2.083vw; /* 2.5rem -> 40px */
   background-color: #1e1e1ee4;
+  max-height: 30vw;
+  width: 33.7vw;
   transition: all 0.3s ease;
 }
 
 .form-section:hover {
-  border: 2px solid #f4e1a3;
+  border: 0.104vw solid #f4e1a3;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25vw; /* 1.5rem -> 24px */
+  font-size: 1.042vw;
 }
 
 .form-label {
   display: block;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.625vw; /* 0.75rem -> 12px */
   font-weight: 500;
   color: #f4e1a3;
-  font-family: 'Metropolis';
-  font-size: 1.1rem;
+  font-family: "Metropolis";
+  font-size: 0.917vw; /* 1.1rem -> ~17.6px */
 }
 
 .form-input {
   width: 100%;
-  padding: 14px 18px;
-  border: 2px solid #f4e1a30d;
-  border-radius: 10px;
+  padding: 0.729vw 0.938vw; /* 14px 18px */
+  border: 0.104vw solid #f4e1a30d; /* 2px */
+  border-radius: 0.521vw; /* 10px */
   background-color: #252525e4;
   color: #f4e1a3;
-  font-size: 1.1rem;
-  font-family: 'Metropolis';
+  font-size: 0.917vw; /* 1.1rem -> ~17.6px */
+  font-family: "Metropolis";
   transition: all 0.3s ease;
+  height: 3.2vw;
 }
 
 .form-input:focus {
@@ -82,9 +89,9 @@
 
 .error-message {
   color: #ef4444;
-  font-size: 0.875rem;
-  margin-top: 0.5rem;
-  font-family: 'Metropolis';
+  font-size: 0.729vw; /* 0.875rem -> 14px */
+  margin-top: 0.417vw; /* 0.5rem -> 8px */
+  font-family: "Metropolis";
 }
 
 .avatar-row {
@@ -92,22 +99,25 @@
   align-items: center;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 1.5rem;
-  margin-top: 1rem;
-  width: 100%;
+  gap: 1.25vw; /* 1.5rem -> 24px */
+  margin-top: 0.833vw; /* 1rem -> 16px */
+  width: 22.2vw;
+  height: 7vw;
 }
 
 .choose-avatar-button {
   background-color: rgb(163, 34, 34);
   color: #f4e1a3;
   border: none;
-  border-radius: 10px;
-  padding: 14px 24px;
-  font-size: 1.1rem;
+  border-radius: 0.521vw; /* 10px */
+  padding: 0.729vw 1.25vw; /* 14px 24px */
+  font-size: 0.917vw; /* 1.1rem -> ~17.6px */
   font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-family: 'Metropolis';
+  font-family: "Metropolis";
+  width: 6vw;
+  height: 4.2vw;
 }
 
 .choose-avatar-button:hover:not(:disabled) {
@@ -116,11 +126,11 @@
 }
 
 .avatar-preview {
-  width: 150px;
-  height: 150px;
+  width: 7.813vw; /* 150px */
+  height: 7.813vw; /* 150px */
   border-radius: 50%;
   overflow: hidden;
-  border: 3px solid #f4e1a30d;
+  border: 0.156vw solid #f4e1a30d; /* 3px */
   background: #2a2a2a;
   flex-shrink: 0;
   transition: all 0.3s ease;
@@ -133,29 +143,51 @@
 }
 
 .join-game-submit-button {
-  width: 240px;
-  height: 75px;
+  width: 12.5vw; /* 240px */
+  height: 3.906vw; /* 75px */
   padding: 0;
   color: #f4e1a3;
   background-color: rgb(163, 34, 34);
-  border-radius: 12px;
+  border-radius: 0.625vw; /* 12px */
   cursor: pointer;
-  font-size: 26px;
-  margin: 2rem auto 0;
+  font-size: 1.354vw; /* 26px */
+  margin: 1.667vw auto 0; /* 2rem -> 32px */
   display: block;
-  transition:
-    background-color 0.25s ease,
-    transform 0.2s ease,
+  transition: background-color 0.25s ease, transform 0.2s ease,
     box-shadow 0.25s ease;
-  font-family: 'Metropolis';
+  font-family: "Metropolis";
 }
 
 .join-game-submit-button:hover {
   transform: scale(1.05);
-  box-shadow: 0 0px 50px #f4e1a3cc;
+  box-shadow: 0 0 2.604vw #f4e1a3cc; /* 50px */
 }
 
 .join-game-submit-button:active {
   transform: scale(0.97);
-  box-shadow: 0 0px 50px #f4e1a3cc;
+  box-shadow: 0 0 2.604vw #f4e1a3cc;
+}
+
+/* Disable interactions and soften visuals while submitting */
+.join-game-submit-button:disabled {
+  background-color: rgba(163, 34, 34, 0.45);
+  color: rgba(244, 225, 163, 0.65);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.choose-avatar-button:disabled {
+  background-color: rgba(163, 34, 34, 0.35);
+  color: rgba(244, 225, 163, 0.3);
+  cursor: not-allowed;
+  transform: none;
+  pointer-events: none;
+}
+
+/* Inputs muted while submitting */
+.form-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }

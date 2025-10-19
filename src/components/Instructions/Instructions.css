@@ -1,26 +1,42 @@
-/* Launcher (image only, hover zoom) */
+/* Launcher (image-only) */
 .ins-launcher {
   position: fixed;
-  bottom: 30px;
-  left: 30px;
+  bottom: 1.042vw; /* 20px -> 20/19.2 = 1.042vw */
+  left: 1.302vw; /* 25px -> 25/19.2 = 1.302vw */
   padding: 0;
   border: 0;
   background: none;
   cursor: pointer;
-  z-index: 40;
-}
-.ins-launcherImg {
-  width: 48px;
-  height: 48px;
-  display: block;
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
-  transition: transform 0.15s ease;
+  z-index: 50;
+  outline: none;
 }
 
+/* PNG only: fixed size, smooth hover grow + soft white glow */
+.ins-launcherImg {
+  width: 2.708vw; /* 52px -> 52/19.2 */
+  height: 2.708vw;
+  display: block;
+  border-radius: 0;
+  pointer-events: none;
+  transition: transform 0.078vw ease, filter 0.078vw ease; /* 0.15s/1s ratio ~ 0.078 */
+  filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
+}
+
+/* Hover/active states */
 .ins-launcher:hover .ins-launcherImg,
 .ins-launcher:focus-visible .ins-launcherImg {
-  transform: scale(1.08);
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 0.521vw rgba(255, 255, 255, 0.55)); /* 10px -> 10/19.2 */
+}
+
+.ins-launcher:active .ins-launcherImg {
+  transform: scale(0.95);
+}
+
+/* Accessible focus outline on button */
+.ins-launcher:focus-visible {
+  outline: 0.104vw solid rgba(255, 255, 255, 0.5); /* 2px */
+  outline-offset: 0.156vw; /* 3px */
 }
 
 /* Overlay */
@@ -31,21 +47,19 @@
   background: rgba(0, 0, 0, 0.85);
   display: grid;
   place-items: center;
-  padding: 1rem;
+  padding: 0.521vw; /* 1rem = 10px? originally 16px = 0.833vw? Keep 0.833vw for consistency */
+  padding: 0.833vw;
 }
 
 /* Modal */
 .ins-modal {
-  width: min(
-    calc(min(78vh, 880px, calc(92vw * 2048 / 1378)) * 1378 / 2048 + 32px),
-    96vw
-  );
+  width: min(calc(min(78vh, 880px, calc(92vw * 2048 / 1378)) * 1378 / 2048 + 1.667vw), 96vw);
   display: grid;
-  grid-template-rows: 56px 1fr;
-  border: 2px solid #f4e1a30d;
-  border-radius: 16px;
+  grid-template-rows: 2.917vw 1fr; /* 56px -> 2.917vw */
+  border: 0.104vw solid #f4e1a30d; /* 2px */
+  border-radius: 0.833vw; /* 16px */
   background: #1e1e1ee4;
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 0.938vw 3.125vw rgba(0, 0, 0, 0.8); /* 18px 60px */
   overflow: hidden;
   box-sizing: border-box;
   transition: all 0.3s ease;
@@ -57,15 +71,17 @@
   background: linear-gradient(#1e1e1e, #1a1a1a);
   display: grid;
   align-items: center;
-  padding: 0 52px;
-  border-bottom: 1px solid #f4e1a30d;
+  padding: 0 2.708vw; /* 52px */
+  border-bottom: 0.104vw solid #f4e1a30d;
 }
+
 .ins-title {
   margin: 0 auto;
   color: #f4e1a3;
   letter-spacing: 0.02em;
   text-align: center;
-  font-size: 1.45rem;
+  font-size: 0.76vw; /* 1.45rem = 23px -> 23/19.2 = 1.198vw? Use 1.198vw */
+  font-size: 1.198vw;
   font-family: "Metropolis";
 }
 
@@ -73,46 +89,41 @@
 .ins-close {
   position: absolute;
   top: 40%;
-  right: 10px;
+  right: 0.521vw; /* 10px */
   transform: translateY(-50%);
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  border: 2px solid #f4e1a30d;
+  width: 1.771vw; /* 34px */
+  height: 1.771vw;
+  border-radius: 0.521vw; /* 10px */
+  border: 0.104vw solid #f4e1a30d; /* 2px */
   background: rgb(163, 34, 34);
   cursor: pointer;
   display: grid;
   place-items: center;
   transition: all 0.3s ease;
 }
+
 .ins-close::before,
 .ins-close::after {
   content: "";
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 14px;
-  height: 2px;
+  width: 0.729vw; /* 14px */
+  height: 0.104vw; /* 2px */
   background: #f4e1a3;
-  border-radius: 1px;
+  border-radius: 0.052vw; /* 1px */
   transform-origin: center;
 }
-.ins-close::before {
-  transform: translate(-50%, -50%) rotate(45deg);
-}
-.ins-close::after {
-  transform: translate(-50%, -50%) rotate(-45deg);
-}
-.ins-close:hover {
-  filter: brightness(1.08);
-}
+.ins-close::before { transform: translate(-50%, -50%) rotate(45deg); }
+.ins-close::after { transform: translate(-50%, -50%) rotate(-45deg); }
+.ins-close:hover { filter: brightness(1.08); }
 
-/* Body: stage + optional counter */
+/* Body: stage + counter */
 .ins-body {
-  padding: 10px 16px 14px;
+  padding: 0.521vw 0.833vw 0.729vw; /* 10px 16px 14px */
   display: grid;
-  grid-template-rows: 1fr 26px;
-  gap: 8px;
+  grid-template-rows: 1fr 1.354vw; /* 26px */
+  gap: 0.417vw; /* 8px */
   box-sizing: border-box;
   background: #1e1e1e52;
 }
@@ -120,7 +131,7 @@
 /* Stage */
 .ins-stage {
   position: relative;
-  height: min(78vh, 880px, calc(92vw * 2048 / 1378));
+  height: min(78vh, 46vw, calc(92vw * 2048 / 1378)); /* 880px -> 45.83vw */
   aspect-ratio: 1378 / 2048;
   width: auto;
   margin: 0 auto;
@@ -135,8 +146,8 @@
   display: grid;
   place-items: center;
   background: #25252500;
-  border: 2px solid #f4e1a30d;
-  border-radius: 12px;
+  border: 0.104vw solid #f4e1a30d; /* 2px */
+  border-radius: 0.625vw; /* 12px */
   overflow: hidden;
   box-sizing: border-box;
   transition: all 0.3s ease;
@@ -156,10 +167,10 @@
 .ins-counter {
   text-align: right;
   color: #f4e1a3;
-  line-height: 26px;
+  line-height: 1.354vw; /* 26px */
   font-family: "Metropolis";
-  font-size: 0.95rem;
-  padding-right: 4px;
+  font-size: 0.729vw; /* 14px */
+  padding-right: 0.208vw; /* 4px */
   box-sizing: border-box;
 }
 
@@ -184,69 +195,53 @@
   padding: 0;
   line-height: 0;
 }
-.ins-left {
-  left: 18px;
-  right: auto;
-}
-.ins-right {
-  right: 18px;
-  left: auto;
-}
+.ins-left { left: 0.938vw; } /* 18px */
+.ins-right { right: 0.938vw; }
 
-/* Visible circular button */
+/* Circular button */
 .ins-arrow::after {
   content: "";
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 28px;
-  height: 28px;
+  width: 1.458vw; /* 28px */
+  height: 1.458vw;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   background: rgba(37, 37, 37, 0.95);
-  border: 1px solid #f4e1a30d;
+  border: 0.052vw solid #f4e1a30d; /* 1px */
   box-sizing: border-box;
   transition: all 0.3s ease;
 }
-
 .ins-arrow:hover::after {
   border-color: #f4e1a3;
   filter: brightness(1.2);
 }
 
-/* Chevron centered inside the circle */
+/* Chevron */
 .ins-arrow::before {
   content: "";
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 9px;
-  height: 9px;
-  border-top: 2px solid #f4e1a3;
-  border-right: 2px solid #f4e1a3;
+  width: 0.469vw; /* 9px */
+  height: 0.469vw;
+  border-top: 0.104vw solid #f4e1a3; /* 2px */
+  border-right: 0.104vw solid #f4e1a3;
   transform-origin: center;
   z-index: 3;
 }
-.ins-left::before {
-  transform: translate(-30%, -50%) rotate(225deg);
-}
-.ins-right::before {
-  transform: translate(-70%, -50%) rotate(45deg);
-}
+.ins-left::before { transform: translate(-30%, -50%) rotate(225deg); }
+.ins-right::before { transform: translate(-70%, -50%) rotate(45deg); }
 
-/* Additional styling for better integration */
-.ins-modal * {
-  box-sizing: border-box;
-}
-
-/* Focus states for accessibility */
+/* Focus states */
 .ins-close:focus-visible,
 .ins-arrow:focus-visible {
-  outline: 2px solid #f4e1a3;
-  outline-offset: 2px;
+  outline: 0.104vw solid #f4e1a3;
+  outline-offset: 0.104vw;
 }
 
-/* Smooth transitions for all interactive elements */
+/* Smooth transitions */
 .ins-modal,
 .ins-close,
 .ins-frame,

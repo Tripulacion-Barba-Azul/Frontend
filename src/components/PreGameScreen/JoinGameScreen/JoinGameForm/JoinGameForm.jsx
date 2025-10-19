@@ -12,6 +12,7 @@ export default function JoinGameForm() {
   });
   const [formErrors, setFormErrors] = useState({});
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [submitting, setSubmitting] = useState(false); // NEW: request lock
 
   const { gameId } = useParams();
   const navigate = useNavigate();
@@ -35,50 +36,57 @@ export default function JoinGameForm() {
     return errors;
   };
 
-  const handleSubmit = async (e) => {  // Make it async
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Prevent duplicate fast submits
+    if (submitting) return;
+
     const errors = validate(settings);
     setFormErrors(errors);
-  
-    if (Object.keys(errors).length === 0) {
-      const requestData = {
-        playerName: settings.PlayerName,
-        birthDate: String(settings.PlayerBirthday),
-        avatar: settings.Avatar ? Number(settings.Avatar) : undefined,
-      };
-  
-      async function postData() {
-        try {
-          const response = await fetch(
-            `http://localhost:8000/games/${gameId}/join`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(requestData),
-            }
-          );
-  
-          if (!response.ok) {
-            console.error("Error joining game:", response.statusText);
-            navigate(`/join`);
-          } else {
-            const data = await response.json();
-            const fetchedId = data.gameId;
-            const fetchedPlayerId = data.actualPlayerId;
-  
-            if (fetchedId != gameId) {
-              navigate(`/join`);
-            } else {
-              navigate(`/game/${fetchedId}?playerId=${fetchedPlayerId}`);
-            }
-          }
-        } catch (error) {
-          console.error("Error in request:", error);
-          navigate(`/join`);
+    if (Object.keys(errors).length > 0) return;
+
+    setSubmitting(true); // lock UI
+
+    const requestData = {
+      playerName: settings.PlayerName,
+      birthDate: String(settings.PlayerBirthday),
+      avatar: settings.Avatar ? Number(settings.Avatar) : undefined,
+    };
+
+    try {
+      const response = await fetch(
+        `http://localhost:8000/games/${gameId}/join`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestData),
         }
+      );
+
+      if (!response.ok) {
+        console.error("Error joining game:", response.statusText);
+        setSubmitting(false); // unlock on failure
+        navigate(`/join`);
+        return;
       }
-  
-      await postData();  // Await the async function
+
+      const data = await response.json();
+      const fetchedId = data.gameId;
+      const fetchedPlayerId = data.actualPlayerId;
+
+      if (String(fetchedId) !== String(gameId)) {
+        setSubmitting(false); // unlock before redirecting back
+        navigate(`/join`);
+        return;
+      }
+
+      // Navigation will unmount the component; no need to unlock
+      navigate(`/game/${fetchedId}?playerId=${fetchedPlayerId}`);
+    } catch (error) {
+      console.error("Error in request:", error);
+      setSubmitting(false); // unlock on failure
+      navigate(`/join`);
     }
   };
 
@@ -103,6 +111,7 @@ export default function JoinGameForm() {
                   setSettings({ ...settings, PlayerName: e.target.value })
                 }
                 className="form-input"
+                disabled={submitting}
               />
               <p className="error-message">{formErrors.PlayerName}</p>
             </div>
@@ -119,6 +128,7 @@ export default function JoinGameForm() {
                   setSettings({ ...settings, PlayerBirthday: e.target.value })
                 }
                 className="form-input"
+                disabled={submitting}
               />
               <p className="error-message">{formErrors.PlayerBirthday}</p>
             </div>
@@ -130,18 +140,28 @@ export default function JoinGameForm() {
                   type="button"
                   className="choose-avatar-button"
                   onClick={() => setShowAvatarPicker(true)}
+                  disabled={submitting} // optional: lock while submitting
                 >
                   Choose <br /> Avatar
                 </button>
                 <div className="avatar-preview">
-                  <img src={AVATAR_MAP[settings.Avatar]} alt="Selected avatar" />                
+                  <img
+                    src={AVATAR_MAP[settings.Avatar]}
+                    alt="Selected avatar"
+                  />
                 </div>
               </div>
             </div>
           </fieldset>
 
-          <button type="submit" className="join-game-submit-button">
-            Join Game
+          <button
+            type="submit"
+            className="join-game-submit-button"
+            disabled={submitting}
+            aria-busy={submitting}
+            aria-disabled={submitting}
+          >
+            {submitting ? "Joining..." : "Join Game"}
           </button>
         </form>
 

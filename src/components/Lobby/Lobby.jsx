@@ -193,7 +193,7 @@ function Lobby(props) {
       <div className="players-section">
         <h3>
           {hasMaximumPlayers && (
-            <span className="full-lobby-badge"> - GAME FULL</span>
+            <span className="full-lobby-badge"> - GAME IS FULL -</span>
           )}
         </h3>
         <ul className="players-list">
@@ -201,12 +201,14 @@ function Lobby(props) {
             players.map((player, index) => (
               <li key={index} className="player-item">
                 {player.playerName}
-                {player.playerName === currentGame.creator && (
+              <div className="player-badges">
+                {player.playerId === currentGame.ownerId && (
                   <span className="creator-badge"> (Creator)</span>
                 )}
                 {player.playerId === props.playerId && (
                   <span className="current-player-badge"> (You)</span>
                 )}
+              </div>
               </li>
             ))
           ) : (
@@ -214,7 +216,7 @@ function Lobby(props) {
           )}
         </ul>
         {isOwner && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', marginTop: 25,}}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', marginTop: 10,}}>
             <StartGameButton
               disabled={!hasMinimumPlayers}
               gameId={props.id}

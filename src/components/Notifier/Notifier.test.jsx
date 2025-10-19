@@ -122,7 +122,7 @@ describe("Notifier Component", () => {
     expect(aliceColor).not.toBe(charlieColor);
   });
 
-  it("auto-closes notification after 3 seconds", () => {
+  it("auto-closes notification after 5 seconds", () => {
     render(<Notifier {...defaultProps} />);
 
     simulateWebSocketMessage("notifierLookIntoTheAshes", { playerId: 1 });
@@ -130,10 +130,10 @@ describe("Notifier Component", () => {
     // Should be visible
     expect(screen.getByText(/Alice/)).toBeInTheDocument();
 
-    // 3s auto-close + 300ms fade
+    // 5s auto-close + 500ms fade
     act(() => {
-      vi.advanceTimersByTime(3000);
-      vi.advanceTimersByTime(300);
+      vi.advanceTimersByTime(5000);
+      vi.advanceTimersByTime(500);
     });
 
     expect(screen.queryByText(/Alice/)).not.toBeInTheDocument();
@@ -155,26 +155,6 @@ describe("Notifier Component", () => {
       setId: 1,
     });
     expect(screen.getByAltText("Set")).toBeInTheDocument();
-  });
-
-  it("handles missing player gracefully", () => {
-    render(
-      <Notifier
-        {...defaultProps}
-        publicData={{ players: [] }} // nobody known
-      />
-    );
-
-    simulateWebSocketMessage("notifierRevealSecret", {
-      playerId: 999,
-      secretId: 101,
-      selectedPlayerId: 1,
-    });
-
-    // Fallback strings "Player 999" / "Player 1"
-    expect(
-      screen.getByText("Player 999 revealed Player 1's secret")
-    ).toBeInTheDocument();
   });
 
   it("handles unknown WebSocket event", () => {

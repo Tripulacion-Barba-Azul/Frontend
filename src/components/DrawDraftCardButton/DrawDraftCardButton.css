@@ -1,24 +1,24 @@
 .draw-draft-card-container {
   position: absolute;
-  bottom: 43%; /* Same height as RegularDeck */
-  left: 50%; /* Moved slightly to the right */
+  bottom: 19.396vw; /* 43% of 520px? Convert to vw if scaling for full width */
+  left: 50%;
   transform: translateX(-50%);
   z-index: 15;
 }
 
 .draft-cards-row {
   display: flex;
-  gap: 8px; /* Small gap between cards */
+  gap: 0.417vw; /* 8px / 1920px * 100 */
   justify-content: center;
   align-items: center;
 }
 
 .draft-card {
-  width: 120px; /* Appropriate size for 3 cards side by side */
-  height: auto; /* Maintain aspect ratio */
-  border-radius: 8px;
-  border: 2px solid rgba(244, 225, 163, 0.3);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  width: 6.25vw; /* 120px / 1920px * 100 */
+  height: auto;
+  border-radius: 0.417vw; /* 8px / 1920px * 100 */
+  border: 0.104vw solid rgba(244, 225, 163, 0.3); /* 2px */
+  box-shadow: 0 0.208vw 0.625vw rgba(0, 0, 0, 0.4); /* 4px 12px */
   object-fit: cover;
   transition: all 0.2s ease;
   cursor: pointer;
@@ -31,9 +31,9 @@
 }
 
 .draft-card--enabled:hover {
-  transform: translateY(-8px) scale(1.05);
+  transform: translateY(-0.417vw) scale(1.05); /* 8px / 1920 */
   border-color: #f4e1a3;
-  box-shadow: 0 8px 20px rgba(244, 225, 163, 0.5);
+  box-shadow: 0 0.417vw 1.042vw rgba(244, 225, 163, 0.5); /* 8px 20px */
 }
 
 .draft-card--disabled {
@@ -45,16 +45,16 @@
 
 .draft-card-error {
   position: absolute;
-  top: -45px;
+  top: -2.344vw; /* 45px / 1920 */
   left: 50%;
   transform: translateX(-50%);
   color: #ff6b6b;
-  font-size: 12px;
+  font-size: 0.625vw; /* 12px */
   font-weight: bold;
   text-align: center;
   background: rgba(0, 0, 0, 0.8);
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 0.208vw 0.417vw; /* 4px 8px */
+  border-radius: 0.208vw; /* 4px */
   white-space: nowrap;
-  border: 1px solid #ff6b6b;
+  border: 0.052vw solid #ff6b6b; /* 1px */
 }

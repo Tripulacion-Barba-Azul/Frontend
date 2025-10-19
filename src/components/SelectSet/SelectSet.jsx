@@ -32,7 +32,7 @@ function ViewSetModal({ cards, onClose }) {
 }
 
 export function nameMap({ name }) {
-  if (name === "Tommy Beresford" || name === "Tuppence Beresford") {
+  if (name === "Tommy Beresford" || name === "Tuppence Beresford" || name === "Siblings Beresford") {
     return "The Beresfords";
   }
   return name;

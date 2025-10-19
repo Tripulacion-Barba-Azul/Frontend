@@ -1,8 +1,8 @@
 :root {
-  --sets-gap: 0.75rem;
-  --sets-row-gap: 0.4rem;
-  --sets-item-min: 30px;
-  --anim-buffer: 28px;
+  --sets-gap: 0.3906vw;       /* 0.75rem -> 12px -> 12/1920*100 = 0.625vw, but using ~0.39vw for reference width 1920px */
+  --sets-row-gap: 0.2083vw;   /* 0.4rem -> 6.4px -> 0.3333vw ~ 0.2083vw */
+  --sets-item-min: 1.5625vw;  /* 30px -> 30/1920*100 = 1.5625vw */
+  --anim-buffer: 1.4583vw;    /* 28px -> 28/1920*100 = 1.4583vw */
 }
 
 /* Base grid */
@@ -11,10 +11,9 @@
   width: auto;
   box-sizing: border-box;
   gap: var(--sets-row-gap);
-  padding: 6px;
+  padding: 0.3125vw; /* 6px -> 0.3125vw */
   overflow: visible;
   pointer-events: auto;
-  /* small buffer to avoid temporary scrollbars on y/x translate */
   --buffer: var(--anim-buffer);
 }
 
@@ -32,101 +31,95 @@
   padding: 0;
   overflow: visible;
   transform-origin: center;
+  min-width: var(--sets-item-min);
 }
 
-/* ---------------- HORIZONTAL (rows stack top->down) ---------------- */
+/* ---------------- HORIZONTAL ---------------- */
 .sets-grid[data-position="horizontal"],
 .sets-grid.sets-horizontal {
   flex-direction: column;
-  align-items: center;        /* each row centered horizontally */
-  justify-content: flex-start;/* anchor top; new rows append downward */
+  align-items: center;
+  justify-content: flex-start;
   gap: var(--sets-row-gap);
-  padding-bottom: calc(var(--buffer)); /* reserve bottom buffer */
-  padding-left: 0; /* ADD THIS */
-  padding-right: 0; /* ADD THIS */
+  padding-bottom: calc(var(--buffer));
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .sets-row-wrapper {
   display: block;
   overflow: visible;
-  width: 100%; /* ADD THIS */
+  width: 100%;
 }
 
-/* row: center items symmetrically */
 .sets-row {
   display: flex;
-  justify-content: center; /* KEEP THIS - centers items in the row */
+  justify-content: center;
   align-items: center;
   gap: var(--sets-gap);
-  padding: 2px 6px;
+  padding: 0.1042vw 0.3125vw; /* 2px 6px -> 0.1042vw 0.3125vw */
   overflow: visible;
-  width: 100%; /* ADD THIS */
+  width: 100%;
 }
 
-/* ---------------- VERTICAL (columns) ---------------- */
-/* Vertical left/right grid container */
+/* ---------------- VERTICAL ---------------- */
 .sets-grid[data-position="vertical-left"],
 .sets-grid[data-position="vertical-right"] {
   display: flex;
   flex-direction: row;
   justify-content: flex-start; /* left) or flex-end (right) */
-  align-items: stretch;        /* columns take full height */
+  align-items: stretch;
   gap: var(--sets-gap);
-  
-  /* Make container fill parent so vertical centering works */
   height: 100%;
   overflow: visible;
-
-  /* extra padding from edges */
   padding-left: calc(var(--buffer));
   padding-right: calc(var(--buffer));
 }
 
-/* Inner wrapper to vertically center the columns */
 .sets-grid[data-position="vertical-left"] .sets-column,
 .sets-grid[data-position="vertical-right"] .sets-column {
   display: flex;
   flex-direction: column;
-  justify-content: center; /* vertically center items inside the column */
-  align-items: center;     /* horizontally center cards inside column */
-  height: 100%;            /* make column fill grid vertically */
+  justify-content: center;
+  align-items: center;
+  height: 100%;
   overflow: visible;
 }
 
-/* ---------------- VERTICAL-LEFT / VERTICAL-RIGHT ---------------- */
+/* Vertical-left / Vertical-right adjustments */
 .sets-grid[data-position="vertical-left"] {
   flex-direction: row;
-  justify-content: flex-start; /* columns start from left and expand right */
-  align-items: stretch;        
+  justify-content: flex-start;
+  align-items: stretch;
   gap: var(--sets-gap);
   padding-left: calc(var(--buffer));
-  padding-right: 0; /* Remove right padding for left alignment */
+  padding-right: 0;
   height: 100%;
   overflow: visible;
 }
 
 .sets-grid[data-position="vertical-right"] {
   flex-direction: row;
-  justify-content: flex-end; /* columns start from right and expand left */
-  align-items: stretch;        
+  justify-content: flex-end;
+  align-items: stretch;
   gap: var(--sets-gap);
   padding-right: calc(var(--buffer));
-  padding-left: 0; /* Remove left padding for right alignment */
+  padding-left: 0;
   height: 100%;
   overflow: visible;
 }
 
-/* Ensure each column centers its items internally */
+/* Each column centers items */
 .sets-grid[data-position="vertical-left"] .sets-column,
 .sets-grid[data-position="vertical-right"] .sets-column {
   display: flex;
   flex-direction: column;
-  justify-content: center; /* center items vertically inside the column */
-  align-items: center;     /* center items horizontally inside the column */
+  justify-content: center;
+  align-items: center;
   overflow: visible;
 }
 
-/* ---------------- DOUBLE HORIZONTAL (single centered row) ---------------- */
+/* ---------------- DOUBLE HORIZONTAL ---------------- */
 .sets-grid[data-position="doubleHorizontal"],
 .sets-grid.sets-double-horizontal {
   flex-direction: row;
@@ -136,8 +129,8 @@
   padding-left: calc(var(--buffer));
   padding-right: calc(var(--buffer));
   overflow: visible;
-  padding-top: 0; /* ADD THIS */
-  padding-bottom: 0; /* ADD THIS */
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .sets-single-row {
@@ -147,15 +140,23 @@
   align-items: center;
   gap: var(--sets-gap);
   overflow: visible;
-  width: 100%; /* ADD THIS */
+  width: 100%;
 }
 
 /* responsiveness */
 @media (max-width: 900px) {
-  :root { --sets-gap: 0.5rem; --sets-row-gap: 0.3rem; --anim-buffer: 22px; }
-  .sets-item { min-width: 44px; }
+  :root {
+    --sets-gap: 0.2604vw;        /* 0.5rem -> 8px */
+    --sets-row-gap: 0.1563vw;    /* 0.3rem -> 4.8px */
+    --anim-buffer: 1.1458vw;     /* 22px -> 1.1458vw */
+  }
+  .sets-item { min-width: 2.2917vw; } /* 44px -> 2.2917vw */
 }
+
 @media (max-width: 480px) {
-  :root { --sets-gap: 0.35rem; --anim-buffer: 18px; }
-  .sets-item { min-width: 40px; }
+  :root {
+    --sets-gap: 0.1823vw;        /* 0.35rem -> 5.6px */
+    --anim-buffer: 0.9375vw;     /* 18px -> 0.9375vw */
+  }
+  .sets-item { min-width: 2.0833vw; } /* 40px -> 2.0833vw */
 }

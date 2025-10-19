@@ -1,105 +1,134 @@
 .owncards-overlay {
   position: absolute;
   inset: 0;
-  /* Make overlay ignore clicks, but allow children to be clickable */
   pointer-events: none;
 }
 
-/* Fixed row: bottom-center with a stable gap */
 .owncards-row {
   position: absolute;
   left: 50%;
-  bottom: 0.5%;
+  bottom: 0.260vw; /* 0.5% of 1920px -> 10px */
   transform: translateX(-50%);
   display: flex;
-  gap: 5px;
+  gap: 0.260vw; /* 5px */
   user-select: none;
-  /* Ensure row and children can receive clicks */
   pointer-events: auto;
   z-index: 10;
 }
 
-/* Each card image - UPDATED PROPORTIONS */
-.owncards-card {
-  width: 140px; /* Changed from 130px */
-  height: auto; /* Changed from 198px to maintain aspect ratio */
-  border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-  object-fit: cover;
+.owncards-row > * {
+  list-style: none;
+}
 
-  /* allow clicking */
+/* ---- Card base ---- */
+.owncards-card {
+  width: 7.29vw; /* 140px -> 7.29vw */
+  height: auto;
+  border-radius: 0.417vw; /* 8px -> 0.417vw */
+  border: 0.052vw solid rgba(0, 0, 0, 0.2); /* 1px -> 0.052vw */
+  box-shadow: 0 0.052vw 0.104vw rgba(0, 0, 0, 0.25); /* 1px 2px -> vw */
+  object-fit: cover;
   pointer-events: auto;
   cursor: pointer;
   position: relative;
   z-index: 10;
-
-  /* smooth movement when selecting/deselecting */
-  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), 
-  box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              z-index 0s 0s;
+  transform: translateY(0) scale(1);
 }
 
-/* Visual "selected": lift the card slightly */
+/* ---- Selection ---- */
 .owncards-card--selected {
-  transform: translateY(-35px);
-  z-index: 3;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  transform: translateY(-1.82vw) scale(1); /* -35px -> -1.82vw */
+  z-index: 15;
 }
 
-/* When selection is disabled (waiting/drawing) make it clear */
+/* Disabled cards */
 .owncards-card--disabled {
   cursor: default;
   opacity: 0.75;
 }
 
-/* Actions area (placeholders only) */
-.owncards-actions {
-  position: absolute;
-  right: 7%;   /* distance from right edge */
-  top: 82%;
-  display: flex;
-  gap: 8px;
-  /* Ensure actions can receive clicks */
-  pointer-events: auto;
-  z-index: 10;
-
+/* ---- Hover effects ---- */
+.owncards-card:not(.owncards-card--disabled):not(.owncards-card--dragging):hover {
+  transform: scale(1.08);
+  z-index: 20;
+  box-shadow: 0 0.104vw 0.781vw #f4e1a3cc; /* 2px 15px -> vw */
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+              z-index 0s 0s,
+              box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Minimal button look — replace with your button component later if needed */
+/* When selected, hover adds extra lift */
+.owncards-card--selected:not(.owncards-card--disabled):not(.owncards-card--dragging):hover {
+  transform: translateY(-2.34vw) scale(1.08); /* -45px -> -2.34vw */
+}
+
+/* Active (click) state */
+.owncards-card:not(.owncards-card--disabled):not(.owncards-card--dragging):active {
+  transform: translateY(-0.52vw) scale(1); /* -10px -> -0.52vw */
+  transition: transform 0.08s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.owncards-card--selected:not(.owncards-card--disabled):not(.owncards-card--dragging):active {
+  transform: translateY(-1.56vw) scale(1); /* -30px -> -1.56vw */
+}
+
+/* Dragging state - let Framer Motion handle it */
+.owncards-card--dragging {
+  z-index: 20;
+  filter: brightness(1.05);
+  cursor: grabbing;
+}
+
+/* Disabled cards get subtle hover */
+.owncards-card--disabled:hover {
+  transform: translateY(-0.26vw); /* -5px -> -0.26vw */
+  opacity: 0.85;
+  cursor: not-allowed;
+}
+
+/* ---- Buttons ---- */
+.owncards-actions {
+  position: absolute;
+  right: 7.25vw; /* originally 7%, converted to vw (7% of 1920px ~ 134px -> 3.65vw) */
+  top: 37.5vw; /* originally 82px? scale proportionally: 82/1920*100 = 4.27vw */
+  display: flex;
+  gap: 0.417vw; /* 8px */
+  pointer-events: auto;
+  z-index: 10;
+}
+
 .owncards-action {
-  width: 240px;
-  height: 90px;
+  width: 12.5vw; /* 240px */
+  height: 4.688vw; /* 90px */
   padding: 0;
   color: #f4e1a3;
   background-color: rgb(163, 34, 34);
-  border-radius: 12px;
-  border: 2px solid #f4e1a3;
+  border-radius: 0.625vw; /* 12px */
+  border: 0.104vw solid #f4e1a3; /* 2px */
   cursor: pointer;
-  font-size: 24px;
+  font-size: 1.25vw; /* 24px */
   font-family: "Metropolis";
   user-select: none;
   pointer-events: auto;
-  margin: 7px;
+  margin: 0.365vw; /* 7px */
   z-index: 10;
-
-  transition: 
-    background-color 0.25s ease,
-    transform 0.2s ease,
-    box-shadow 0.25s ease;
+  transition: background-color 0.013vw ease, transform 0.010vw ease, box-shadow 0.013vw ease;
 }
 
 .owncards-action:hover {
-  transform: scale(1.05); /* gentle grow */
-  box-shadow: 0 0px 85px  #f4e1a3cc;
+  transform: scale(1.05);
+  box-shadow: 0 0 4.427vw #f4e1a3cc; /* 85px */
 }
 
 .owncards-action:active {
-  transform: scale(0.97); /* tactile press effect */
-  box-shadow: 0 0px 85px  #f4e1a3cc;
+  transform: scale(0.97);
+  box-shadow: 0 0 4.427vw #f4e1a3cc;
 }
 
-/* optional: a slight glowing border effect when focused */
 .owncards-action:focus {
   outline: none;
-  box-shadow: 0 0px 85px  #f4e1a3cc;
+  box-shadow: 0 0 4.427vw #f4e1a3cc;
 }

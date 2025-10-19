@@ -1,19 +1,21 @@
+/* Converted to vw-only (reference width: 1920px; 1vw = 19.2px) */
+
 /* Lock background scroll */
 body.active-viewset {
   overflow-y: hidden;
 }
 
-/* Button (same layering as before) */
+/* Button */
 .btn-viewset {
   position: relative;
   padding: 0;
   display: block;
-  margin: 100px auto 0;
+  margin: 5.2083vw auto 0; /* 100px -> 5.2083vw */
   border: none;
   background: none;
   cursor: pointer;
-  width: 45px;
-  height: 45px;
+  width: 2.3438vw;  /* 45px -> 2.3438vw */
+  height: 2.3438vw; /* 45px -> 2.3438vw */
   overflow: visible;
   z-index: 2;
 }
@@ -24,7 +26,7 @@ body.active-viewset {
   display: block;
   position: relative;
   z-index: 100;
-  filter: drop-shadow(0 0 8px #f6e4aae1)
+  filter: drop-shadow(0 0 0.4167vw #f6e4aae1); /* 8px -> 0.4167vw */
 }
 
 .btn-viewset img:hover {
@@ -55,8 +57,8 @@ body.active-viewset {
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 1rem;
-  padding: 20px;
+  gap: 0.8333vw; /* 16px -> 0.8333vw */
+  padding: 1.0417vw; /* 20px -> 1.0417vw */
   max-width: 100%;
   overflow-x: auto;
   z-index: 100000;
@@ -65,7 +67,7 @@ body.active-viewset {
 /* Each card — same size and styling as ViewMyCards */
 .card {
   width: 100%;
-  max-width: 250px;
+  max-width: 13.0208vw; /* 250px -> 13.0208vw */
   aspect-ratio: 2 / 3;
   z-index: 100000;
 }
@@ -73,39 +75,39 @@ body.active-viewset {
 .card img {
   width: 100%;
   height: 100%;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  border-radius: 0.4167vw; /* 8px -> 0.4167vw */
+  box-shadow: 0 0.1042vw 0.3125vw rgba(0, 0, 0, 0.2); /* 2px, 6px -> 0.1042vw,0.3125vw */
   object-fit: fill;
 }
 
 /* Close button */
 .close-viewset {
   position: absolute;
-  top: 0px;
-  right: 10px;
-  padding: 5px 7px;
-  width: 40px;
-  height: 40px;
+  top: 0.0vw; /* 0px -> 0vw */
+  right: 0.5208vw; /* 10px -> 0.5208vw */
+  padding: 0.2604vw 0.3646vw; /* 5px 7px -> 0.2604vw 0.3646vw */
+  width: 2.0833vw;  /* 40px -> 2.0833vw */
+  height: 2.0833vw; /* 40px -> 2.0833vw */
   z-index: 100000;
   background-color: red;
   border-color: black;
 }
 
-/* Responsiveness */
+/* Responsiveness in vw */
 @media (max-width: 1200px) {
   .card {
-    max-width: 250px;
+    max-width: 13.0208vw; /* 250px -> 13.0208vw */
   }
 }
 
 @media (max-width: 900px) {
   .card {
-    max-width: 200px;
+    max-width: 10.4167vw; /* 200px -> 10.4167vw */
   }
 }
 
 @media (max-width: 600px) {
   .card {
-    max-width: 150px;
+    max-width: 7.8125vw; /* 150px -> 7.8125vw */
   }
 }
