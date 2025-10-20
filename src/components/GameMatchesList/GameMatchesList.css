@@ -3,11 +3,10 @@
   min-height: 112.5vw; /* 100vh -> 883px -> 883/19.2 = 45.98vw? Wait, recalc: 883/19.2 = 46vw approx */
   min-height: 46vw;
   background: rgba(0, 0, 0, 0.7);
-  padding: 1.5rem; /* 1.5rem = 24px -> 24/19.2 = 1.25vw */
-  padding: 1.25vw;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
 .matches-wrapper {

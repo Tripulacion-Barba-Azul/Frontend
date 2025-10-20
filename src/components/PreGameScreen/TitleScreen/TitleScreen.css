@@ -4,13 +4,14 @@
   justify-content: center;
   align-items: center;
   height: 100vh;
-  margin: 2vw;
+  margin: 0vw;
   position: relative;
   text-align: center;
   font-family: "Metropolis";
   background: url("/Assets/background_pregame.jpg") no-repeat center center
     fixed;
   background-size: cover;
+  overflow: hidden;
 }
 
 /* Move title higher */
@@ -19,6 +20,7 @@
   max-width: 39.06vw; /* 750px */
   margin-bottom: -5.21vw; /* -100px */
   transform: translateY(-6vh); /* already in vh - perfect! */
+  margin-top: 2vw;
 }
 
 /* Center characters vertically overall */
