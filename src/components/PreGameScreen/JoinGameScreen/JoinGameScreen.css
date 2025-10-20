@@ -1,0 +1,15 @@
+.JoinGameScreen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  color: #ffffff;
+  font-family: 'Metropolis';
+  text-align: center;
+}
+
+body {
+  margin: 0;
+}

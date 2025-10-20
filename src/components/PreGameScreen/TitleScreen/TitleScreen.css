@@ -1,0 +1,42 @@
+.TitleScreen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0vw;
+  position: relative;
+  text-align: center;
+  font-family: "Metropolis";
+  background: url("/Assets/background_pregame.jpg") no-repeat center center
+    fixed;
+  background-size: cover;
+  overflow: hidden;
+}
+
+/* Move title higher */
+.title-image {
+  width: 100%;
+  max-width: 39.06vw; /* 750px */
+  margin-bottom: -5.21vw; /* -100px */
+  transform: translateY(-6vh); /* already in vh - perfect! */
+  margin-top: 2vw;
+}
+
+/* Center characters vertically overall */
+.characters-image {
+  width: 100%;
+  max-width: 23.44vw; /* 450px */
+  position: relative;
+  z-index: 1;
+  filter: brightness(0.95);
+}
+
+.buttons-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.52vw;
+  margin: 0.14vw 0;
+  transform: translateY(-1.6vw); /* already in vh - perfect! */
+}

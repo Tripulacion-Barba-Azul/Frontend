@@ -1,0 +1,33 @@
+/* Same style language as Create/Join buttons */
+.OwnGamesButton {
+  width: 11vw; /* 220px */
+  height: 3vw; /* 70px */
+  padding: 0;
+  color: #000;
+  background-color: #f4e1a3;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 0.63vw; /* 12px */
+  cursor: pointer;
+  font-size: 1.3vw;
+  user-select: none;
+  pointer-events: auto;
+  margin: 0.36vw; /* 7px */
+  z-index: 10;
+  transition: background-color 0.25s ease, transform 0.2s ease,
+    box-shadow 0.25s ease;
+}
+
+.OwnGamesButton:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 2.6vw #f4e1a3cc; /* 50px */
+}
+
+.OwnGamesButton:active {
+  transform: scale(0.97);
+  box-shadow: 0 0 2.6vw #f4e1a3cc; /* 50px */
+}
+
+.OwnGamesButton:focus {
+  outline: none;
+  box-shadow: 0 0 2.6vw #f4e1a3cc; /* 50px */
+}

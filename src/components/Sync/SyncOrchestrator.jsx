@@ -1,46 +1,89 @@
 import React from "react";
-import BoardSync from "./Board/BoardSync.jsx";
-import RegularDeckSync from "./RegularDeck/RegularDeckSync.jsx";
-import DiscardPileSync from "./DiscardPile/DiscardPileSync.jsx";
-import OwnCardsSync from "./OwnCards/OwnCardsSync.jsx";
-import ViewMySecretsSync from "./ViewMySecrets/ViewMySecretsSync.jsx";
-import ViewMyCardsSync from "./ViewMyCards/ViewMyCardsSync.jsx";
+import Board from "../Board/Board.jsx";
+import DiscardPile from "../DiscardPile/DiscardPile.jsx";
+import OwnCards from "../OwnCards/OwnCards.jsx";
+import RegularDeck from "../RegularDeck/RegularDeck.jsx";
+import ViewMyCards from "../ViewMyCards/ViewMyCards.jsx";
+import ViewMySecrets from "../ViewMySecrets/ViewMySecrets.jsx";
+import DrawDraftCardButton from "../DrawDraftCardButton/DrawDraftCardButton.jsx";
+import BackToHomeButton from "./BackToHomeButton/BackToHomeButton.jsx";
 
 export default function SyncOrchestrator({
-  serverPlayers,
-  serverCards,
-  serverSecrets,
+  publicData,
+  privateData,
   currentPlayerId,
 }) {
+  const turnStatus =
+    publicData.players.find((p) => p?.id === currentPlayerId)?.turnStatus ??
+    "waiting";
+  const socialDisgrace =
+    publicData.players.find((p) => p?.id === currentPlayerId)?.socialDisgrace ??
+    false;
+
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      {/* Capa Board (turnos + jugadores) */}
-      <BoardSync
-        serverPlayers={serverPlayers}
-        serverCards={serverCards}
-        serverSecrets={serverSecrets}
+      {/* Game Board */}
+      <Board
+        players={publicData.players}
         currentPlayerId={currentPlayerId}
+        currentPlayerRole={privateData.role}
+        currentPlayerAlly={privateData.ally}
       />
 
-      {/* Capa mazo + descarte + mano propia (como antes) */}
-      <div className="absolute inset-0 pointer-events-none">
-        <RegularDeckSync serverCards={serverCards} />
-        <DiscardPileSync serverCards={serverCards} />
-        <OwnCardsSync
-          serverCards={serverCards}
-          currentPlayerId={currentPlayerId}
-        />
-        <ViewMyCardsSync
-          serverCards={serverCards}
-          currentPlayerId={currentPlayerId}
-          anchorClass="fixed left-110 bottom-45 z-50 pointer-events-auto"
+      <div className="absolute inset-0">
+        {/* Regular Deck */}
+        <div className="absolute inset-0">
+          <RegularDeck
+            number={publicData.regularDeckCount}
+            turnStatus={turnStatus}
+          />
+        </div>
+
+        {/* Discard Pile */}
+        <div className="absolute inset-0">
+          <DiscardPile
+            number={publicData.discardPileCount}
+            card={publicData.discardPileTop}
+          />
+        </div>
+
+        {/* Own Cards */}
+        <OwnCards
+          cards={privateData.cards}
+          turnStatus={turnStatus}
+          socialDisgrace={socialDisgrace}
         />
 
-        <ViewMySecretsSync
-          allSecrets={serverSecrets}
-          playerId={currentPlayerId}
-          anchorClass="fixed right-416 bottom-27 z-50 pointer-events-auto"
+        {/* View My Cards */}
+        <div
+          className="fixed z-50 pointer-events-auto"
+          style={{
+            right: "24.2vw",
+            bottom: "7.8vw"
+          }}
+        >          
+        <ViewMyCards cards={privateData.cards} />
+        </div>
+
+        {/* View My Secrets */}
+        <div
+          className="fixed z-50 pointer-events-auto"
+          style={{
+            right: "87.9271vw",
+            bottom: "4.1vw"
+          }}
+        >
+          <ViewMySecrets secrets={privateData.secrets} />
+        </div>
+
+        {/* Draw Draft Cards */}
+        <DrawDraftCardButton
+          cards={publicData.draftCards}
+          turnStatus={turnStatus}
         />
+
+        {/* Back to home button */}
+        <BackToHomeButton />
       </div>
     </div>
   );

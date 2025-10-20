@@ -1,67 +1,52 @@
+// GameScreen.jsx
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import Lobby from "../Lobby/Lobby";
 import SyncOrchestrator from "../Sync/SyncOrchestrator";
-import {
-  buildUiPlayers,
-  buildCardsState,
-  buildSecretsState,
-} from "./GameScreenLogic";
+import GameEndScreen from "../GameEndScreen/GameEndSreen";
+import Notifier from "../Notifier/Notifier";
+import EffectManager from "../EffectManager/EffectManager";
+import PresentationScreen from "../PresentationScreen/PresentationScreen";
+import BackgroundMusicPlayer from "../BackgroundMusicPlayer/BackgroundMusicPlayer";
 
 export default function GameScreen() {
   const { gameId } = useParams();
   const [searchParams] = useSearchParams();
   const playerId = searchParams.get("playerId");
+  const currentPlayerId = parseInt(playerId);
 
-  const [started, setStarted] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-
-  const [cards, setCards] = useState([]);
-  const [secrets, setSecrets] = useState([]);
-  const [players, setPlayers] = useState([]);
-  const [playerTurnId, setTurn] = useState(null);
-  const [remainingOnDeck, setRemainingOnDeck] = useState(null);
-  
-  // Estados para verificar si tenemos datos válidos
-  const [validPlayers, setValidPlayers] = useState([]);
-  const [validCards, setValidCards] = useState([]);
-  const [validSecrets, setValidSecrets] = useState([]);
-  const [gameDataReady, setGameDataReady] = useState(false);
-  
+  const [started, setStarted] = useState(false);
   const [refreshLobby, setRefreshLobby] = useState(0);
 
-  // Callback para cuando un jugador se une en el lobby
-  const handlePlayerJoined = () => {
-    // Triggear actualización del lobby
-    setRefreshLobby(prev => prev + 1);
-    console.log('🎯 Player joined event handled in GameScreen');
-  };
+  // NEW: has the presentation been shown/acknowledged?
+  const [gamePresented, setGamePresented] = useState(false);
+
+  const [publicData, setPublicData] = useState(null);
+  const [privateData, setPrivateData] = useState(null);
 
   const wsRef = useRef(null);
-  const wsEndpoint = `ws://localhost:8000/ws/${gameId}`;
+  const wsEndpoint = `ws://localhost:8000/ws/${gameId}/${playerId}`;
 
-  // Connect / reconnect when gameId changes
+  const handlePlayerJoined = () => setRefreshLobby((prev) => prev + 1);
+
   useEffect(() => {
     if (!gameId) return;
-
-    if (wsRef.current) {
-      wsRef.current.close();
-    }
 
     const websocket = new WebSocket(wsEndpoint);
 
     websocket.onopen = () => {
-      console.log("✅ WebSocket conectado");
+      console.log("✅ WebSocket connected");
       setIsConnected(true);
     };
 
     websocket.onclose = () => {
-      console.log("❌ WebSocket desconectado");
+      console.log("❌ WebSocket disconnected");
       setIsConnected(false);
     };
 
     websocket.onerror = (error) => {
-      console.error("⚠️ Error en WebSocket:", error);
+      console.error("⚠️ WebSocket error:", error);
       setIsConnected(false);
     };
 
@@ -77,119 +62,157 @@ export default function GameScreen() {
   // Handle incoming messages
   useEffect(() => {
     const websocket = wsRef.current;
-if (!websocket) return;
+    if (!websocket) return;
 
-websocket.onmessage = (event) => {
-  // log crudo
-  console.log("📨 RAW WS message:", event.data);
+    websocket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
 
-  try {
-    const data = JSON.parse(event.data);
-    console.log("📩 Parsed message:", data);
+        switch (data.event) {
+          case "publicUpdate":
+            setPublicData(data.payload);
+            // Accept both snake_case and camelCase just in case
+            if (
+              data.payload?.gameStatus === "in_progress" ||
+              data.payload?.gameStatus === "inProgress"
+            ) {
+              setStarted(true);
+            }
+            break;
 
-    switch (data.event) {
-      case "game_started":
-        console.log("🚀 Partida empezó");
-        console.log("👉 Secrets recibidos:", data.secrets);
-        console.log("👉 Cards recibidas:", data.cards);
-        console.log("👉 Players recibidos:", data.players);
-        console.log("👉 playerTurn recibidos:", data.playerTurnId);
+          case "privateUpdate":
+            setPrivateData(data.payload);
+            break;
 
-        setStarted(true);
+          case "player_joined":
+            handlePlayerJoined();
+            break;
 
-        if (typeof data.playerTurnId === "number") {
-          setTurn(data.playerTurnId);
+          case "gameStarted":
+            setStarted(true);
+            break;
+
+          default:
+            console.warn("GAMESCREEN: Unhandled event:", data);
         }
-
-        if (Array.isArray(data.players)) {
-          console.log("🛠️ Players recibidos:", data.players);
-          
-          const builtPlayers = buildUiPlayers({
-            players: data.players,
-            playerTurnId: data.playerTurnId,
-            playerId: Number(playerId)
-          });
-          
-          console.log("🛠️ Players construidos:", builtPlayers);
-          setPlayers(builtPlayers);
-          setValidPlayers(builtPlayers);
-        }
-
-        if (Array.isArray(data.cards)) {
-          console.log("🃏 Cards recibidas:", data.cards);
-          const builtCards = buildCardsState({
-            remainingOnDeck: data.remainingOnDeck,
-            cards: data.cards
-          });
-          console.log("🃏 Cards construidas:", builtCards);
-          setCards(builtCards);
-          setValidCards(builtCards);
-        }
-
-        if (Array.isArray(data.secrets)) {
-          console.log("🕵️‍♂️ Secrets construidos:", data.secrets);
-          const builtSecrets = buildSecretsState(data.secrets);
-          console.log("🕵️‍♂️ Secrets construidos after:", builtSecrets);
-          setSecrets(builtSecrets);
-          setValidSecrets(builtSecrets);
-        }
-
-        if (typeof data.remainingOnDeck === "number") {
-          console.log("📦 Remaining deck:", data.remainingOnDeck);
-          setRemainingOnDeck(data.remainingOnDeck);
-        }
-
-        break;
-
-      case "player_joined":
-        console.log("👤 Jugador se unió:", data.player);
-        handlePlayerJoined();
-        break;
-
-      default:
-        console.log("❓ Evento no manejado:", data.event);
-    }
-  } catch (err) {
-    console.warn("⚠️ Mensaje (no JSON):", event.data);
-  }
-};
+      } catch (err) {
+        console.warn("⚠️ Non-JSON message:", event.data);
+      }
+    };
   }, [wsRef.current]);
 
-  // Effect para verificar cuando todos los datos están listos
-  useEffect(() => {
-    if (started && validPlayers.length >= 2 && validCards.length > 0 && validSecrets.length > 0) {
-      console.log("🎯 Game data is ready, setting gameDataReady to true");
-      console.log("🎯 validPlayers:", validPlayers.length);
-      console.log("🎯 validCards:", validCards.length); 
-      console.log("🎯 validSecrets:", validSecrets.length);
-      setGameDataReady(true);
-    } else {
-      setGameDataReady(false);
-    }
-  }, [started, validPlayers, validCards, validSecrets]);
+  // The game is ready once we have public & private data AND it has started
+  const gameDataReady = Boolean(publicData && privateData && started);
 
-  // Verificar que tenemos todos los datos necesarios antes de renderizar el juego
-  const hasValidGameData = gameDataReady;
+  // Build props for PresentationScreen when ready
+  let presentationActualPlayer = null;
+  let presentationAlly = null;
+
+  if (gameDataReady) {
+    const findPlayerById = (id) =>
+      publicData?.players?.find((p) => Number(p.id) === Number(id));
+
+    const me = findPlayerById(currentPlayerId);
+    presentationActualPlayer = {
+      name: me?.name ?? "You",
+      role: privateData?.role ?? "detective",
+      avatar: me?.avatar,
+    };
+
+    if (privateData?.ally?.id) {
+      const allyPlayer = findPlayerById(privateData.ally.id);
+      presentationAlly = {
+        name: allyPlayer?.name ?? "Ally",
+        role: privateData.ally.role, // "murderer" | "accomplice"
+        avatar: allyPlayer?.avatar,
+      };
+    } else {
+      presentationAlly = null;
+    }
+  }
 
   return (
     <>
-      {hasValidGameData ? (
-        <SyncOrchestrator
-          serverPlayers={validPlayers}
-          serverCards={validCards}
-          serverSecrets={validSecrets}
-          currentPlayerId={parseInt(playerId)}
-        />
+      {gameDataReady ? (
+        <>
+          {/* Mounted once for both PresentationScreen and SyncOrchestrator */}
+          <BackgroundMusicPlayer
+            src="/Music/BoardMusic.mp3" // put your 30s loop here
+            // sources={["/audio/bgm.mp3","/audio/bgm.ogg"]} // optional fallback
+            volume={0.4} // tweak if needed
+            persistKey="bgm-muted" // shared preference across sessions
+          />
+
+          {!gamePresented ? (
+            <PresentationScreen
+              actualPlayer={presentationActualPlayer}
+              ally={presentationAlly}
+              close={setGamePresented}
+            />
+          ) : (
+            <SyncOrchestrator
+              publicData={publicData}
+              privateData={privateData}
+              currentPlayerId={currentPlayerId}
+            />
+          )}
+        </>
       ) : (
         <Lobby
           id={parseInt(gameId)}
-          playerId={parseInt(playerId)}
+          playerId={currentPlayerId}
           onStartGame={() => setStarted(true)}
           ws={wsRef.current}
           isConnected={isConnected}
           refreshTrigger={refreshLobby}
         />
       )}
+
+      {isConnected && wsRef.current && (
+        <>
+          <Notifier
+            publicData={publicData}
+            actualPlayerId={currentPlayerId}
+            wsRef={wsRef}
+          />
+          <EffectManager
+            publicData={publicData}
+            privateData={privateData}
+            actualPlayerId={currentPlayerId}
+            wsRef={wsRef}
+          />
+          <GameEndScreen websocket={wsRef.current} />
+        </>
+      )}
     </>
   );
 }
+
+// event: "privateUpdate"
+// payload:  {
+//   cards: [{ id: int, name: string, type: string }],
+//   secrets: [{ id: int, revealed: bool, name: string }],
+//   role: "murderer" | "accomplice" | "detective",
+//   ally: { id: int, role: "murderer" | "accomplice" } | null
+// }
+
+// event: "publicUpdate"
+// payload: {
+//   actionStatus: "blocked" | "unblocked",
+//   gameStatus: "waiting" | "in_progress" | "finished",
+//   regularDeckCount: int,
+//   discardPileTop: { id: int, name: string },
+//   draftCards: [{ id: int, name: string }],
+//   discardPileCount: int,
+//   players: [{
+//     id: int,
+//     name: string,
+//     avatar: int,
+//     socialDisgrace: bool,
+//     turnOrder: int,
+//     turnStatus: "waiting" | "playing" | "discarding" | "discardingOpt" | "drawing",
+//     cardCount: int,
+//     secrets: [{ id: int, revealed: bool, name: string }],
+//     sets: [{ setId: int, setName: string, cards: [{ id: int, name: string }] }]
+//   }]
+// }

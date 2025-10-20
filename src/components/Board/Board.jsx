@@ -1,7 +1,45 @@
 import PlayerBadge from "./PlayerBadge/PlayerBadge.jsx";
 import { buildSeatedPlayersFromOrders } from "./Seats/seatsLogic.js";
+import Instructions from "../Instructions/Instructions.jsx";
 
-export default function Board({ players }) {
+/**
+ * Input:
+ * - players: [{
+//              id: int
+//              name: String
+//              avatar: int
+//              socialDisgrace: bool
+//              turnOrder: int
+//              turnStatus: enum(string) # “waiting” | “playing” | "takingAction" | “discarding” | “discardingOpt” | “drawing”
+//              cardCount: int
+//              secrets: [{
+//                  id: int
+//                  revealed: bool
+//                  name: String #default null
+//               }]
+//              sets: [{
+//                  setId: int
+//                  setName: enum(string)
+//                  cards: [{
+//                      id: int
+//                      name: enum(string)
+//                   }]
+//               }]
+//           }]
+ *
+ * - currentPlayerId: number
+ *
+ * - currentPlayerRole: string | null
+ *
+ * - currentPlayerAlly: {id: number, role: string} | null
+ */
+
+export default function Board({
+  players,
+  currentPlayerId,
+  currentPlayerRole,
+  currentPlayerAlly,
+}) {
   // Early validation to prevent errors
   if (!Array.isArray(players) || players.length < 2) {
     return (
@@ -19,10 +57,13 @@ export default function Board({ players }) {
     );
   }
 
-
-
   // Build seated data
-  const seated = buildSeatedPlayersFromOrders(players);
+  const seated = buildSeatedPlayersFromOrders(
+    players,
+    currentPlayerId,
+    currentPlayerRole,
+    currentPlayerAlly
+  );
 
   // Anchor box (full board plane)
   const anchorStyle = { bottom: "0%", top: "0%", right: "0%", left: "0%" };
@@ -40,9 +81,12 @@ export default function Board({ players }) {
         className="w-full h-screen bg-black"
       ></div>
 
+      {/* Instructions */}
+      <Instructions mode="game" />
+
       {/* Foreground: badges */}
-      <div className="absolute inset-0 z-10 pointer-events-none">
-        <div className="absolute pointer-events-none" style={anchorStyle}>
+      <div className="absolute inset-0 z-10 pointer-events-auto">
+        <div className="absolute pointer-events-auto" style={anchorStyle}>
           {seated.map((p) => (
             <div
               key={p.id}
@@ -52,14 +96,16 @@ export default function Board({ players }) {
               <PlayerBadge
                 name={p.name}
                 avatar={p.avatar}
+                socialDisgrace={p.socialDisgrace}
                 size={p.size}
                 ringColor={p.ringColor}
                 nameBgColor={p.nameBgColor}
-                turn={p.turn}
+                position={p.position}
                 numCards={
                   p.meta?.actualPlayer ? null : p.numCards ?? p.numCards ?? 0
                 }
                 secrets={p.meta?.actualPlayer ? null : p.secrets ?? []}
+                sets={p.sets ?? []}
               />
             </div>
           ))}

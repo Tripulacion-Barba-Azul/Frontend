@@ -1,0 +1,270 @@
+/* Overlay for selecting a set */
+.selectset-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+}
+
+/* Main modal content */
+.selectset-content {
+  background: #1e1e1e;
+  color: white;
+  border-radius: 0.9375vw;  /* 18px -> 0.9375vw */
+  padding: 2.0833vw;        /* 40px -> 2.0833vw */
+  max-width: 83.3333vw;     /* 1600px -> 83.3333vw */
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 0 1.8229vw rgba(0, 0, 0, 0.6); /* 35px -> 1.8229vw */
+  font-family: "Metropolis", sans-serif;
+  width: auto;
+  margin: 0 1.0417vw; /* 20px -> 1.0417vw */
+}
+
+/* Title text */
+.selectset-text {
+  margin-bottom: 1.25vw; /* 24px -> 1.25vw */
+  color: #f4e1a3;
+  text-align: center;
+  font-size: 2.0833vw; /* 40px -> 2.0833vw */
+  font-family: "Metropolis";
+}
+
+/* Grid of available sets */
+.selectset-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7813vw; /* 15px -> 0.7813vw */
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.5625vw; /* 30px -> 1.5625vw */
+}
+
+/* Each set item */
+.selectset-item {
+  background: #2a2a2a;
+  border-radius: 0.625vw; /* 12px -> 0.625vw */
+  padding: 0.8333vw;      /* 16px -> 0.8333vw */
+  text-align: center;
+  cursor: pointer;
+  width: 11.8vw;        /* 200px -> 10.4167vw */
+  transition: background 0.15s, transform 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.selectset-item:hover {
+  background: #3a3a3a;
+  transform: scale(1.15);
+}
+
+.selectset-item.selected {
+  outline: 0.1563vw solid #f4e1a3; /* 3px -> 0.1563vw */
+  background: #333;
+  transform: scale(1.15);
+}
+
+/* Set icon */
+.selectset-avatar {
+  width: 4.1667vw;  /* 80px -> 4.1667vw */
+  height: 4.1667vw; /* 80px -> 4.1667vw */
+  border-radius: 0;
+  background: none;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none;
+}
+
+/* Info below each set icon */
+.selectset-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #f4e1a3;
+  width: 100%;
+}
+
+.selectset-name {
+  font-size: 1.0417vw; /* 20px -> 1.0417vw */
+  font-weight: bold;
+  margin-bottom: 0.2083vw; /* 4px -> 0.2083vw */
+  text-align: center;
+}
+
+.selectset-card-count {
+  font-size: 0.8854vw; /* 17px -> 0.8854vw */
+  color: #d1caa0;
+  margin-bottom: 0.5208vw; /* 10px -> 0.5208vw */
+}
+
+/* “View Cards” button */
+.selectset-view-btn {
+  background: rgb(163, 34, 34);
+  border: none;
+  color: #f4e1a3;
+  padding: 0.3125vw 0.7292vw; /* 6px 14px -> vw */
+  border-radius: 0.5208vw; /* 10px -> 0.5208vw */
+  cursor: pointer;
+  font-size: 0.8854vw; /* 17px -> 0.8854vw */
+  transition: background 0.25s;
+  pointer-events: auto;
+}
+
+.selectset-view-btn:hover {
+  background: rgb(115, 23, 23);
+}
+
+/* Bottom buttons */
+.selectset-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7813vw; /* 15px -> 0.7813vw */
+  width: 100%;
+  max-width: 14.5833vw; /* 280px -> 14.5833vw */
+}
+
+.selectset-confirm,
+.selectset-back {
+  padding: 0.625vw 1.25vw; /* 12px 24px -> vw */
+  border: none;
+  border-radius: 0.5208vw; /* 10px -> 0.5208vw */
+  font-size: 0.9vw;     /* 11px -> 0.5729vw */
+  font-family: "Metropolis";
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+  flex: 1;
+}
+
+.selectset-confirm {
+  background-color: rgb(163, 34, 34);
+  color: #f4e1a3;
+}
+
+.selectset-confirm:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 0 1vw #f4e1a3cc;
+}
+
+.selectset-confirm:disabled {
+  background-color: rgba(163, 34, 34, 0.35);
+  color: rgba(244, 225, 163, 0.3);
+  cursor: not-allowed;
+}
+
+.selectset-back {
+  background-color: #2a2a2a;
+  color: #f4e1a3;
+}
+
+.selectset-back:hover {
+  background: #3a3a3a;
+}
+
+/* ===================================================================
+   VIEWSET MODAL — vw conversion
+   =================================================================== */
+
+/* Lock background scroll */
+body.active-viewset {
+  overflow-y: hidden;
+}
+
+/* Giant overlay */
+.viewset-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 100000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Cards container */
+.cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5208vw;  /* 1rem -> 16px -> 0.5208vw */
+  padding: 1.0417vw; /* 20px -> 1.0417vw */
+  max-width: 100%;
+  max-height: 100vh;
+  overflow: auto;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* Each card */
+.card {
+  width: 100%;
+  max-width: 11.9792vw; /* 230px -> 11.9792vw */
+  aspect-ratio: 2 / 3;
+}
+
+.card img {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.4167vw; /* 8px -> 0.4167vw */
+  box-shadow: 0 0.1042vw 0.3125vw rgba(0, 0, 0, 0.3); /* 2px 6px */
+  animation: fadeIn 0.1s ease-out;
+  object-fit: fill;
+}
+
+/* Close button */
+.close-viewset {
+  position: absolute;
+  top: 1.0417vw;   /* 20px -> 1.0417vw */
+  right: 1.0417vw; /* 20px -> 1.0417vw */
+  padding: 0.2604vw 0.3646vw; /* 5px 7px -> vw */
+  width: 2.0833vw;  /* 40px -> 2.0833vw */
+  height: 2.0833vw; /* 40px -> 2.0833vw */
+  border: none;
+  background-color: rgb(163, 34, 34);
+  color: #f4e1a3;
+  font-size: 0.5729vw; /* ~11px -> vw */
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 100001;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.close-viewset:hover {
+  background: rgb(115, 23, 23);
+  transform: scale(1.1);
+}
+
+/* Fade-in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive card sizes (optional tweaks) */
+@media (max-width: 1200px) {
+  .card { max-width: 11.4583vw; } /* 220px -> vw */
+}
+@media (max-width: 900px) {
+  .card { max-width: 9.375vw; } /* 180px -> vw */
+}
+@media (max-width: 600px) {
+  .card { max-width: 7.2917vw; } /* 140px -> vw */
+}

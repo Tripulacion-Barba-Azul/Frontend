@@ -1,140 +1,246 @@
-import './Lobby.css';
-import { useState, useEffect } from 'react';
-import StartGameButton from '../StartGameButton/StartGameButton';
+import "./Lobby.css";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import StartGameButton from "./StartGameButton/StartGameButton";
+import AbandonGameButton from "./AbandonGameButton/AbandonGameButton";
+import CancelGameButton from "./CancelGameButton/CancelGameButton";
 
-// Props esperados: { id, playerId, ws, isConnected, refreshTrigger }
-function Lobby(props){
-    
-    const [currentGame, setCurrentGame] = useState(null);
-    const [players, setPlayers] = useState([]);
-    const [isOwner, setIsOwner] = useState(false);
-    const [playerNotInGame, setPlayerNotInGame] = useState(false);
-    
-    const fetchMatches = async () => {
-        try {
-         const response = await fetch(`http://localhost:8000/games/${props.id}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            }
-          });
+function Lobby(props) {
+  const navigate = useNavigate();
+  const [currentGame, setCurrentGame] = useState(null);
+  const [players, setPlayers] = useState([]);
+  const [isOwner, setIsOwner] = useState(false);
+  const [playerNotInGame, setPlayerNotInGame] = useState(false);
+  const [showCancelNotification, setShowCancelNotification] = useState(false);
+  const [cancelNotificationData, setCancelNotificationData] = useState(null);
 
-          if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-          }
+  const fetchMatches = async () => {
+    try {
+      const response = await fetch(`http://localhost:8000/games/${props.id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-          const data = await response.json();
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
 
-          const playersArray = data.players || [];
-          const ownerPlayer = playersArray.find(player => player.playerId === data.ownerId);
-          const ownerName = ownerPlayer ? ownerPlayer.playerName : 'Unknown Owner';
+      const data = await response.json();
+
+      const playersArray = data.players || [];
+      const ownerPlayer = playersArray.find(
+        (player) => player.playerId === data.ownerId
+      );
+      const ownerName = ownerPlayer ? ownerPlayer.playerName : "Unknown Owner";
+
+      const gameData = {
+        id: data.gameId,
+        name: data.gameName,
+        creator: ownerName,
+        ownerId: data.ownerId,
+        minPlayers: data.minPlayers,
+        maxPlayers: data.maxPlayers,
+        currentPlayers: playersArray,
+      };
+
+      
+      const isCurrentPlayerOwner = props.playerId === data.ownerId;
+      setIsOwner(isCurrentPlayerOwner);
+
+      if (isCurrentPlayerOwner) {
+        
+        setPlayers(gameData.currentPlayers);
+      } else {
+        
+        const currentPlayerInList = gameData.currentPlayers.find(
+          (player) => player.playerId === props.playerId
+        );
+
+        if (currentPlayerInList) {
           
-          const gameData = {
-            id: data.gameId,
-            name: data.gameName,
-            creator: ownerName,
-            ownerId: data.ownerId,
-            minPlayers: data.minPlayers,
-            maxPlayers: data.maxPlayers,
-            currentPlayers: playersArray
-          };
+          setPlayers(gameData.currentPlayers);
+        } else {
           
-          // Verificar si el jugador actual es el owner
-          const isCurrentPlayerOwner = props.playerId === data.ownerId;
-          setIsOwner(isCurrentPlayerOwner);
+          console.error(
+            `Player ID ${props.playerId} not found in game ${props.id}. This indicates the player is not part of this game.`
+          );
           
-          if (isCurrentPlayerOwner) {
-            // Si es owner, cargar todos los jugadores actuales
-            setPlayers(gameData.currentPlayers);
-          } else {
-            // Si no es owner, verificar si está en la lista de jugadores
-            const currentPlayerInList = gameData.currentPlayers.find(player => player.playerId === props.playerId);
-            
-            if (currentPlayerInList) {
-              // El jugador está en la lista, cargar todos los jugadores
-              setPlayers(gameData.currentPlayers);
-            } else {
-              // El jugador NO está en la lista - esto es un ERROR
-              console.error(`Player ID ${props.playerId} not found in game ${props.id}. This indicates the player is not part of this game.`);
-              // NO agregamos al jugador, solo cargamos los jugadores válidos
-              setPlayers(gameData.currentPlayers);
-              // Marcar que el jugador no está en el juego
-              setPlayerNotInGame(true);
-            }
-          }
+          setPlayers(gameData.currentPlayers);
           
-          setCurrentGame(gameData);
-        } catch (error) {
-          console.error('Error fetching matches:', error);
+          setPlayerNotInGame(true);
         }
+      }
+
+      setCurrentGame(gameData);
+    } catch (error) {
+      console.error("Error fetching matches:", error);
+    }
+  };
+
+  // Manejar mensajes del WebSocket
+  useEffect(() => {
+    if (!props.ws) return;
+
+    const handleWebSocketMessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data.event === "playerExit") {
+          // Update player list when someone leaves
+          fetchMatches();
+        } else if (data.event === 'gameDeleted') {
+          const { gameName, ownerName } = data.payload;
+          setCancelNotificationData({
+            ownerName: ownerName,
+            gameName: gameName
+          });
+          setShowCancelNotification(true);
+        }
+      } catch (error) {
+        console.error("Error processing WebSocket message in Lobby:", error);
+      }
     };
 
-    // Actualizar cuando se recibe un trigger de refresh (por ejemplo, player_joined)
-    useEffect(() => {
-        if (props.refreshTrigger > 0) {
-            console.log('🔄 Actualizando lista de jugadores debido a player_joined');
-            fetchMatches();
-        }
-    }, [props.refreshTrigger]);
+    props.ws.addEventListener("message", handleWebSocketMessage);
 
-    // Cargar datos iniciales cuando cambia el ID del juego
-    useEffect(() => {
-        console.log('📋 Cargando datos iniciales del lobby');
-        fetchMatches();
-    }, [props.id]);
+    return () => {
+      props.ws.removeEventListener("message", handleWebSocketMessage);
+    };
+  }, [props.ws]);
 
-    if (!currentGame) {
-        return <div className='Lobby'>Cargando información del juego...</div>;
+  useEffect(() => {
+    if (props.refreshTrigger > 0) {
+      fetchMatches();
     }
+  }, [props.refreshTrigger]);
 
-    // Si el jugador no está en la partida, mostrar solo el mensaje de error
-    if (playerNotInGame) {
-        return (
-            <div className='Lobby' style={{ padding: '20px', textAlign: 'center' }}>
-                <h2 style={{color: 'red'}}>No tienes acceso a esta partida</h2>
-            </div>
-        );
-    }
+  useEffect(() => {
+    fetchMatches();
+  }, [props.id]);
 
-    const hasMinimumPlayers = players.length >= currentGame.minPlayers;
-    const hasMaximumPlayers = players.length >= currentGame.maxPlayers;
+  if (!currentGame) {
+    return <div className="Lobby">Loading game info...</div>;
+  }
 
-    return(
-        <div className='Lobby'>
-            <h2>Partida: {currentGame.name} {props.isConnected && <span style={{color: 'green'}}>Connected</span>}</h2>
-            <h2>Creador de la partida: {currentGame.creator}</h2>
-            <h2>Min: {currentGame.minPlayers}, Max: {currentGame.maxPlayers}</h2>
+  
+  if (playerNotInGame) {
+    return (
+      <div className="Lobby" style={{ padding: "20px", textAlign: "center" }}>
+        <h2 style={{ color: "red" }}>You dont have access to this game</h2>
+      </div>
+    );
+  }
 
-            <div className='players-section'>
-                <h3>
-                    Jugadores en espera ({players.length})
-                    {hasMaximumPlayers && <span className='full-lobby-badge'> - PARTIDA LLENA</span>}
-                    :
-                </h3>
-                <ul className='players-list'>
-                    {players.length > 0 ? (
-                        players.map((player, index) => (
-                            <li key={index} className='player-item'>
-                                {player.playerName}
-                                {player.playerName === currentGame.creator && <span className='creator-badge'> (Creador)</span>}
-                                {player.playerId === props.playerId && <span className='current-player-badge'> (Tú)</span>}
-                            </li>
-                        ))
-                    ) : (
-                        <li className='no-players'>No hay jugadores en la partida</li>
-                    )}
-                </ul>
-                {isOwner && (
-                    <StartGameButton 
-                        disabled={!hasMinimumPlayers}
-                        gameId={props.id}
-                        actualPlayerId={props.playerId}
-                        onStartGame={props.onStartGame}
-                    />
-                )}
-            </div>
+  const hasMinimumPlayers = players.length >= currentGame.minPlayers;
+  const hasMaximumPlayers = players.length >= currentGame.maxPlayers;
+
+  const handleCloseNotification = () => {
+    setShowCancelNotification(false);
+    navigate("/");
+  };
+
+  const CancelNotificationModal = () => {
+    if (!showCancelNotification || !cancelNotificationData) return null;
+
+    return (
+      <div className="cancel-notification-overlay">
+        <div className="cancel-notification-modal">
+          <h3>Game canceled</h3>
+          <p>
+            The game "{cancelNotificationData.gameName}" has been canceled 
+            by {cancelNotificationData.ownerName}
+          </p>
+          <button 
+            className="close-notification-btn"
+            onClick={handleCloseNotification}
+          >
+            Back to home screen
+          </button>
         </div>
-    )
+      </div>
+    );
+  };
+
+  return (
+    <div className="Lobby">
+      <h2>
+        {currentGame.name}{" "}
+      </h2>
+      <div className="progress-section">
+      <div className="progress-bar">
+          <div
+            className={`progress-fill ${
+              players.length >= currentGame.maxPlayers
+                ? 'progress-red'
+                : players.length >= currentGame.minPlayers
+                ? 'progress-yellow'
+                : 'progress-green'
+            }`}
+            style={{
+              width: `${(players.length / currentGame.maxPlayers) * 100}%`,
+            }}
+          ></div>
+        </div>
+        <div className="progress-labels">
+          <span>Min: {currentGame.minPlayers}</span>
+          <span>Players: {players.length}</span>
+          <span>Max: {currentGame.maxPlayers}</span>
+        </div>
+      </div>
+
+      <div className="players-section">
+        <h3>
+          {hasMaximumPlayers && (
+            <span className="full-lobby-badge"> - GAME IS FULL -</span>
+          )}
+        </h3>
+        <ul className="players-list">
+          {players.length > 0 ? (
+            players.map((player, index) => (
+              <li key={index} className="player-item">
+                {player.playerName}
+              <div className="player-badges">
+                {player.playerId === currentGame.ownerId && (
+                  <span className="creator-badge"> (Creator)</span>
+                )}
+                {player.playerId === props.playerId && (
+                  <span className="current-player-badge"> (You)</span>
+                )}
+              </div>
+              </li>
+            ))
+          ) : (
+            <li className="no-players">No players in sight</li>
+          )}
+        </ul>
+        {isOwner && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', marginTop: 10,}}>
+            <StartGameButton
+              disabled={!hasMinimumPlayers}
+              gameId={props.id}
+              actualPlayerId={props.playerId}
+              onStartGame={props.onStartGame}
+            />
+            <CancelGameButton
+              disabled={false}
+              gameId={props.id}
+              actualPlayerId={props.playerId}
+            />
+          </div>
+        )}
+        
+        {/* Leave game button - only for players who are NOT owner */}
+        <AbandonGameButton
+          isOwner={isOwner}
+          playerId={props.playerId}
+          gameId={props.id}
+        />
+      </div>
+      <CancelNotificationModal />
+    </div>
+  );
 }
 
 export default Lobby;

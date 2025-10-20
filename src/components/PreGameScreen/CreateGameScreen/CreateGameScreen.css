@@ -1,0 +1,19 @@
+.CreateGameScreen {
+  display: flex;
+  margin: 0;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* exact height, not min-height */
+  position: relative; /* same as TitleScreen */
+  text-align: center;
+  font-family: 'Metropolis';
+  background: url('/Assets/background_pregame.jpg') no-repeat center center fixed;
+  background-size: cover;
+  overflow-y: auto; /* allow scrolling if content is tall */
+}
+
+body {
+  margin: 0;
+  overflow-x: hidden; /* prevent horizontal scroll */
+}
