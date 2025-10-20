@@ -181,6 +181,7 @@ body{
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  border-radius: 1.25vw;
   padding: 1.25vw; /* 24px */
 }
 
@@ -189,7 +190,7 @@ body{
   border: 2px solid #f4e1a30d;
   border-radius: 0.94vw; /* 18px */
   padding: 2.08vw; /* 40px */
-  max-width: 20.83vw; /* 400px */
+  width: 30.83vw; /* 400px */
   width: 100%;
   text-align: center;
   color: #f4e1a3;
@@ -200,6 +201,23 @@ body{
 .cancel-notification-modal:hover {
   border: 2px solid #f4e1a3;
   box-shadow: 0 0 2.34vw rgba(244, 225, 163, 0.7); /* 45px */
+}
+
+.close-notification-btn {
+  background-color: rgb(163, 34, 34);
+  border: none;
+  color: #f4e1a3;
+  padding: 0.625vw 1.25vw;           /* 12px 24px -> vw */
+  font-family: "Metropolis";
+  font-size: 0.8729vw;               /* 11px -> 0.5729vw */
+  border-radius: 0.5208vw;           /* 10px -> 0.5208vw */
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.close-notification-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 1vw #f4e1a3cc;
 }
 
 /* Responsive */
