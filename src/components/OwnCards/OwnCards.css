@@ -92,10 +92,9 @@
 /* ---- Buttons ---- */
 .owncards-actions {
   position: absolute;
-  right: 7.25vw; /* originally 7%, converted to vw (7% of 1920px ~ 134px -> 3.65vw) */
-  top: 37.5vw; /* originally 82px? scale proportionally: 82/1920*100 = 4.27vw */
+  right: 7.25vw;
+  bottom: 3.25vw; /* Adjust this number to visually match the desired spacing */
   display: flex;
-  gap: 0.417vw; /* 8px */
   pointer-events: auto;
   z-index: 10;
 }
@@ -113,7 +112,6 @@
   font-family: "Metropolis";
   user-select: none;
   pointer-events: auto;
-  margin: 0.365vw; /* 7px */
   z-index: 10;
   transition: background-color 0.013vw ease, transform 0.010vw ease, box-shadow 0.013vw ease;
 }
