@@ -5,6 +5,11 @@
 
 This repository contains the frontend for the web version of the card game, built with React.
 
+
+### API document:
+    https://docs.google.com/spreadsheets/d/1yGESwe0XBWM6WqJdIJk8Frrl3bl4HbfxNNSNcHZxcIc/edit?gid=0#gid=0
+
+    
 ## Configuration
 
 ### System Requirements
