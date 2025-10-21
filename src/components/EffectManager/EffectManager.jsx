@@ -16,17 +16,17 @@ import OrderDiscardPileCards from "../OrderDiscardPileCards/OrderDiscardPileCard
  * Endpoints per-event (rename to real routes)
  * ────────────────────────────────────────────────────────────────────────────*/
 const EFFECT_ENDPOINTS = {
-  selectAnyPlayer: "http://localhost:8000/play/{id}/actions/select-any-player",
+  selectAnyPlayer: "https://dotc-production.up.railway.app/play/{id}/actions/select-any-player",
   andThenThereWasOneMore:
-    "http://localhost:8000/play/{id}/actions/and-then-there-was-one-more",
-  revealSecret: "http://localhost:8000/play/{id}/actions/reveal-secret",
-  revealOwnSecret: "http://localhost:8000/play/{id}/actions/reveal-own-secret",
-  hideSecret: "http://localhost:8000/play/{id}/actions/hide-secret",
-  stealSet: "http://localhost:8000/play/{id}/actions/steal-set",
+    "https://dotc-production.up.railway.app/play/{id}/actions/and-then-there-was-one-more",
+  revealSecret: "https://dotc-production.up.railway.app/play/{id}/actions/reveal-secret",
+  revealOwnSecret: "https://dotc-production.up.railway.app/play/{id}/actions/reveal-own-secret",
+  hideSecret: "https://dotc-production.up.railway.app/play/{id}/actions/hide-secret",
+  stealSet: "https://dotc-production.up.railway.app/play/{id}/actions/steal-set",
   lookIntoTheAshes:
-    "http://localhost:8000/play/{id}/actions/look-into-the-ashes",
+    "https://dotc-production.up.railway.app/play/{id}/actions/look-into-the-ashes",
   delayTheMurderersEscape:
-    "http://localhost:8000/play/{id}/actions/delay-the-murderers-escape",
+    "https://dotc-production.up.railway.app/play/{id}/actions/delay-the-murderers-escape",
 };
 
 /** Small log helpers (keep console clean) */

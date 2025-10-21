@@ -440,7 +440,7 @@ describe("GameMatchesList", () => {
       );
 
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:8000/games?activeGames=false",
+        "https://dotc-production.up.railway.app/games?activeGames=false",
         {
           method: "GET",
           headers: {

@@ -91,7 +91,7 @@ describe("DrawDraftCardButton", () => {
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
-        "http://localhost:8000/play/123/actions/draw-card",
+        "https://dotc-production.up.railway.app/play/123/actions/draw-card",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

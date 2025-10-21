@@ -6,7 +6,7 @@ function CancelGameButton({ disabled, gameId, actualPlayerId, onCancelGame}){
         if (disabled) return;
         
         try {
-            const response = await fetch(`http://localhost:8000/games/${gameId}/delete?player_id=${actualPlayerId}`, {
+            const response = await fetch(`https://dotc-production.up.railway.app/games/${gameId}/delete?player_id=${actualPlayerId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -3,7 +3,7 @@ import { Users, User, Clock, Play, RefreshCw } from "lucide-react";
 import "./GameMatchesList.css";
 import { useNavigate } from "react-router-dom";
 
-const apiGamesList = "http://localhost:8000/games?activeGames=false";
+const apiGamesList = "https://dotc-production.up.railway.app/games?activeGames=false";
 
 const GameMatchesList = () => {
   const [matches, setMatches] = useState([]);

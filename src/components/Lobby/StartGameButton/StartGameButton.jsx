@@ -6,7 +6,7 @@ function StartGameButton({ disabled, gameId, actualPlayerId, onStartGame}){
         if (disabled) return;
         
         try {
-            const response = await fetch(`http://localhost:8000/games/${gameId}/start?owner_id=${actualPlayerId}`, {
+            const response = await fetch(`https://dotc-production.up.railway.app/games/${gameId}/start?owner_id=${actualPlayerId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

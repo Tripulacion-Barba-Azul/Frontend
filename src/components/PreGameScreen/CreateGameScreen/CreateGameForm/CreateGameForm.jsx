@@ -107,7 +107,7 @@ export default function CreateGameForm() {
     };
 
     try {
-      const response = await fetch("http://localhost:8000/games", {
+      const response = await fetch("https://dotc-production.up.railway.app/games", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: 'include',

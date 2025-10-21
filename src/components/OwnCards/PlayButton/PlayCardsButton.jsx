@@ -23,7 +23,7 @@ export default function PlayCardsButton({ selectedCards = [], onPlaySuccess }) {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/play/${gameId}/actions/play-card`,
+        `https://dotc-production.up.railway.app/play/${gameId}/actions/play-card`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

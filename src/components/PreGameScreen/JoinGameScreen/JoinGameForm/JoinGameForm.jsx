@@ -56,7 +56,7 @@ export default function JoinGameForm() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/games/${gameId}/join`,
+        `https://dotc-production.up.railway.app/games/${gameId}/join`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

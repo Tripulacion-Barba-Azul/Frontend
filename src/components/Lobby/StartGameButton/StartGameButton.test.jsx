@@ -69,7 +69,7 @@ describe('StartGameButton', () => {
     
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8000/games/123/start?owner_id=456',
+        'https://dotc-production.up.railway.app/games/123/start?owner_id=456',
         {
           method: 'POST',
           headers: {
@@ -201,7 +201,7 @@ describe('StartGameButton', () => {
     
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:8000/games/game-999/start?owner_id=player-888',
+        'https://dotc-production.up.railway.app/games/game-999/start?owner_id=player-888',
         expect.any(Object)
       );
     });

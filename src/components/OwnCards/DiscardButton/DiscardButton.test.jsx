@@ -110,7 +110,7 @@ describe("DiscardButton.jsx (updated)", () => {
 
     await waitFor(() => expect(onSuccess).toHaveBeenCalled());
     expect(global.fetch).toHaveBeenCalledWith(
-      "http://localhost:8000/play/123/actions/discard",
+      "https://dotc-production.up.railway.app/play/123/actions/discard",
       expect.objectContaining({
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -137,7 +137,7 @@ describe("DiscardButton.jsx (updated)", () => {
 
     await waitFor(() => expect(onSuccess).toHaveBeenCalled());
     expect(global.fetch).toHaveBeenCalledWith(
-      "http://localhost:8000/play/123/actions/discard",
+      "https://dotc-production.up.railway.app/play/123/actions/discard",
       expect.objectContaining({
         method: "POST",
         headers: { "Content-Type": "application/json" },

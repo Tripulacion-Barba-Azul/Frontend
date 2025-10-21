@@ -27,7 +27,7 @@ export default function DrawDraftCardButton({
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:8000/play/${gameId}/actions/draw-card`,
+        `https://dotc-production.up.railway.app/play/${gameId}/actions/draw-card`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -17,7 +17,7 @@ import { filterOwnInProgress, parseOwnPairsMap } from "./ownGamesLogic";
 const OWN_PAIRS_COOKIE = "playersGames";
 
 // Your existing endpoint to fetch games (we keep it as-is)
-const apiGamesList = "http://localhost:8000/games?activeGames=true";
+const apiGamesList = "https://dotc-production.up.railway.app/games?activeGames=true";
 
 export default function GameOwnMatchesList() {
   const [matches, setMatches] = useState([]);

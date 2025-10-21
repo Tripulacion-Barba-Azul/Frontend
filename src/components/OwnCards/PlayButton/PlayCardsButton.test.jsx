@@ -74,7 +74,7 @@ describe("<PlayCardsButton />", () => {
 
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
-        "http://localhost:8000/play/123/actions/play-card",
+        "https://dotc-production.up.railway.app/play/123/actions/play-card",
         expect.objectContaining({
           method: "POST",
           headers: { "Content-Type": "application/json" },

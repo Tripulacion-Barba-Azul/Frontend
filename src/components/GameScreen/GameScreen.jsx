@@ -26,7 +26,7 @@ export default function GameScreen() {
   const [privateData, setPrivateData] = useState(null);
 
   const wsRef = useRef(null);
-  const wsEndpoint = `ws://localhost:8000/ws/${gameId}/${playerId}`;
+  const wsEndpoint = `wss://dotc-production.up.railway.app/ws/${gameId}/${playerId}`;
 
   const handlePlayerJoined = () => setRefreshLobby((prev) => prev + 1);
 

@@ -278,7 +278,7 @@ describe("EffectManager", () => {
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
     const { url, body } = getLastFetchArgs();
-    expect(url).toBe("http://localhost:8000/play/42/actions/select-any-player");
+    expect(url).toBe("https://dotc-production.up.railway.app/play/42/actions/select-any-player");
     expect(body).toMatchObject({
       event: "selectAnyPlayer",
       playerId: 1,
@@ -320,7 +320,7 @@ describe("EffectManager", () => {
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
     const { url, body } = getLastFetchArgs();
-    expect(url).toBe("http://localhost:8000/play/42/actions/steal-set");
+    expect(url).toBe("https://dotc-production.up.railway.app/play/42/actions/steal-set");
     expect(body).toMatchObject({
       event: "stealSet",
       playerId: 1,
@@ -366,7 +366,7 @@ describe("EffectManager", () => {
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
     const { url, body } = getLastFetchArgs();
     expect(url).toBe(
-      "http://localhost:8000/play/42/actions/and-then-there-was-one-more"
+      "https://dotc-production.up.railway.app/play/42/actions/and-then-there-was-one-more"
     );
 
     // IMPORTANTE: el componente envía
@@ -403,7 +403,7 @@ describe("EffectManager", () => {
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
     const { url, body } = getLastFetchArgs();
-    expect(url).toBe("http://localhost:8000/play/42/actions/reveal-secret");
+    expect(url).toBe("https://dotc-production.up.railway.app/play/42/actions/reveal-secret");
     expect(body).toMatchObject({
       event: "revealSecret",
       playerId: 1,
@@ -432,7 +432,7 @@ describe("EffectManager", () => {
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
     const { url, body } = getLastFetchArgs();
-    expect(url).toBe("http://localhost:8000/play/42/actions/reveal-own-secret");
+    expect(url).toBe("https://dotc-production.up.railway.app/play/42/actions/reveal-own-secret");
     expect(body).toMatchObject({
       event: "revealOwnSecret",
       playerId: 1,
@@ -462,7 +462,7 @@ describe("EffectManager", () => {
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
     const { url, body } = getLastFetchArgs();
-    expect(url).toBe("http://localhost:8000/play/42/actions/hide-secret");
+    expect(url).toBe("https://dotc-production.up.railway.app/play/42/actions/hide-secret");
     expect(body).toMatchObject({
       event: "hideSecret",
       playerId: 1,
@@ -492,7 +492,7 @@ describe("EffectManager", () => {
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
     const { url, body } = getLastFetchArgs();
     expect(url).toBe(
-      "http://localhost:8000/play/42/actions/look-into-the-ashes"
+      "https://dotc-production.up.railway.app/play/42/actions/look-into-the-ashes"
     );
     expect(body).toMatchObject({
       event: "lookIntoTheAshes",
@@ -525,7 +525,7 @@ describe("EffectManager", () => {
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
     const { url, body } = getLastFetchArgs();
     expect(url).toBe(
-      "http://localhost:8000/play/42/actions/delay-the-murderers-escape"
+      "https://dotc-production.up.railway.app/play/42/actions/delay-the-murderers-escape"
     );
     expect(body).toMatchObject({
       event: "delayTheMurderersEscape",

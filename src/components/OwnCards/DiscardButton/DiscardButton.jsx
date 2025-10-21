@@ -49,7 +49,7 @@ export default function DiscardButton({
 
     try {
       const response = await fetch(
-        `http://localhost:8000/play/${gameId}/actions/discard`,
+        `https://dotc-production.up.railway.app/play/${gameId}/actions/discard`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

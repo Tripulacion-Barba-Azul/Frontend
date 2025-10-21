@@ -14,7 +14,7 @@ export default function AbandonGameButton({ isOwner, playerId, gameId }) {
     setLoading(true);
 
     try {
-      const response = await fetch(`http://localhost:8000/games/${gameId}/exit?player_id=${playerId}`, {
+      const response = await fetch(`https://dotc-production.up.railway.app/games/${gameId}/exit?player_id=${playerId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

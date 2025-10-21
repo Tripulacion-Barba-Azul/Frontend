@@ -16,7 +16,7 @@ function Lobby(props) {
 
   const fetchMatches = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/games/${props.id}`, {
+      const response = await fetch(`https://dotc-production.up.railway.app/games/${props.id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

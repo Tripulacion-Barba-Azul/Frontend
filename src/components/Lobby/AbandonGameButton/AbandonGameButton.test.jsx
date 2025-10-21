@@ -64,7 +64,7 @@ describe("AbandonGameButton", () => {
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
-        "http://localhost:8000/games/456/exit?player_id=123",
+        "https://dotc-production.up.railway.app/games/456/exit?player_id=123",
         {
           method: "POST",
           headers: {

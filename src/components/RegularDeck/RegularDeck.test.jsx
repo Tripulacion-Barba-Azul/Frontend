@@ -70,7 +70,7 @@ describe("RegularDeck Component", () => {
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(fetchMock).toHaveBeenCalledWith(
-      "http://localhost:8000/play/42/actions/draw-card",
+      "https://dotc-production.up.railway.app/play/42/actions/draw-card",
       expect.objectContaining({
         method: "POST",
         headers: { "Content-Type": "application/json" },

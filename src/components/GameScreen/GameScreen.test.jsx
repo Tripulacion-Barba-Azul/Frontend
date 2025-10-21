@@ -119,7 +119,7 @@ describe("GameScreen", () => {
   it("creates a WebSocket connection on mount", () => {
     render(<GameScreen />);
     expect(WebSocket).toHaveBeenCalledWith(
-      `ws://localhost:8000/ws/${mockGameId}/${mockPlayerId}`
+      `wss://dotc-production.up.railway.app/ws/${mockGameId}/${mockPlayerId}`
     );
   });
 

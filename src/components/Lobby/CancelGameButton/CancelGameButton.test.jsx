@@ -56,7 +56,7 @@ describe('CancelGameButton', () => {
 
     await waitFor(() => {
       expect(fetch).toHaveBeenCalledWith(
-        `http://localhost:8000/games/${defaultProps.gameId}/delete?player_id=${defaultProps.actualPlayerId}`,
+        `https://dotc-production.up.railway.app/games/${defaultProps.gameId}/delete?player_id=${defaultProps.actualPlayerId}`,
         {
           method: 'POST',
           headers: {
