@@ -1,3 +1,23 @@
+// BackgroundMusicPlayer.jsx
+
+/**
+ * @file BackgroundMusicPlayer.jsx
+ * @description Looping background audio with a floating mute/unmute control.
+ *
+ * @typedef {Object} BackgroundMusicPlayerProps
+ * @property {string} [src="/audio/bgm.mp3"] - Default audio source (used if `sources` is not provided).
+ * @property {string[]} [sources] - Optional prioritized list of sources (e.g., [".../bgm.mp3",".../bgm.ogg"]).
+ * @property {number} [volume=0.4] - Initial volume in [0..1]. (Runtime clamped)
+ * @property {string} [persistKey="bgm-muted"] - LocalStorage key to persist mute state across sessions.
+ * @property {string} [className=""] - Extra class names for the root.
+ * @property {boolean} [showControl=true] - When false, hides the floating control (audio still plays).
+ *
+ * Behavior:
+ * - Starts muted by default to avoid autoplay restrictions; first gesture resumes playback.
+ * - Uses `volume` + `muted` UI state (not `audio.muted`) to improve cross-platform behavior.
+ * - Persists mute state in localStorage under `persistKey`.
+ */
+
 import React, { useEffect, useRef, useState } from "react";
 import "./BackgroundMusicPlayer.css";
 
@@ -49,6 +69,7 @@ export default function BackgroundMusicPlayer({
     };
     tryPlay();
 
+    // Resume on first user gesture (helps with autoplay policies)
     const resumeOnGesture = () => {
       a.play().catch(() => {});
       document.removeEventListener("pointerdown", resumeOnGesture);
@@ -65,6 +86,7 @@ export default function BackgroundMusicPlayer({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Persist and apply volume when muting/unmuting or when 'volume' prop changes
   useEffect(() => {
     const a = audioRef.current;
     if (!a) return;

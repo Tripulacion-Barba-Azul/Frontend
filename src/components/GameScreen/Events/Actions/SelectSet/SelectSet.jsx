@@ -1,10 +1,29 @@
+// SelectSet.jsx
+
+/**
+ * @file SelectSet.jsx
+ * @description Modal grid to pick **one** detective set. Includes a “View Cards” modal preview.
+ *
+ * === Canonical shapes (from API DOCUMENT) ===
+ * @typedef {{ id:number, name:string }} DetectiveCard
+ *
+ * @typedef {{ setId:number, setName:string, cards:DetectiveCard[] }} DetectiveSet
+ *
+ * === Props ===
+ * @typedef {Object} SelectSetProps
+ * @property {DetectiveSet[]} [sets=[]] - Sets to choose from (usually from a target player).
+ * @property {(setId:number)=>void} selectedSetId - Called on confirm with the chosen setId.
+ * @property {(() => void)|null} [goBack] - Optional “back” handler; if omitted, back button is hidden.
+ * @property {string} [text="Choose a Set"] - Prompt text.
+ */
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { CARDS_MAP, SETS_MAP } from "../generalMaps.js";
+import { CARDS_MAP, SETS_MAP } from "../../../../../utils/generalMaps";
 import { createPortal } from "react-dom";
 import "./SelectSet.css";
 
-// Modal-only version of ViewSet
+// Modal-only version of ViewSet: previews the set's cards
 function ViewSetModal({ cards, onClose }) {
   useEffect(() => {
     document.body.classList.add("active-viewset");
@@ -31,13 +50,19 @@ function ViewSetModal({ cards, onClose }) {
   );
 }
 
+/** Normalizes the Beresfords variants to a single label */
 export function nameMap({ name }) {
-  if (name === "Tommy Beresford" || name === "Tuppence Beresford" || name === "Siblings Beresford") {
+  if (
+    name === "Tommy Beresford" ||
+    name === "Tuppence Beresford" ||
+    name === "Siblings Beresford"
+  ) {
     return "The Beresfords";
   }
   return name;
 }
 
+/** @param {SelectSetProps} props */
 export default function SelectSet({
   sets = [],
   selectedSetId,
@@ -47,6 +72,7 @@ export default function SelectSet({
   const [selectedSet, setSelectedSet] = useState(null);
   const [viewingSet, setViewingSet] = useState(false);
 
+  // Lock page scroll while modal is open
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {

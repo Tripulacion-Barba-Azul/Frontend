@@ -17,7 +17,7 @@ vi.mock("react-router-dom", async () => {
   return { ...mod, useParams: vi.fn(() => ({ gameId: "42" })) };
 });
 
-vi.mock("../SelectPlayer/SelectPlayer", () => ({
+vi.mock("../Actions/SelectPlayer/SelectPlayer", () => ({
   default: ({ text, players, selectedPlayerId }) => (
     <div data-testid="SelectPlayer">
       <div data-testid="sp-text">{text}</div>
@@ -35,7 +35,7 @@ vi.mock("../SelectPlayer/SelectPlayer", () => ({
   ),
 }));
 
-vi.mock("../SelectSet/SelectSet", () => ({
+vi.mock("../Actions/SelectSet/SelectSet", () => ({
   default: ({ text, sets, selectedSetId, goBack }) => (
     <div data-testid="SelectSet">
       <div data-testid="ss-text">{text}</div>
@@ -58,7 +58,7 @@ vi.mock("../SelectSet/SelectSet", () => ({
   ),
 }));
 
-vi.mock("../SelectSecret/SelectSecret", () => ({
+vi.mock("../Actions/SelectSecret/SelectSecret", () => ({
   default: ({
     text,
     secrets,
@@ -94,7 +94,7 @@ vi.mock("../SelectSecret/SelectSecret", () => ({
   ),
 }));
 
-vi.mock("../SelectDiscardPileCards/SelectDiscardPileCards", () => ({
+vi.mock("../Actions/SelectDiscardPileCards/SelectDiscardPileCards", () => ({
   default: ({ text, cards, selectedCardId }) => (
     <div data-testid="SelectDiscardPileCards">
       <div data-testid="sdc-text">{text}</div>
@@ -112,7 +112,7 @@ vi.mock("../SelectDiscardPileCards/SelectDiscardPileCards", () => ({
   ),
 }));
 
-vi.mock("../OrderDiscardPileCards/OrderDiscardPileCards", () => ({
+vi.mock("../Actions/OrderDiscardPileCards/OrderDiscardPileCards", () => ({
   default: ({ text, cards, selectedCardsOrder }) => (
     <div data-testid="OrderDiscardPileCards">
       <div data-testid="odpc-text">{text}</div>

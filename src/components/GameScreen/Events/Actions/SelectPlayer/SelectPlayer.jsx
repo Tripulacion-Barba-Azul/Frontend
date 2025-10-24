@@ -1,8 +1,44 @@
+// SelectPlayer.jsx
+
+/**
+ * @file SelectPlayer.jsx
+ * @description Modal grid to pick a player (returns the selected player's id).
+ *
+ * === Canonical shapes (from API DOCUMENT) ===
+ * @typedef {"waiting"|"playing"|"discarding"|"discardingOpt"|"drawing"} TurnStatus
+ *
+ * @typedef {{ id:number, revealed:boolean, name:(string|null) }} PublicSecret
+ *
+ * @typedef {{ id:number, name:string }} DetectiveCard
+ *
+ * @typedef {{ setId:number, setName:string, cards:DetectiveCard[] }} DetectiveSet
+ *
+ * @typedef {{
+ *   id:number,
+ *   name:string,
+ *   avatar:number,
+ *   socialDisgrace:boolean,
+ *   turnOrder:number,
+ *   turnStatus:TurnStatus,
+ *   cardCount:number,
+ *   secrets:PublicSecret[],
+ *   sets:DetectiveSet[]
+ * }} PublicPlayer
+ *
+ * === Props ===
+ * @typedef {Object} SelectPlayerProps
+ * @property {number|string} actualPlayerId - Current user's id (to tag "(you)").
+ * @property {PublicPlayer[]} [players=[]] - Player list to render as choices.
+ * @property {(id:number|string)=>void} selectedPlayerId - Called on confirm with the chosen id.
+ * @property {string} [text=""] - Prompt text shown above the grid.
+ */
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { AVATAR_MAP } from "../generalMaps";
+import { AVATAR_MAP } from "../../../../../utils/generalMaps";
 import "./SelectPlayer.css";
 
+/** @param {SelectPlayerProps} props */
 export default function SelectPlayer({
   actualPlayerId,
   players = [],
@@ -11,6 +47,7 @@ export default function SelectPlayer({
 }) {
   const [chosenId, setChosenId] = useState(null);
 
+  // Lock page scroll while modal is open
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {

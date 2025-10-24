@@ -1,3 +1,18 @@
+// Lobby.jsx
+
+/**
+ * @description Pre-game lobby: shows players, capacity progress, and owner actions.
+ *
+ * @typedef {Object} LobbyProps
+ * @property {string} id - Game identifier (server-side gameId).
+ * @property {string} playerId - Current player's unique id.
+ * @property {WebSocket|null} ws - Open WebSocket connection used to receive lobby events.
+ * @property {number} [refreshTrigger=0] - External trigger to refetch lobby state (increments to refresh).
+ * @property {(args:{gameId:string, playerId:string})=>void} [onStartGame] - Optional callback fired on start.
+ *
+ * Props shape: see LobbyProps.
+ */
+
 import "./Lobby.css";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -5,7 +20,7 @@ import StartGameButton from "./StartGameButton/StartGameButton";
 import AbandonGameButton from "./AbandonGameButton/AbandonGameButton";
 import CancelGameButton from "./CancelGameButton/CancelGameButton";
 
-function Lobby(props) {
+function Lobby(/** @type {LobbyProps} */ props) {
   const navigate = useNavigate();
   const [currentGame, setCurrentGame] = useState(null);
   const [players, setPlayers] = useState([]);
@@ -14,25 +29,20 @@ function Lobby(props) {
   const [showCancelNotification, setShowCancelNotification] = useState(false);
   const [cancelNotificationData, setCancelNotificationData] = useState(null);
 
+  // Fetch server state for a single game; also validates current player membership/ownership.
   const fetchMatches = async () => {
     try {
       const response = await fetch(`http://localhost:8000/games/${props.id}`, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
 
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
 
       const data = await response.json();
 
       const playersArray = data.players || [];
-      const ownerPlayer = playersArray.find(
-        (player) => player.playerId === data.ownerId
-      );
+      const ownerPlayer = playersArray.find((p) => p.playerId === data.ownerId);
       const ownerName = ownerPlayer ? ownerPlayer.playerName : "Unknown Owner";
 
       const gameData = {
@@ -45,30 +55,26 @@ function Lobby(props) {
         currentPlayers: playersArray,
       };
 
-      
       const isCurrentPlayerOwner = props.playerId === data.ownerId;
       setIsOwner(isCurrentPlayerOwner);
 
       if (isCurrentPlayerOwner) {
-        
+        // Owner can always see the full roster
         setPlayers(gameData.currentPlayers);
       } else {
-        
+        // Non-owner: ensure the current player actually belongs to this game
         const currentPlayerInList = gameData.currentPlayers.find(
-          (player) => player.playerId === props.playerId
+          (p) => p.playerId === props.playerId
         );
 
         if (currentPlayerInList) {
-          
           setPlayers(gameData.currentPlayers);
         } else {
-          
+          // Not in game: still show roster, but gate the UI with an access message
           console.error(
-            `Player ID ${props.playerId} not found in game ${props.id}. This indicates the player is not part of this game.`
+            `Player ID ${props.playerId} not found in game ${props.id}.`
           );
-          
           setPlayers(gameData.currentPlayers);
-          
           setPlayerNotInGame(true);
         }
       }
@@ -79,23 +85,21 @@ function Lobby(props) {
     }
   };
 
-  // Manejar mensajes del WebSocket
+  // Listen to lobby-related WebSocket events to keep the roster in sync and handle deletion.
   useEffect(() => {
     if (!props.ws) return;
 
     const handleWebSocketMessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        
+
         if (data.event === "playerExit") {
-          // Update player list when someone leaves
+          // Someone left: refresh roster from server
           fetchMatches();
-        } else if (data.event === 'gameDeleted') {
+        } else if (data.event === "gameDeleted") {
+          // Owner canceled the game: show modal and then navigate away
           const { gameName, ownerName } = data.payload;
-          setCancelNotificationData({
-            ownerName: ownerName,
-            gameName: gameName
-          });
+          setCancelNotificationData({ ownerName, gameName });
           setShowCancelNotification(true);
         }
       } catch (error) {
@@ -104,18 +108,16 @@ function Lobby(props) {
     };
 
     props.ws.addEventListener("message", handleWebSocketMessage);
-
-    return () => {
+    return () =>
       props.ws.removeEventListener("message", handleWebSocketMessage);
-    };
   }, [props.ws]);
 
+  // External refresh trigger (parent increments a counter to force refetch)
   useEffect(() => {
-    if (props.refreshTrigger > 0) {
-      fetchMatches();
-    }
+    if (props.refreshTrigger > 0) fetchMatches();
   }, [props.refreshTrigger]);
 
+  // Fetch when the game id changes (navigated to a different lobby)
   useEffect(() => {
     fetchMatches();
   }, [props.id]);
@@ -124,7 +126,7 @@ function Lobby(props) {
     return <div className="Lobby">Loading game info...</div>;
   }
 
-  
+  // Access guard: player tried to open a lobby where they don't belong
   if (playerNotInGame) {
     return (
       <div className="Lobby" style={{ padding: "20px", textAlign: "center" }}>
@@ -141,6 +143,7 @@ function Lobby(props) {
     navigate("/");
   };
 
+  // Inline modal component showing a non-blocking cancellation notice.
   const CancelNotificationModal = () => {
     if (!showCancelNotification || !cancelNotificationData) return null;
 
@@ -149,10 +152,10 @@ function Lobby(props) {
         <div className="cancel-notification-modal">
           <h3>Game canceled</h3>
           <p>
-            The game "{cancelNotificationData.gameName}" has been canceled 
-            by {cancelNotificationData.ownerName}
+            The game "{cancelNotificationData.gameName}" has been canceled by{" "}
+            {cancelNotificationData.ownerName}
           </p>
-          <button 
+          <button
             className="close-notification-btn"
             onClick={handleCloseNotification}
           >
@@ -165,23 +168,23 @@ function Lobby(props) {
 
   return (
     <div className="Lobby">
-      <h2>
-        {currentGame.name}{" "}
-      </h2>
+      <h2>{currentGame.name} </h2>
+
+      {/* Capacity progress: color shifts with occupancy thresholds */}
       <div className="progress-section">
-      <div className="progress-bar">
+        <div className="progress-bar">
           <div
             className={`progress-fill ${
               players.length >= currentGame.maxPlayers
-                ? 'progress-red'
+                ? "progress-red"
                 : players.length >= currentGame.minPlayers
-                ? 'progress-yellow'
-                : 'progress-green'
+                ? "progress-yellow"
+                : "progress-green"
             }`}
             style={{
               width: `${(players.length / currentGame.maxPlayers) * 100}%`,
             }}
-          ></div>
+          />
         </div>
         <div className="progress-labels">
           <span>Min: {currentGame.minPlayers}</span>
@@ -196,27 +199,38 @@ function Lobby(props) {
             <span className="full-lobby-badge"> - GAME IS FULL -</span>
           )}
         </h3>
+
+        {/* Roster */}
         <ul className="players-list">
           {players.length > 0 ? (
             players.map((player, index) => (
               <li key={index} className="player-item">
                 {player.playerName}
-              <div className="player-badges">
-                {player.playerId === currentGame.ownerId && (
-                  <span className="creator-badge"> (Creator)</span>
-                )}
-                {player.playerId === props.playerId && (
-                  <span className="current-player-badge"> (You)</span>
-                )}
-              </div>
+                <div className="player-badges">
+                  {player.playerId === currentGame.ownerId && (
+                    <span className="creator-badge"> (Creator)</span>
+                  )}
+                  {player.playerId === props.playerId && (
+                    <span className="current-player-badge"> (You)</span>
+                  )}
+                </div>
               </li>
             ))
           ) : (
             <li className="no-players">No players in sight</li>
           )}
         </ul>
+
+        {/* Owner-only actions */}
         {isOwner && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', marginTop: 10,}}>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              marginTop: 10,
+            }}
+          >
             <StartGameButton
               disabled={!hasMinimumPlayers}
               gameId={props.id}
@@ -230,14 +244,15 @@ function Lobby(props) {
             />
           </div>
         )}
-        
-        {/* Leave game button - only for players who are NOT owner */}
+
+        {/* Leave game (hidden for owner) */}
         <AbandonGameButton
           isOwner={isOwner}
           playerId={props.playerId}
           gameId={props.id}
         />
       </div>
+
       <CancelNotificationModal />
     </div>
   );

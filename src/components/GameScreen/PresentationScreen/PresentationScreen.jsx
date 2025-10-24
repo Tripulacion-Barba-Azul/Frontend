@@ -1,15 +1,16 @@
+// PresentationScreen.jsx
+
 import "./PresentationScreen.css";
 import { useEffect, useRef } from "react";
-import { AVATAR_MAP } from "../generalMaps";
+import { AVATAR_MAP } from "../../../utils/generalMaps";
 
 /**
  * PresentationScreen
  *
- * Props:
+ * Props (see API DOCUMENT for canonical shapes):
  * - actualPlayer: { name: string; role: "murderer" | "accomplice" | "detective" | string }
  * - ally?: { name: string; avatar?: number|string } | null
  * - close: (v: boolean) => void
- * - soloAsSingleBox?: boolean   // NEW: when true, murderer/accomplice render as a single box if there's NO ally (detective is always single)
  *
  * Behavior (unchanged when an ally exists):
  * - murderer/accomplice:
@@ -29,7 +30,6 @@ export default function PresentationScreen({
   actualPlayer,
   ally = null,
   close,
-  soloAsSingleBox = true, // default enabled to match the requested behavior
 }) {
   const timeoutRef = useRef(null);
 
@@ -50,7 +50,7 @@ export default function PresentationScreen({
 
   const backgroundSrc = "/Presentation/background.png";
 
-  // Role images (replace with your final assets if needed)
+  // Role images (replace with final assets if needed)
   const murdererSrc = "/Presentation/murderer.png";
   const accompliceSrc = "/Presentation/accomplice.png";
   const detectiveSrc = "/Presentation/detective.png";
@@ -62,10 +62,7 @@ export default function PresentationScreen({
 
   /** Flag: should we collapse to a single box? */
   const shouldSolo =
-    isDetective ||
-    (soloAsSingleBox &&
-      !ally &&
-      (role === "murderer" || role === "accomplice"));
+    isDetective || (!ally && (role === "murderer" || role === "accomplice"));
 
   /** Colored name inline */
   const Name = ({ name, role }) => (
@@ -106,7 +103,7 @@ export default function PresentationScreen({
   const allyAvatarSrc =
     ally && AVATAR_MAP[ally.avatar] ? AVATAR_MAP[ally.avatar] : null;
 
-  // Role content
+  // Role content (text + card image)
   let cardSrc = detectiveSrc;
   let leftContent;
   let rightContent = null;
@@ -198,6 +195,7 @@ export default function PresentationScreen({
   const showRightContent = Boolean(rightContent) && !shouldSolo;
   const showRightChip = hasRightChip && !shouldSolo;
 
+  // CTA: mark as ready and clear pending timeout
   const handleReady = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -234,12 +232,10 @@ export default function PresentationScreen({
           <div
             className={`textBox ${shouldSolo ? "solo-box" : ""}`}
             data-variant="big"
-            data-det={
-              isDetective ? "true" : "false"
-            } /* keep legacy flag for CSS */
+            data-det={isDetective ? "true" : "false"} /* legacy flag for CSS */
             data-solo={
               shouldSolo ? "true" : "false"
-            } /* new generic flag for single-box layout */
+            } /* single-box layout flag */
           >
             {leftContent}
           </div>

@@ -47,25 +47,28 @@ const BackToHomeButtonMock = vi.fn(() => {
 });
 
 // Wire mocks to the same import paths used by SyncOrchestrator.jsx
-vi.mock("../Board/Board.jsx", () => ({ default: (p) => BoardMock(p) }));
-vi.mock("../RegularDeck/RegularDeck.jsx", () => ({
+vi.mock("./Board/Board.jsx", () => ({ default: (p) => BoardMock(p) }));
+vi.mock("./FixedBoardElements/RegularDeck/RegularDeck.jsx", () => ({
   default: (p) => RegularDeckMock(p),
 }));
-vi.mock("../DiscardPile/DiscardPile.jsx", () => ({
+vi.mock("./FixedBoardElements/DiscardPile/DiscardPile.jsx", () => ({
   default: (p) => DiscardPileMock(p),
 }));
-vi.mock("../OwnCards/OwnCards.jsx", () => ({
+vi.mock("./FixedBoardElements/OwnCards/OwnCards.jsx", () => ({
   default: (p) => OwnCardsMock(p),
 }));
-vi.mock("../ViewMyCards/ViewMyCards.jsx", () => ({
+vi.mock("./FixedBoardElements/ViewMyCards/ViewMyCards.jsx", () => ({
   default: (p) => ViewMyCardsMock(p),
 }));
-vi.mock("../ViewMySecrets/ViewMySecrets.jsx", () => ({
+vi.mock("./FixedBoardElements/ViewMySecrets/ViewMySecrets.jsx", () => ({
   default: (p) => ViewMySecretsMock(p),
 }));
-vi.mock("../DrawDraftCardButton/DrawDraftCardButton.jsx", () => ({
-  default: (p) => DrawDraftCardButtonMock(p),
-}));
+vi.mock(
+  "./FixedBoardElements/DrawDraftCardButton/DrawDraftCardButton.jsx",
+  () => ({
+    default: (p) => DrawDraftCardButtonMock(p),
+  })
+);
 
 // IMPORTANT: path matches the component import in SyncOrchestrator.jsx
 vi.mock("./BackToHomeButton/BackToHomeButton.jsx", () => ({

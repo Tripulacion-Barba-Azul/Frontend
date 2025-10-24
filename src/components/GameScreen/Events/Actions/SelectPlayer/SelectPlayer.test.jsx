@@ -7,7 +7,7 @@ import SelectPlayer from "./SelectPlayer";
 vi.mock("./SelectPlayer.css", () => ({}));
 
 // Mock avatar map used by the component
-vi.mock("../generalMaps.js", () => ({
+vi.mock("../../../../../utils/generalMaps", () => ({
   AVATAR_MAP: {
     1: "/a1.png",
     2: "/a2.png",

@@ -1,18 +1,77 @@
+// SyncOrchestrator.jsx
+
+/**
+ * @file SyncOrchestrator.jsx
+ * @description Single source of truth for the live board. Receives the latest
+ * public and private snapshots and renders the board + fixed UI elements.
+ *
+ * === Canonical shapes (from API DOCUMENT) ===
+ *
+ * @typedef {"waiting"|"inProgress"|"finished"} GameStatus
+ * @typedef {"blocked"|"unblocked"} ActionStatus
+ * @typedef {"waiting"|"playing"|"discarding"|"discardingOpt"|"drawing"} TurnStatus
+ * @typedef {"detective"|"murderer"|"accomplice"} Role
+ *
+ * @typedef {{ id:number, name:string }} SimpleCard
+ * @typedef {{ id:number, name:string, type:string }} HandCard
+ *
+ * @typedef {{ id:number, revealed:boolean, name:(string|null) }} PublicSecret
+ * @typedef {{ id:number, name:string }} DetectiveCard
+ * @typedef {{ setId:number, setName:string, cards:DetectiveCard[] }} DetectiveSet
+ *
+ * @typedef {{
+ *   id:number,
+ *   name:string,
+ *   avatar:number,
+ *   socialDisgrace:boolean,
+ *   turnOrder:number,
+ *   turnStatus:TurnStatus,
+ *   cardCount:number,
+ *   secrets:PublicSecret[],
+ *   sets:DetectiveSet[]
+ * }} PublicPlayer
+ *
+ * @typedef {{
+ *   actionStatus:ActionStatus,
+ *   gameStatus:GameStatus,
+ *   regularDeckCount:number,
+ *   discardPileTop:(SimpleCard|null),
+ *   draftCards:SimpleCard[],
+ *   discardPileCount:number,
+ *   players:PublicPlayer[]
+ * }} PublicData
+ *
+ * @typedef {{
+ *   cards:HandCard[],
+ *   secrets:PublicSecret[],
+ *   role:Role,
+ *   ally: ({ id:number, role:Exclude<Role,"detective"> } | null)
+ * }} PrivateData
+ *
+ * === Props ===
+ * @param {Object} props
+ * @param {PublicData}  props.publicData
+ * @param {PrivateData} props.privateData
+ * @param {number}      props.currentPlayerId
+ */
+
 import React from "react";
-import Board from "../Board/Board.jsx";
-import DiscardPile from "../DiscardPile/DiscardPile.jsx";
-import OwnCards from "../OwnCards/OwnCards.jsx";
-import RegularDeck from "../RegularDeck/RegularDeck.jsx";
-import ViewMyCards from "../ViewMyCards/ViewMyCards.jsx";
-import ViewMySecrets from "../ViewMySecrets/ViewMySecrets.jsx";
-import DrawDraftCardButton from "../DrawDraftCardButton/DrawDraftCardButton.jsx";
+import Board from "./Board/Board.jsx";
+import DiscardPile from "./FixedBoardElements/DiscardPile/DiscardPile.jsx";
+import OwnCards from "./FixedBoardElements/OwnCards/OwnCards.jsx";
+import RegularDeck from "./FixedBoardElements/RegularDeck/RegularDeck.jsx";
+import ViewMyCards from "./FixedBoardElements/ViewMyCards/ViewMyCards.jsx";
+import ViewMySecrets from "./FixedBoardElements/ViewMySecrets/ViewMySecrets.jsx";
+import DrawDraftCardButton from "./FixedBoardElements/DrawDraftCardButton/DrawDraftCardButton.jsx";
 import BackToHomeButton from "./BackToHomeButton/BackToHomeButton.jsx";
 
+/** @param {{ publicData: PublicData, privateData: PrivateData, currentPlayerId: number }} props */
 export default function SyncOrchestrator({
   publicData,
   privateData,
   currentPlayerId,
 }) {
+  // Derive current player's transient flags from the public snapshot.
   const turnStatus =
     publicData.players.find((p) => p?.id === currentPlayerId)?.turnStatus ??
     "waiting";
@@ -22,7 +81,7 @@ export default function SyncOrchestrator({
 
   return (
     <div className="relative w-full h-screen overflow-hidden">
-      {/* Game Board */}
+      {/* Game Board (players layout + role/ally awareness) */}
       <Board
         players={publicData.players}
         currentPlayerId={currentPlayerId}
@@ -31,7 +90,7 @@ export default function SyncOrchestrator({
       />
 
       <div className="absolute inset-0">
-        {/* Regular Deck */}
+        {/* Regular Deck counter */}
         <div className="absolute inset-0">
           <RegularDeck
             number={publicData.regularDeckCount}
@@ -39,7 +98,7 @@ export default function SyncOrchestrator({
           />
         </div>
 
-        {/* Discard Pile */}
+        {/* Discard Pile counter + top card preview */}
         <div className="absolute inset-0">
           <DiscardPile
             number={publicData.discardPileCount}
@@ -47,42 +106,35 @@ export default function SyncOrchestrator({
           />
         </div>
 
-        {/* Own Cards */}
+        {/* Player hand (private) with turn/socialDisgrace gates */}
         <OwnCards
           cards={privateData.cards}
           turnStatus={turnStatus}
           socialDisgrace={socialDisgrace}
         />
 
-        {/* View My Cards */}
+        {/* Quick views */}
         <div
           className="fixed z-50 pointer-events-auto"
-          style={{
-            right: "24.2vw",
-            bottom: "7.8vw"
-          }}
-        >          
-        <ViewMyCards cards={privateData.cards} />
+          style={{ right: "24.2vw", bottom: "7.8vw" }}
+        >
+          <ViewMyCards cards={privateData.cards} />
         </div>
 
-        {/* View My Secrets */}
         <div
           className="fixed z-50 pointer-events-auto"
-          style={{
-            right: "87.9271vw",
-            bottom: "4.1vw"
-          }}
+          style={{ right: "87.9271vw", bottom: "4.1vw" }}
         >
           <ViewMySecrets secrets={privateData.secrets} />
         </div>
 
-        {/* Draw Draft Cards */}
+        {/* Draft draw (uses publicData.draftCards visibility) */}
         <DrawDraftCardButton
           cards={publicData.draftCards}
           turnStatus={turnStatus}
         />
 
-        {/* Back to home button */}
+        {/* Escape hatch */}
         <BackToHomeButton />
       </div>
     </div>

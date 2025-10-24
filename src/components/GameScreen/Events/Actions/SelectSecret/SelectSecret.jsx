@@ -1,7 +1,28 @@
+// SelectSecret.jsx
+
+/**
+ * @file SelectSecret.jsx
+ * @description Modal grid to select **one** secret card. The `revealed` prop controls which secrets are selectable.
+ *
+ * === Canonical shapes (from API DOCUMENT) ===
+ * @typedef {{ id:number, revealed:boolean, name:(string|null) }} PublicSecret
+ *
+ * === Props ===
+ * @typedef {Object} SelectSecretProps
+ * @property {number|string} actualPlayerId - Current user's id (used to show own-front overlay).
+ * @property {PublicSecret[]} secrets - Secrets to render for the target player.
+ * @property {number|string} playerId - Target player whose secrets are shown.
+ * @property {boolean} revealed - Selection rule: `true` → only revealed; `false` → only hidden.
+ * @property {string} text - Prompt shown at the top.
+ * @property {(id:number)=>void} selectedSecretId - Called after confirm animation with chosen secret id.
+ * @property {(() => void)|null} [goBack] - Optional “back” handler; if omitted, back button is hidden.
+ */
+
 import React, { useState, useMemo, useCallback } from "react";
-import { SECRETS_MAP } from "../generalMaps.js";
+import { SECRETS_MAP } from "../../../../../utils/generalMaps";
 import "./SelectSecret.css";
 
+/** @param {SelectSecretProps} props */
 export default function SelectSecret({
   actualPlayerId,
   secrets,
@@ -16,7 +37,7 @@ export default function SelectSecret({
   const [localSecrets, setLocalSecrets] = useState(secrets);
   const [isConfirming, setIsConfirming] = useState(false);
 
-  // Sync local secrets when props change, and reset local UI state
+  // Sync local secrets when props change; clear transient UI state
   React.useEffect(() => {
     setLocalSecrets(secrets);
     setSelectedCardId(null);
@@ -24,10 +45,10 @@ export default function SelectSecret({
     setIsFlipping({});
   }, [secrets]);
 
-  // Selection rule: only secrets matching `revealed` are selectable
+  // Only allow selection that matches the `revealed` rule
   const canSelectSecret = useCallback(
     (secret) => {
-      if (typeof revealed !== "boolean") return true; // backward-compatible
+      if (typeof revealed !== "boolean") return true; // backward compatible
       return revealed ? !!secret?.revealed : !secret?.revealed;
     },
     [revealed]
@@ -35,7 +56,7 @@ export default function SelectSecret({
 
   const handleCardClick = (secretId) => {
     const s = localSecrets?.find((x) => x.id === secretId);
-    if (!s || !canSelectSecret(s)) return; // ignore non-selectable
+    if (!s || !canSelectSecret(s)) return;
     setSelectedCardId(secretId);
   };
 
@@ -52,7 +73,7 @@ export default function SelectSecret({
       setIsFlipping((prev) => ({ ...prev, [selectedCardId]: true }));
 
       setTimeout(() => {
-        // Flip visual (local) for feedback
+        // Local flip for user feedback
         setLocalSecrets((prevSecrets) =>
           prevSecrets.map((secret) =>
             secret.id === selectedCardId

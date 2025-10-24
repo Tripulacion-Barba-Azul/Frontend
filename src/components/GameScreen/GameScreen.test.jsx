@@ -23,7 +23,7 @@ vi.mock("../Lobby/Lobby", () => ({
   ),
 }));
 
-vi.mock("../Sync/SyncOrchestrator", () => ({
+vi.mock("./Sync/SyncOrchestrator", () => ({
   default: ({ publicData, privateData, currentPlayerId }) => (
     <div data-testid="sync-orchestrator">
       Sync - Player: {currentPlayerId}, Public: {publicData ? "yes" : "no"},
@@ -32,20 +32,20 @@ vi.mock("../Sync/SyncOrchestrator", () => ({
   ),
 }));
 
-vi.mock("../GameEndScreen/GameEndSreen", () => ({
+vi.mock("./GameEndScreen/GameEndSreen", () => ({
   default: () => <div data-testid="game-end-screen">Game End Screen</div>,
 }));
 
-vi.mock("../Notifier/Notifier", () => ({
+vi.mock("./Events/Notifier/Notifier", () => ({
   default: () => <div data-testid="notifier">Notifier</div>,
 }));
 
-vi.mock("../EffectManager/EffectManager", () => ({
+vi.mock("./Events/EffectManager/EffectManager", () => ({
   default: () => <div data-testid="effect-manager">EffectManager</div>,
 }));
 
 // PresentationScreen with a button that triggers close(true)
-vi.mock("../PresentationScreen/PresentationScreen", () => ({
+vi.mock("./PresentationScreen/PresentationScreen", () => ({
   default: ({ close }) => (
     <div data-testid="presentation-screen">
       Presentation
@@ -57,7 +57,7 @@ vi.mock("../PresentationScreen/PresentationScreen", () => ({
 }));
 
 // NEW: BackgroundMusicPlayer mocked as a simple marker
-vi.mock("../BackgroundMusicPlayer/BackgroundMusicPlayer", () => ({
+vi.mock("./BackgroundMusicPlayer/BackgroundMusicPlayer", () => ({
   default: () => <div data-testid="bgm">BGM</div>,
 }));
 

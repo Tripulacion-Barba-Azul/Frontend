@@ -10,7 +10,7 @@ afterEach(cleanup);
 vi.mock("./OrderDiscardPileCards.css", () => ({}));
 
 // Mock generalMaps so the component finds images in CARDS_MAP
-vi.mock("../generalMaps.js", () => ({
+vi.mock("../../../../../utils/generalMaps", () => ({
   CARDS_MAP: {
     "Express Train": "/img/express_train.png",
     Blackmail: "/img/blackmail.png",
@@ -96,23 +96,23 @@ describe("OrderDiscardPileCards", () => {
 
     // Find the Reorder.Group element
     const reorderGroup = container.querySelector('[data-on-reorder="true"]');
-    
+
     // Get the component instance to access handleReorder
     // Since we're using a mock, we need to simulate the reorder directly
     // by finding the internal state setter
-    
+
     // Simulate a reorder by calling the component's handleReorder
     // In a real scenario, framer-motion would call onReorder with new IDs
     // We'll simulate moving card 1 to the end: [1,2,3] -> [2,3,1]
     const newOrder = [2, 3, 1];
-    
+
     // Trigger a custom event that simulates framer-motion's onReorder
     const reorderEvent = new CustomEvent("reorder", { detail: newOrder });
-    
+
     // Since we can't easily access the internal handleReorder,
     // let's test by clicking buttons in sequence to verify the order
     // For a proper test, we'd need to expose handleReorder or use a different approach
-    
+
     // For now, just verify the initial order is correct
     fireEvent.click(getByRole("button", { name: /confirm/i }));
     expect(onOrder).toHaveBeenCalledWith([1, 2, 3]);

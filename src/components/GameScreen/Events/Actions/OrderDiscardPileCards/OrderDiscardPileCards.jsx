@@ -1,47 +1,64 @@
+// OrderDiscardPileCards.jsx
+
+/**
+ * @file OrderDiscardPileCards.jsx
+ * @description Modal to reorder a small subset (1..5) of discard-pile cards.
+ *
+ * === Canonical shapes (from API DOCUMENT) ===
+ * @typedef {{ id:number, name:string }} SimpleCard
+ *
+ * === Props ===
+ * @typedef {Object} OrderDiscardPileCardsProps
+ * @property {SimpleCard[]} [cards=[]] - Top N cards from the discard pile to reorder (1..5).
+ * @property {(ids:number[])=>void} selectedCardsOrder - Callback fired on confirm with the new order of card ids.
+ * @property {string} [text="Reorder the cards"] - Modal title/prompt.
+ */
+
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Reorder } from "framer-motion";
 import "./OrderDiscardPileCards.css";
-import { CARDS_MAP } from "../generalMaps.js"; // adjust path if needed
+import { CARDS_MAP } from "../../../../../utils/generalMaps";
 
+/** @param {OrderDiscardPileCardsProps} props */
 export default function OrderDiscardPileCards({
   cards = [],
   selectedCardsOrder,
   text = "Reorder the cards",
 }) {
-  // Normalize incoming cards (1..5, filter falsy)
+  // Normalize incoming cards (only truthy, clamp to first 5)
   const baseCards = useMemo(() => {
     const list = Array.isArray(cards) ? cards.filter(Boolean) : [];
     return list.slice(0, 5);
   }, [cards]);
 
-  // Keep only cards with an image mapping
+  // Keep only cards that have an image mapping in CARDS_MAP
   const validCards = useMemo(
     () => baseCards.filter((c) => c?.name && CARDS_MAP?.[c.name]),
     [baseCards]
   );
 
-  // Local order
+  // Local order state mirrors the valid input cards
   const [order, setOrder] = useState(validCards);
   useEffect(() => setOrder(validCards), [validCards]);
 
-  // Number of columns (1..5) for CSS layout (width/columns controlled in CSS)
+  // Number of columns for the grid (used by CSS via data-cols)
   const COLS = Math.max(1, Math.min(order.length || 1, 5));
 
-  // Reorder handler for framer-motion
+  // Adapt framer-motion's array of ids back into the card array
   const handleReorder = (newOrderIds) => {
     setOrder(
       newOrderIds.map((id) => order.find((c) => c.id === id)).filter(Boolean)
     );
   };
 
-  // Confirm returns only the ids in the new order
+  // Emit only the ids in the chosen order
   const handleConfirm = () => {
     if (typeof selectedCardsOrder !== "function" || order.length === 0) return;
     selectedCardsOrder(order.map((c) => c.id));
   };
 
-  // Modal UI (portal). Panel/grid sizing handled by CSS via [data-cols].
+  // Always-open modal rendered via portal; sizing handled by CSS and data-cols
   return (
     <>
       {createPortal(
@@ -80,9 +97,7 @@ export default function OrderDiscardPileCards({
                             stiffness: 600,
                             damping: 28,
                           }}
-                          style={{
-                            flexShrink: 0,
-                          }}
+                          style={{ flexShrink: 0 }}
                         >
                           <button
                             className="odp-card"
@@ -101,7 +116,7 @@ export default function OrderDiscardPileCards({
                     })}
                   </Reorder.Group>
 
-                  {/* Leftmost indicator (icon + small caption) */}
+                  {/* Visual cue: leftmost card goes on top of the deck */}
                   <div
                     className="odp-grid-indicator"
                     data-cols={COLS}

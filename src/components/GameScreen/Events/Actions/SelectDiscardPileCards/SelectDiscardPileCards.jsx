@@ -1,22 +1,42 @@
+// SelectDiscardPileCards.jsx
+
+/**
+ * @file SelectDiscardPileCards.jsx
+ * @description Modal to pick **one** card from the top-N discard pile (1..5).
+ *
+ * === Canonical shapes (from API DOCUMENT) ===
+ * @typedef {{ id:number, name:string }} SimpleCard
+ *
+ * === Props ===
+ * @typedef {Object} SelectDiscardPileCardsProps
+ * @property {SimpleCard[]} [cards=[]] - Cards to display (subset from discard pile, typically top 5).
+ * @property {(id:number)=>void} selectedCardId - Callback fired on confirm with the chosen card id.
+ * @property {string} [text="Select a card"] - Modal title/prompt.
+ */
+
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import "./SelectDiscardPileCards.css";
-import { CARDS_MAP } from "../generalMaps.js";
+import { CARDS_MAP } from "../../../../../utils/generalMaps";
 
+/** @param {SelectDiscardPileCardsProps} props */
 export default function SelectDiscardPileCards({
   cards = [],
   selectedCardId,
   text = "Select a card",
 }) {
+  // Trace renders (useful when wiring with WS effects)
   console.log("SelectDiscardPileCards render", { cards, text });
-  // Always-open modal
+
+  // Always-open modal with local selected id
   const [pickedId, setPickedId] = useState(null);
 
-  // Validate against map
+  // Only accept cards that have an image mapping
   const validCards = Array.isArray(cards)
     ? cards.filter((c) => c && CARDS_MAP[c.name] !== undefined)
     : [];
-  // Dynamic grid columns for 1 to 5 cards
+
+  // Grid columns adapt to 1..5 cards (CSS can also read a data-attr if preferred)
   const fixedCols =
     validCards.length > 0 && validCards.length <= 5
       ? {
@@ -28,8 +48,8 @@ export default function SelectDiscardPileCards({
 
   const handleConfirm = () => {
     if (pickedId == null || typeof selectedCardId !== "function") return;
-    selectedCardId(pickedId); // update parent
-    setPickedId(null); // disable Confirm + clear selection
+    selectedCardId(pickedId); // notify parent
+    setPickedId(null); // clear local selection (disables Confirm)
   };
 
   return createPortal(
