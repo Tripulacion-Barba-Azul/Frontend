@@ -1,0 +1,46 @@
+# .github/workflows/frontend-tests.yml
+name: Frontend CI - Tests
+
+on:
+  push:
+    branches: [ develop ]        # run on every push to develop
+  pull_request:
+    branches: [ develop ]        # and on PRs targeting develop
+  workflow_dispatch: {}          # manual trigger (optional)
+
+jobs:
+  test:
+    name: Run unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # If your frontend lives in a subfolder, set it here (e.g., './frontend')
+    defaults:
+      run:
+        working-directory: .     # <- change to './FRONTEND' if your project is in that folder
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'     # LTS; align with your local version
+          cache: 'npm'           # cache node_modules based on lockfile
+
+      - name: Install dependencies
+        run: npm ci              # clean install for reproducible CI builds
+
+      - name: Run tests
+        env:
+          CI: true               # ensure non-interactive/CI-safe behavior
+        run: npm test            # this must exist in your package.json "scripts"
+
+      # Optional: upload coverage if your "npm test" generates ./coverage/**
+      - name: Upload coverage artifact (optional)
+        if: ${{ hashFiles('coverage/**') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage
