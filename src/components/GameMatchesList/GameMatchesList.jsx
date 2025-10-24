@@ -1,3 +1,32 @@
+// GameMatchesList.jsx
+
+/**
+ * @file GameMatchesList.jsx
+ * @description Public lobby: fetches and lists available games to join. Allows manual refresh and navigation to /join/:gameId.
+ * Props: none (this component does not accept props).
+ *
+ * API: GET http://localhost:8000/games?activeGames=false
+ * Expected response item shape (subset used here):
+ * {
+ *   gameId: string|number,
+ *   gameName: string,
+ *   ownerName: string,
+ *   minPlayers: number,
+ *   maxPlayers: number,
+ *   actualPlayers: number
+ * }
+ */
+
+/**
+ * @typedef {Object} Match
+ * @property {string|number} id
+ * @property {string} name
+ * @property {string} creator
+ * @property {number} minPlayers
+ * @property {number} maxPlayers
+ * @property {number} currentPlayers
+ */
+
 import React, { useState, useEffect } from "react";
 import { Users, User, Clock, Play, RefreshCw } from "lucide-react";
 import "./GameMatchesList.css";
@@ -6,34 +35,33 @@ import { useNavigate } from "react-router-dom";
 const apiGamesList = "http://localhost:8000/games?activeGames=false";
 
 const GameMatchesList = () => {
+  /** @type {[Match[], React.Dispatch<React.SetStateAction<Match[]>>]} */
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const navigate = useNavigate();
 
+  /**
+   * Fetch games from the server.
+   * @param {boolean} isRefresh - When true, shows the smaller "refreshing" state instead of the full-page loader.
+   */
   const fetchMatches = async (isRefresh = false) => {
     try {
-      if (isRefresh) {
-        setRefreshing(true);
-      } else {
-        setLoading(true);
-      }
+      if (isRefresh) setRefreshing(true);
+      else setLoading(true);
 
       const response = await fetch(apiGamesList, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: 'include',
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
       });
 
-      if (!response.ok) {
-        throw new Error(`Error HTTP: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
 
       const data = await response.json();
 
+      // Normalize API items to the local Match shape used by the UI
       const mappedData = data.map((game) => ({
         id: game.gameId,
         name: game.gameName,
@@ -46,59 +74,46 @@ const GameMatchesList = () => {
       setMatches(mappedData);
     } catch (error) {
       console.error("Error fetching matches:", error);
-      setMatches([]); // didnt fetch any matches
+      setMatches([]); // keep UI consistent on failure
     } finally {
-      if (isRefresh) {
-        setRefreshing(false);
-      } else {
-        setLoading(false);
-      }
+      if (isRefresh) setRefreshing(false);
+      else setLoading(false);
     }
   };
 
+  // Initial load on mount
   useEffect(() => {
     fetchMatches(false);
   }, []);
 
+  /**
+   * Compute status styling + whether joining is allowed for a card.
+   * @param {Match} match
+   */
   const getMatchStatus = (match) => {
     const { currentPlayers, minPlayers, maxPlayers } = match;
 
     if (currentPlayers >= maxPlayers) {
-      return {
-        color: "status-red",
-        status: "",
-        canJoin: false,
-        icon: "🔴",
-      };
+      return { color: "status-red", status: "", canJoin: false, icon: "🔴" };
     } else if (currentPlayers >= minPlayers) {
-      return {
-        color: "status-yellow",
-        status: "",
-        canJoin: true,
-        icon: "🟡",
-      };
+      return { color: "status-yellow", status: "", canJoin: true, icon: "🟡" };
     } else {
-      return {
-        color: "status-green",
-        status: "",
-        canJoin: true,
-        icon: "🟢",
-      };
+      return { color: "status-green", status: "", canJoin: true, icon: "🟢" };
     }
   };
 
-  // Handle refresh matches
+  // Trigger a light refresh (keeps page context)
   const handleRefresh = () => {
     fetchMatches(true);
   };
 
-  // Handle joing match
+  // Navigate to the join screen for the selected match
   const handleJoinMatch = (matchId) => {
     console.log(`Trying to join the game ${matchId}`);
     navigate(`/join/${matchId}`);
   };
 
-  // loading spinner
+  // Full-page loading state
   if (loading) {
     return (
       <div
@@ -123,6 +138,7 @@ const GameMatchesList = () => {
       }}
     >
       <div className="matches-wrapper">
+        {/* Header: title + manual refresh */}
         <div className="matches-header">
           <h1 className="matches-title">List of games</h1>
           <button
@@ -137,6 +153,7 @@ const GameMatchesList = () => {
           </button>
         </div>
 
+        {/* Cards grid */}
         <div className="matches-grid">
           {matches.map((match) => {
             const status = getMatchStatus(match);
@@ -144,7 +161,7 @@ const GameMatchesList = () => {
             return (
               <div key={match.id} className="match-card">
                 <div className="match-content">
-                  {/* Name and state header */}
+                  {/* Name + status pill */}
                   <div className="match-header">
                     <h3 className="match-name">{match.name}</h3>
                     <span className={`match-status ${status.color}`}>
@@ -152,7 +169,7 @@ const GameMatchesList = () => {
                     </span>
                   </div>
 
-                  {/* Creator info */}
+                  {/* Creator */}
                   <div className="match-creator">
                     <User className="creator-icon" />
                     <span className="creator-text">
@@ -160,7 +177,7 @@ const GameMatchesList = () => {
                     </span>
                   </div>
 
-                  {/*Players info*/}
+                  {/* Players count */}
                   <div className="match-players-info">
                     <div className="players-count">
                       <Users className="players-icon" />
@@ -170,7 +187,7 @@ const GameMatchesList = () => {
                     </div>
                   </div>
 
-                  {/* Players progress bar */}
+                  {/* Occupancy progress bar */}
                   <div className="progress-section">
                     <div className="progress-bar">
                       <div
@@ -186,7 +203,7 @@ const GameMatchesList = () => {
                             (match.currentPlayers / match.maxPlayers) * 100
                           }%`,
                         }}
-                      ></div>
+                      />
                     </div>
                     <div className="progress-labels">
                       <span>Min: {match.minPlayers}</span>
@@ -194,7 +211,7 @@ const GameMatchesList = () => {
                     </div>
                   </div>
 
-                  {/* Botón de acción */}
+                  {/* Call to action */}
                   <button
                     onClick={() => handleJoinMatch(match.id)}
                     disabled={!status.canJoin}
@@ -222,7 +239,7 @@ const GameMatchesList = () => {
           })}
         </div>
 
-        {/*No games available*/}
+        {/* Empty state */}
         {matches.length === 0 && (
           <div className="empty-state">
             <div className="empty-icon">🎮</div>
@@ -230,7 +247,7 @@ const GameMatchesList = () => {
           </div>
         )}
 
-        {/*Color indicators*/}
+        {/* Legend */}
         <div className="legend-container">
           <h4 className="legend-title">Statuses:</h4>
           <div className="legend-grid">
