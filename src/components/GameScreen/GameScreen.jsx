@@ -29,6 +29,7 @@ import Notifier from "./Events/Notifier/Notifier";
 import EffectManager from "./Events/EffectManager/EffectManager";
 import PresentationScreen from "./PresentationScreen/PresentationScreen";
 import BackgroundMusicPlayer from "./BackgroundMusicPlayer/BackgroundMusicPlayer";
+import Clock from "./Sync/FixedBoardElements/Clock/Clock";
 
 export default function GameScreen() {
   // Router params & query: game and the current player id
@@ -230,6 +231,9 @@ export default function GameScreen() {
             actualPlayerId={currentPlayerId}
             wsRef={wsRef}
           />
+
+          <Clock websocket={wsRef.current} turnStatus={publicData.players.find((p) => p?.id === currentPlayerId)?.turnStatus ?? "waiting"} />
+
           <GameEndScreen websocket={wsRef.current} />
         </>
       )}

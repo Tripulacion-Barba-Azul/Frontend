@@ -92,8 +92,8 @@
 /* ---- Buttons ---- */
 .owncards-actions {
   position: absolute;
-  right: 7.25vw;
-  bottom: 3.25vw; /* Adjust this number to visually match the desired spacing */
+  right: 10.25vw;
+  bottom: 0.8vw; /* Adjust this number to visually match the desired spacing */
   display: flex;
   pointer-events: auto;
   z-index: 10;
