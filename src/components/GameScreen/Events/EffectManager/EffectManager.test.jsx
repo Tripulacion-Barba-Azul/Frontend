@@ -94,11 +94,12 @@ vi.mock("../Actions/SelectSecret/SelectSecret", () => ({
   ),
 }));
 
-vi.mock("../Actions/SelectDiscardPileCards/SelectDiscardPileCards", () => ({
+/* ⬇️ NEW: mocks aligned to EffectManager.jsx imports */
+vi.mock("../Actions/SelectCard/SelectCard", () => ({
   default: ({ text, cards, selectedCardId }) => (
-    <div data-testid="SelectDiscardPileCards">
-      <div data-testid="sdc-text">{text}</div>
-      <div data-testid="sdc-count">{cards?.length ?? 0}</div>
+    <div data-testid="SelectCard">
+      <div data-testid="sc-text">{text}</div>
+      <div data-testid="sc-count">{cards?.length ?? 0}</div>
       {cards?.map((c) => (
         <button
           key={c.id}
@@ -112,11 +113,11 @@ vi.mock("../Actions/SelectDiscardPileCards/SelectDiscardPileCards", () => ({
   ),
 }));
 
-vi.mock("../Actions/OrderDiscardPileCards/OrderDiscardPileCards", () => ({
+vi.mock("../Actions/OrderCards/OrderCards", () => ({
   default: ({ text, cards, selectedCardsOrder }) => (
-    <div data-testid="OrderDiscardPileCards">
-      <div data-testid="odpc-text">{text}</div>
-      <div data-testid="odpc-count">{cards?.length ?? 0}</div>
+    <div data-testid="OrderCards">
+      <div data-testid="oc-text">{text}</div>
+      <div data-testid="oc-count">{cards?.length ?? 0}</div>
       <button
         onClick={() => selectedCardsOrder(cards?.map((c) => c.id) ?? [])}
         aria-label="confirm-order"
@@ -248,8 +249,8 @@ describe("EffectManager", () => {
     expect(screen.queryByTestId("SelectPlayer")).toBeNull();
     expect(screen.queryByTestId("SelectSecret")).toBeNull();
     expect(screen.queryByTestId("SelectSet")).toBeNull();
-    expect(screen.queryByTestId("SelectDiscardPileCards")).toBeNull();
-    expect(screen.queryByTestId("OrderDiscardPileCards")).toBeNull();
+    expect(screen.queryByTestId("SelectCard")).toBeNull();
+    expect(screen.queryByTestId("OrderCards")).toBeNull();
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
@@ -471,7 +472,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("lookIntoTheAshes: SelectDiscardPileCards -> POST con id elegido", async () => {
+  it("lookIntoTheAshes: SelectCard -> POST with chosen id", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -483,9 +484,9 @@ describe("EffectManager", () => {
     await waitHandlerReady(ws);
     sendWs(ws, { event: "lookIntoTheAshes", payload: DISCARD_CARDS });
 
-    const sdc = await screen.findByTestId("SelectDiscardPileCards");
-    expect(sdc).toBeInTheDocument();
-    expect(screen.getByTestId("sdc-count").textContent).toBe("5");
+    const sc = await screen.findByTestId("SelectCard");
+    expect(sc).toBeInTheDocument();
+    expect(screen.getByTestId("sc-count").textContent).toBe("5");
 
     fireEvent.click(screen.getByLabelText("pick-card-8003"));
 
@@ -501,7 +502,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("delayTheMurderersEscape: OrderDiscardPileCards -> POST con ids ordenados", async () => {
+  it("delayTheMurderersEscape: OrderCards -> POST with ordered ids", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -516,9 +517,9 @@ describe("EffectManager", () => {
       payload: DISCARD_CARDS.slice(0, 3),
     });
 
-    const odpc = await screen.findByTestId("OrderDiscardPileCards");
-    expect(odpc).toBeInTheDocument();
-    expect(screen.getByTestId("odpc-count").textContent).toBe("3");
+    const oc = await screen.findByTestId("OrderCards");
+    expect(oc).toBeInTheDocument();
+    expect(screen.getByTestId("oc-count").textContent).toBe("3");
 
     fireEvent.click(screen.getByLabelText("confirm-order"));
 

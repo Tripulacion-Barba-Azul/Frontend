@@ -1,55 +1,55 @@
-// SelectDiscardPileCards.jsx
-
+// SelectCard.jsx
 /**
- * @file SelectDiscardPileCards.jsx
- * @description Modal to pick **one** card from the top-N discard pile (1..5).
- *
- * === Canonical shapes (from API DOCUMENT) ===
- * @typedef {{ id:number, name:string }} SimpleCard
- *
- * === Props ===
- * @typedef {Object} SelectDiscardPileCardsProps
- * @property {SimpleCard[]} [cards=[]] - Cards to display (subset from discard pile, typically top 5).
- * @property {(id:number)=>void} selectedCardId - Callback fired on confirm with the chosen card id.
- * @property {string} [text="Select a card"] - Modal title/prompt.
+ * @file SelectCard.jsx
+ * @description Modal to pick one card from a horizontal row (1..6 cards).
+ * - Single row layout (no wrapping).
+ * - Panel width adapts to card count using vw units.
+ * - Public API unchanged: { cards, selectedCardId, text }.
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { createPortal } from "react-dom";
-import "./SelectDiscardPileCards.css";
+import "./SelectCard.css";
 import { CARDS_MAP } from "../../../../../utils/generalMaps";
 
-/** @param {SelectDiscardPileCardsProps} props */
-export default function SelectDiscardPileCards({
+/** @typedef {{ id:number, name:string }} SimpleCard */
+
+/**
+ * @param {{
+ *   cards?: SimpleCard[],
+ *   selectedCardId: (id:number) => void,
+ *   text?: string
+ * }} props
+ */
+export default function SelectCard({
   cards = [],
   selectedCardId,
   text = "Select a card",
 }) {
-  // Trace renders (useful when wiring with WS effects)
-  console.log("SelectDiscardPileCards render", { cards, text });
-
-  // Always-open modal with local selected id
+  // Local selection state
   const [pickedId, setPickedId] = useState(null);
 
-  // Only accept cards that have an image mapping
-  const validCards = Array.isArray(cards)
-    ? cards.filter((c) => c && CARDS_MAP[c.name] !== undefined)
-    : [];
+  // Only render cards that resolve to an image; hard-cap to 6
+  const validCards = useMemo(() => {
+    return Array.isArray(cards)
+      ? cards.filter((c) => c && CARDS_MAP[c.name] !== undefined).slice(0, 6)
+      : [];
+  }, [cards]);
 
-  // Grid columns adapt to 1..5 cards (CSS can also read a data-attr if preferred)
-  const fixedCols =
-    validCards.length > 0 && validCards.length <= 5
-      ? {
-          gridTemplateColumns: `repeat(${validCards.length}, minmax(160px, 1fr))`,
-        }
-      : undefined;
+  const count = validCards.length;
 
   const handlePick = (id) => setPickedId(id);
 
   const handleConfirm = () => {
     if (pickedId == null || typeof selectedCardId !== "function") return;
-    selectedCardId(pickedId); // notify parent
-    setPickedId(null); // clear local selection (disables Confirm)
+    selectedCardId(pickedId);
+    setPickedId(null);
+  };
+
+  // Expose count to CSS via custom properties for width calculation in vw units
+  const panelStyle = {
+    // CSS variables consumed in SelectCard.css
+    "--count": count,
   };
 
   return createPortal(
@@ -60,14 +60,19 @@ export default function SelectDiscardPileCards({
       data-testid="sdp-root"
     >
       <div className="sdp-overlay" />
-      <div className="sdp-panel">
+      <div className="sdp-panel" style={panelStyle}>
         <div className="sdp-header">
           <h3 className="sdp-title">{text}</h3>
         </div>
 
         <div className="sdp-content">
-          {validCards.length > 0 ? (
-            <div className="sdp-grid" style={fixedCols} data-testid="sdp-grid">
+          {count > 0 ? (
+            <div
+              className="sdp-row"
+              data-count={count}
+              role="listbox"
+              aria-label="cards"
+            >
               {validCards.map((card) => {
                 const src = CARDS_MAP[card.name];
                 const isSelected = pickedId === card.id;
@@ -78,6 +83,8 @@ export default function SelectDiscardPileCards({
                     onClick={() => handlePick(card.id)}
                     title={card.name}
                     type="button"
+                    role="option"
+                    aria-selected={isSelected}
                   >
                     <img
                       src={src}
