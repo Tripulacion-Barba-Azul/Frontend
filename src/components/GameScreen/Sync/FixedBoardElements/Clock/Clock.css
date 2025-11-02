@@ -1,0 +1,27 @@
+/* Clock minimal styling: only the image is visible. */
+.clock-root {
+    position: fixed;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 120;
+    pointer-events: none;
+    width: 7vw; /* reserve tight size so stacking works */
+    height: 7vw;
+  }
+  
+  .clock-img-area {
+    position: relative;
+    width: 7vw;
+    height: 7vw;
+  }
+  
+  .clock-image {
+    width: 7vw;
+    height: 7vw;
+    display: block;
+    user-select: none;
+    -webkit-user-drag: none;
+    will-change: transform, opacity;
+  }
+  
