@@ -1,6 +1,6 @@
 .DiscardPile-container {
   position: absolute;
-  bottom: 18.225vw;
+  bottom: 20.225vw;
   left: 62.6%;
   transform-origin: bottom center;
   display: inline-block;
@@ -24,10 +24,10 @@
 
 .DiscardPile-topcard {
   position: absolute;
-  top: 1.042vw;   /* 10% of container -> approx 20px / 1920*100 = 1.042vw */
-  left: 2.083vw;  /* 20% -> 40px/1920*100 = 2.083vw */
+  top: 1.042vw; /* 10% of container -> approx 20px / 1920*100 = 1.042vw */
+  left: 2.083vw; /* 20% -> 40px/1920*100 = 2.083vw */
   transform: translateX(0);
-  width: 6.25vw;  /* 60% of container? Or 60% of 200px = 120px -> 6.25vw */
+  width: 6.25vw; /* 60% of container? Or 60% of 200px = 120px -> 6.25vw */
   height: auto;
   border-radius: 0.3125vw; /* 6px / 1920 * 100 = 0.3125vw */
   box-shadow: 0 0.208vw 0.208vw rgba(0, 0, 0, 0.5); /* 4px/1920=0.208vw */
@@ -41,7 +41,7 @@
 }
 
 .DiscardPile-container.one-card .DiscardPile-topcard {
-  top: 0.052vw;    /* 1% -> ~1px? keep relative */
+  top: 0.052vw; /* 1% -> ~1px? keep relative */
   left: 2.083vw;
   transform: translateX(0);
   width: 6.25vw;
