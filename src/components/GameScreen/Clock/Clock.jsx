@@ -6,9 +6,15 @@ import "./Clock.css";
  * Bottom-fixed clock image that listens to websocket "timer" events.
  * Props:
  *  - websocket: WebSocket-like (expects addEventListener("message", ...))
- *  - turnStatus: "waiting"|"playing"|"discarding"|"discardingOpt"|"drawing"
+ *  - publicPlayers: array of public player data (to get turnStatus)
+ * - actualPlayerId: id of the current player (to find own turnStatus)
  */
-export default function Clock({ websocket, turnStatus = "waiting" }) {
+export default function Clock({
+  websocket,
+  publicPlayers,
+  actualPlayerId,
+  activeEffect = false, //NEW, must implement
+}) {
   const [eventTime, setEventTime] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [received, setReceived] = useState(false);
@@ -19,7 +25,7 @@ export default function Clock({ websocket, turnStatus = "waiting" }) {
   const finishHoldActiveRef = useRef(false);
   const finishTimerRef = useRef(null);
   const finishExpiryRef = useRef(0);
-  
+
   // Flag to prevent re-triggering the hold for the same "finish" event
   const [holdCompleted, setHoldCompleted] = useState(false);
   const holdCompletedRef = useRef(false);
@@ -39,16 +45,16 @@ export default function Clock({ websocket, turnStatus = "waiting" }) {
   // start the finish hold only if not already active AND not already completed for this cycle
   const startFinishHold = () => {
     if (finishHoldActiveRef.current || holdCompletedRef.current) return;
-    
+
     setFinishHold(true);
     finishExpiryRef.current = Date.now() + FINISH_HOLD_MS;
-    
+
     // clear any existing timer for safety
     if (finishTimerRef.current) {
       clearTimeout(finishTimerRef.current);
       finishTimerRef.current = null;
     }
-    
+
     finishTimerRef.current = setTimeout(() => {
       finishTimerRef.current = null;
       finishExpiryRef.current = 0;
@@ -88,7 +94,7 @@ export default function Clock({ websocket, turnStatus = "waiting" }) {
         } else {
           // tLi > 0: reset the hold completed flag (new cycle started)
           setHoldCompletedFlag(false);
-          
+
           // if a hold was active but already expired, clear it
           if (finishHoldActiveRef.current) {
             const now = Date.now();
@@ -113,13 +119,20 @@ export default function Clock({ websocket, turnStatus = "waiting" }) {
   }, [websocket]);
 
   // show only if not waiting, except while finish hold active
-  const shouldShowClock = !(turnStatus === "waiting" && !finishHoldActive);
+  const turnStatus =
+    publicPlayers.find((p) => p?.id === actualPlayerId)?.turnStatus ??
+    "waiting";
+  const shouldShowClock =
+    !(
+      (turnStatus === "waiting" || turnStatus == "takingAction") &&
+      !finishHoldActive
+    ) || activeEffect;
 
   // derive image purely from state/refs (no side-effects)
   const imageName = useMemo(() => {
     if (!received) return "CLOCK_0";
     if (finishHoldActive) return "CLOCK_8";
-    
+
     // After hold completed, if still at 0, don't show CLOCK_8
     if (timeLeft <= 0) {
       if (holdCompleted) return "CLOCK_0"; // or return null to hide
@@ -159,7 +172,12 @@ export default function Clock({ websocket, turnStatus = "waiting" }) {
     opacity: { duration: 0.14, ease: "easeOut" },
     scale: { duration: 0.14 },
     x: isFinish
-      ? { duration: 0.18, ease: "easeInOut", repeat: Infinity, repeatType: "loop" }
+      ? {
+          duration: 0.18,
+          ease: "easeInOut",
+          repeat: Infinity,
+          repeatType: "loop",
+        }
       : { duration: 0.22, ease: "easeInOut", times: [0, 0.25, 0.75, 1] },
     rotate: isFinish
       ? { duration: 0.18, repeat: Infinity, repeatType: "loop" }
@@ -167,21 +185,21 @@ export default function Clock({ websocket, turnStatus = "waiting" }) {
   };
 
   return (
-    <motion.div 
-      className="clock-root" 
+    <motion.div
+      className={`clock-root ${activeEffect ? "active" : ""}`}
       aria-hidden="true"
       initial={{ opacity: 1 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="clock-img-area">
+      <div className={`clock-img-area ${activeEffect ? "active" : ""}`}>
         <AnimatePresence mode="sync" initial={false}>
           <motion.img
             key={imageName}
             src={imgSrc}
             alt={`Clock ${imageName}`}
-            className="clock-image"
+            className={`clock-image ${activeEffect ? "active" : ""}`}
             draggable={false}
             initial={{ opacity: 0, scale: 0.98 }}
             animate={animateProps}

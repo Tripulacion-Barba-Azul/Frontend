@@ -1,6 +1,6 @@
 .draw-draft-card-container {
   position: absolute;
-  bottom: 19.396vw; /* 43% of 520px? Convert to vw if scaling for full width */
+  bottom: 21.396vw; /* 43% of 520px? Convert to vw if scaling for full width */
   left: 50%;
   transform: translateX(-50%);
   z-index: 15;

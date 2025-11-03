@@ -1,0 +1,53 @@
+/* Clock minimal styling: only the image is visible. */
+.clock-root {
+  position: fixed;
+  bottom: 5.9vw;
+  left: 79.8vw;
+  z-index: 20;
+  pointer-events: none;
+  width: 7vw; /* reserve tight size so stacking works */
+  height: 7vw;
+}
+
+.clock-img-area {
+  position: relative;
+  width: 7vw;
+  height: 7vw;
+}
+
+.clock-image {
+  width: 7vw;
+  height: 7vw;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 0 0.7vw #f6e4aae1); /* 8px -> 0.4167vw */
+}
+
+/* Clock minimal styling: only the image is visible. */
+.clock-root.active {
+  position: fixed;
+  top: 0vw;
+  left: 91.5vw;
+  z-index: 200000;
+  pointer-events: none;
+  width: 9vw; /* reserve tight size so stacking works */
+  height: 9vw;
+}
+
+.clock-img-area.active {
+  position: relative;
+  width: 9vw;
+  height: 9vw;
+}
+
+.clock-image.active {
+  width: 9vw;
+  height: 9vw;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 0 1vw #f6e4aae1); /* 8px -> 0.4167vw */
+}
