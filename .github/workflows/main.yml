@@ -18,7 +18,9 @@ jobs:
         with:
           node-version: '22'
           cache: 'npm'
-          cache-dependency-path: 'Frontend/package-lock.json'
+          cache-dependency-path: |
+           'package-lock.json'
+           'Frontend/package-lock.json'
       
       # Instalar dependencias
       - name: Install deps  
