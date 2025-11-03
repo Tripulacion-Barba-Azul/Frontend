@@ -76,12 +76,13 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
+import Clock from "../../Clock/Clock";
 import SelectPlayer from "../Actions/SelectPlayer/SelectPlayer";
 import SelectSet from "../Actions/SelectSet/SelectSet";
 import SelectSecret from "../Actions/SelectSecret/SelectSecret";
 import SelectCard from "../Actions/SelectCard/SelectCard";
 import OrderCards from "../Actions/OrderCards/OrderCards";
-//import selectDirection from "../Actions/SelectDirection/SelectDirection";
+import SelectDirection from "../Actions/SelectDirection/SelectDirection";
 
 /** Endpoints template per effect; {id} is replaced with current :gameId */
 const EFFECT_ENDPOINTS = {
@@ -602,6 +603,14 @@ export default function EffectManager({
 
   return (
     <>
+      {step !== null && (
+        <Clock
+          websocket={wsRef}
+          publicPlayers={playersAll}
+          actualPlayerId={actualPlayerId}
+          activeEffect={activeEffect}
+        />
+      )}
       {step === "selectPlayer" && (
         <SelectPlayer
           actualPlayerId={actualPlayerId}

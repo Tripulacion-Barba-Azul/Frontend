@@ -1,0 +1,195 @@
+.selectdirection-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.selectdirection-content {
+  background: #1e1e1e;
+  color: white;
+  border-radius: 0.9375vw;        /* 18px -> 0.9375vw */
+  padding: 1.5625vw 3.9063vw;     /* 30px 75px -> vw */
+  width: 40vw;
+  max-width: 50vw;                /* Smaller than SelectPlayer since only 2 options */
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 0 1.8229vw rgba(0, 0, 0, 0.6); /* 35px -> 1.8229vw */
+}
+
+.selectdirection-text {
+  margin-bottom: 1.25vw;           /* 24px -> 1.25vw */
+  color: #f4e1a3;
+  text-align: center;
+  font-size: 2.0833vw;             /* 40px -> 2.0833vw */
+  font-family: "Metropolis";
+}
+
+.selectdirection-grid {
+  display: flex;
+  gap: 2.0833vw;                   /* 40px -> 2.0833vw - wider gap for better separation */
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.5625vw;         /* 30px -> 1.5625vw */
+}
+
+.selectdirection-item {
+  background: #2a2a2a;
+  border-radius: 0.625vw;           /* 12px -> 0.625vw */
+  padding: 1.25vw;                  /* 24px -> 1.25vw - larger padding for better touch target */
+  text-align: center;
+  cursor: pointer;
+  width: 16vw;                      /* Increased width for avatar + name */
+  min-height: 18vw;                 /* Increased height for all elements */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  transition: background 0.15s, transform 0.15s;
+  gap: 0.5vw;                       /* Space between elements */
+}
+
+.selectdirection-item:hover {
+  background: #3a3a3a;
+  transform: scale(1.05);
+}
+
+.selectdirection-item.selected {
+  outline: 0.1563vw solid #f4e1a3; /* 3px -> 0.1563vw */
+  background: #333;
+  transform: scale(1.08);
+}
+
+.selectdirection-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 0.625vw;          /* 12px -> 0.625vw */
+}
+
+.selectdirection-icon svg {
+  width: 3vw;                      /* Smaller arrows to make room for other elements */
+  height: 3vw;
+  transition: transform 0.2s ease;
+}
+
+.selectdirection-item:hover .selectdirection-icon svg {
+  transform: scale(1.1);
+}
+
+.selectdirection-item.selected .selectdirection-icon svg path {
+  stroke: #fff;                    /* Highlight selected arrow in white */
+  stroke-width: 10;                /* Slightly thicker when selected */
+}
+
+.selectdirection-direction-label {
+  color: #f4e1a3;
+  font-size: 1.0417vw;             /* 20px -> 1.0417vw */
+  font-family: "Metropolis";
+  text-align: center;
+  font-weight: 700;
+  margin-bottom: 0.5vw;
+}
+
+.selectdirection-avatar {
+  width: 6vw;                      /* Avatar size */
+  max-width: 6vw;
+  height: auto;
+  max-height: 6vw;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  margin: 0.5vw auto;
+  border: 0.1563vw solid #f4e1a3;  /* Same border as selection outline */
+}
+
+.selectdirection-player-name {
+  color: #f4e1a3;
+  font-size: 0.8854vw;             /* Same size as SelectPlayer names */
+  font-family: "Metropolis";
+  text-align: center;
+  font-weight: 600;
+  word-break: break-word;
+  margin-top: 0.3vw;
+}
+
+.selectdirection-confirm {
+  background-color: rgb(163, 34, 34);
+  border: none;
+  color: #f4e1a3;
+  padding: 0.625vw 1.25vw;          /* 12px 24px -> vw */
+  font-family: "Metropolis";
+  font-size: 0.8729vw;              /* 17px -> 0.8729vw */
+  border-radius: 0.5208vw;          /* 10px -> 0.5208vw */
+  cursor: pointer;
+  transition: background 0.3s;
+  min-width: 6.25vw;                /* 120px -> 6.25vw */
+}
+
+.selectdirection-confirm:disabled {
+  background-color: rgba(163, 34, 34, 0.35);
+  color: rgba(244, 225, 163, 0.3);
+  cursor: not-allowed;
+}
+
+.selectdirection-confirm:hover:not(:disabled) {
+  background: rgb(115, 23, 23);
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .selectdirection-content {
+    width: 90vw;
+    max-width: 90vw;
+    padding: 3vw 6vw;
+  }
+  
+  .selectdirection-text {
+    font-size: 5vw;
+    margin-bottom: 4vw;
+  }
+  
+  .selectdirection-grid {
+    gap: 5vw;
+    margin-bottom: 4vw;
+  }
+  
+  .selectdirection-item {
+    width: 35vw;
+    min-height: 40vw;
+    padding: 3vw;
+  }
+  
+  .selectdirection-icon svg {
+    width: 8vw;
+    height: 8vw;
+  }
+  
+  .selectdirection-direction-label {
+    font-size: 4vw;
+  }
+
+  .selectdirection-avatar {
+    width: 12vw;
+    max-width: 12vw;
+    max-height: 12vw;
+  }
+  
+  .selectdirection-player-name {
+    font-size: 3vw;
+  }
+  
+  .selectdirection-confirm {
+    font-size: 2.5vw;
+    padding: 2vw 4vw;
+    min-width: 15vw;
+  }
+}
