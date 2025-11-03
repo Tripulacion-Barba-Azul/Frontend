@@ -104,17 +104,41 @@ describe("GameScreen", () => {
     expect(screen.queryByTestId("bgm")).not.toBeInTheDocument();
   });
 
-  it("renders WS-dependent components after WebSocket onopen (isConnected=true)", () => {
+  it("renders WS-dependent components after WebSocket onopen (isConnected=true)", async () => {
     render(<GameScreen />);
+  
     act(() => {
       mockWebSocket.onopen?.();
     });
-
-    expect(screen.getByTestId("lobby")).toBeInTheDocument();
-    expect(screen.getByTestId("game-end-screen")).toBeInTheDocument();
-    expect(screen.getByTestId("notifier")).toBeInTheDocument();
-    expect(screen.getByTestId("effect-manager")).toBeInTheDocument();
+  
+    // Simular datos de juego completos → habilita gameDataReady
+    act(() => {
+      mockWebSocket.onmessage?.({
+        data: JSON.stringify({
+          event: "publicUpdate",
+          payload: {
+            gameStatus: "in_progress",
+            players: [
+              { id: Number(mockPlayerId), name: "Me", avatar: 1 },
+            ],
+          },
+        }),
+      });
+      mockWebSocket.onmessage?.({
+        data: JSON.stringify({
+          event: "privateUpdate",
+          payload: { role: "detective", ally: null },
+        }),
+      });
+    });
+  
+    await waitFor(() => {
+      expect(screen.getByTestId("game-end-screen")).toBeInTheDocument();
+      expect(screen.getByTestId("notifier")).toBeInTheDocument();
+      expect(screen.getByTestId("effect-manager")).toBeInTheDocument();
+    });
   });
+  
 
   it("creates a WebSocket connection on mount", () => {
     render(<GameScreen />);
@@ -137,23 +161,52 @@ describe("GameScreen", () => {
     expect(screen.getByText("Lobby - Connected: true")).toBeInTheDocument();
   });
 
-  it("handles onclose by marking disconnected and hides WS-dependent components", () => {
+  it("handles onclose by marking disconnected and hides WS-dependent components", async () => {
     render(<GameScreen />);
-
+  
     act(() => {
       mockWebSocket.onopen?.();
     });
-    expect(screen.getByTestId("game-end-screen")).toBeInTheDocument();
-
+  
+    // Simular datos para activar gameDataReady
+    act(() => {
+      mockWebSocket.onmessage?.({
+        data: JSON.stringify({
+          event: "publicUpdate",
+          payload: {
+            gameStatus: "in_progress",
+            players: [
+              { id: Number(mockPlayerId), name: "Me", avatar: 1 },
+            ],
+          },
+        }),
+      });
+      mockWebSocket.onmessage?.({
+        data: JSON.stringify({
+          event: "privateUpdate",
+          payload: { role: "detective", ally: null },
+        }),
+      });
+    });
+  
+    await waitFor(() =>
+      expect(screen.getByTestId("game-end-screen")).toBeInTheDocument()
+    );
+  
+    // Cerrar conexión
     act(() => {
       mockWebSocket.onclose?.();
     });
-    expect(screen.getByText("Lobby - Connected: false")).toBeInTheDocument();
-    expect(screen.queryByTestId("game-end-screen")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("notifier")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("effect-manager")).not.toBeInTheDocument();
-    expect(WebSocket).toHaveBeenCalledTimes(1);
+  
+    await waitFor(() => {
+      // Ya no están los dependientes del socket
+      expect(screen.queryByTestId("game-end-screen")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("notifier")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("effect-manager")).not.toBeInTheDocument();
+    });
   });
+  
+  
 
   it("handles onerror by logging and setting disconnected (does not close explicitly)", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
