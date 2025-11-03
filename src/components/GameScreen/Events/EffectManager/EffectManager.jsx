@@ -76,6 +76,7 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
+import Clock from "../../Clock/Clock";
 import SelectPlayer from "../Actions/SelectPlayer/SelectPlayer";
 import SelectSet from "../Actions/SelectSet/SelectSet";
 import SelectSecret from "../Actions/SelectSecret/SelectSecret";
@@ -524,6 +525,15 @@ export default function EffectManager({
 
   return (
     <>
+      {step !== null && (
+        <Clock
+          websocket={wsRef.current}
+          publicPlayers={publicData.players}
+          actualPlayerId={actualPlayerId}
+          activeEffect={true}
+        />
+      )}
+
       {step === "selectPlayer" && (
         <SelectPlayer
           actualPlayerId={actualPlayerId}
