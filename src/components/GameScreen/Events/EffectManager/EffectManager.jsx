@@ -605,10 +605,10 @@ export default function EffectManager({
     <>
       {step !== null && (
         <Clock
-          websocket={wsRef}
+          websocket={wsRef.ref}
           publicPlayers={playersAll}
           actualPlayerId={actualPlayerId}
-          activeEffect={activeEffect}
+          activeEffect={true}
         />
       )}
       {step === "selectPlayer" && (
