@@ -136,6 +136,7 @@ describe("GameScreen", () => {
       expect(screen.getByTestId("effect-manager")).toBeInTheDocument();
     });
   });
+  
 
   it("creates a WebSocket connection on mount", () => {
     render(<GameScreen />);
@@ -160,7 +161,7 @@ describe("GameScreen", () => {
 
   it("handles onclose by marking disconnected and hides WS-dependent components", async () => {
     render(<GameScreen />);
-
+  
     act(() => {
       mockWebSocket.onopen?.();
     });
@@ -200,6 +201,8 @@ describe("GameScreen", () => {
       expect(screen.queryByTestId("effect-manager")).not.toBeInTheDocument();
     });
   });
+  
+  
 
   it("handles onerror by logging and setting disconnected (does not close explicitly)", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});

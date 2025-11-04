@@ -76,11 +76,13 @@
 
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
+import Clock from "../../Clock/Clock";
 import SelectPlayer from "../Actions/SelectPlayer/SelectPlayer";
 import SelectSet from "../Actions/SelectSet/SelectSet";
 import SelectSecret from "../Actions/SelectSecret/SelectSecret";
-import SelectDiscardPileCards from "../Actions/SelectDiscardPileCards/SelectDiscardPileCards";
-import OrderDiscardPileCards from "../Actions/OrderDiscardPileCards/OrderDiscardPileCards";
+import SelectCard from "../Actions/SelectCard/SelectCard";
+import OrderCards from "../Actions/OrderCards/OrderCards";
+import SelectDirection from "../Actions/SelectDirection/SelectDirection";
 
 /** Endpoints template per effect; {id} is replaced with current :gameId */
 const EFFECT_ENDPOINTS = {
@@ -95,6 +97,8 @@ const EFFECT_ENDPOINTS = {
     "http://localhost:8000/play/{id}/actions/look-into-the-ashes",
   delayTheMurderersEscape:
     "http://localhost:8000/play/{id}/actions/delay-the-murderers-escape",
+  selectOwnCard: "http://localhost:8000/play/{id}/actions/select-own-card",
+  selectDirection: "http://localhost:8000/play/{id}/actions/select-direction",
 };
 
 const log = (...a) => console.log("[EffectManager]", ...a);
@@ -117,6 +121,7 @@ export default function EffectManager({
   const [selSet, setSelSet] = useState(null);
   const [selCard, setSelCard] = useState(null);
   const [selOrderIds, setSelOrderIds] = useState(null);
+  const [selDirection, setSelDirection] = useState(null);
 
   const [backRequested, setBackRequested] = useState(false);
   const requestBack = useCallback(() => setBackRequested(true), []);
@@ -139,6 +144,7 @@ export default function EffectManager({
     setSelSet(null);
     setSelCard(null);
     setSelOrderIds(null);
+    setSelDirection(null);
     setPayload(null);
     setBackRequested(false);
   }, []);
@@ -197,6 +203,7 @@ export default function EffectManager({
       setSelSet(null);
       setSelCard(null);
       setSelOrderIds(null);
+      setSelDirection(null);
       setPayload(data.payload ?? null);
       setBackRequested(false);
 
@@ -234,12 +241,27 @@ export default function EffectManager({
         case "lookIntoTheAshes":
           log("WS event:", data.event);
           setCurrentEvent("lookIntoTheAshes");
-          gotoStep("selectDiscard");
+          gotoStep("selectCard");
           break;
         case "delayTheMurderersEscape":
           log("WS event:", data.event);
           setCurrentEvent("delayTheMurderersEscape");
           gotoStep("orderDiscard");
+          break;
+        case "selectOwnCard":
+          log("WS event:", data.event);
+          setCurrentEvent("selectOwnCard");
+          gotoStep("selectCard");
+          break;
+        case "selectDirection":
+          log("WS event:", data.event);
+          setCurrentEvent("selectDirection");
+          gotoStep("selectDirection");
+          break;
+        case "selectSet":
+          log("WS event:", data.event);
+          setCurrentEvent("selectSet");
+          gotoStep("selectPlayer");
           break;
         default:
           warn("Unknown WS event (EffectManager):", data.event);
@@ -293,11 +315,16 @@ export default function EffectManager({
 
   const discardTopFive = useMemo(() => payload ?? [], [payload]);
 
+  const ownCards = useMemo(() => privateData?.cards ?? [], [privateData]);
+
   useEffect(() => {
     if (!currentEvent) return;
 
     if (backRequested) {
-      if (step === "selectSet" && currentEvent === "stealSet") {
+      if (
+        step === "selectSet" &&
+        (currentEvent === "stealSet" || currentEvent === "selectSet")
+      ) {
         setSelSet(null);
         setSelPlayer1(null);
         setBackRequested(false);
@@ -404,7 +431,7 @@ export default function EffectManager({
         break;
       }
       case "lookIntoTheAshes": {
-        if (step === "selectDiscard" && selCard != null) {
+        if (step === "selectCard" && selCard != null) {
           sendEffectResponse("lookIntoTheAshes", {
             playerId: actualPlayerId,
             cardId: selCard,
@@ -421,6 +448,36 @@ export default function EffectManager({
         }
         break;
       }
+      case "selectOwnCard": {
+        if (step === "selectCard" && selCard != null) {
+          sendEffectResponse("selectOwnCard", {
+            playerId: actualPlayerId,
+            cardId: selCard,
+          });
+        }
+        break;
+      }
+      case "selectDirection": {
+        if (step === "selectDirection" && selDirection != null) {
+          sendEffectResponse("selectDirection", {
+            playerId: actualPlayerId,
+            direction: selDirection,
+          });
+        }
+        break;
+      }
+      case "selectSet": {
+        if (step === "selectPlayer" && selPlayer1 != null) {
+          gotoStep("selectSet");
+        } else if (step === "selectSet" && selSet != null) {
+          sendEffectResponse("selectSet", {
+            playerId: actualPlayerId,
+            setId: selSet,
+            stolenPlayerId: selPlayer1,
+          });
+        }
+        break;
+      }
       default:
         break;
     }
@@ -433,6 +490,7 @@ export default function EffectManager({
     selSet,
     selCard,
     selOrderIds,
+    selDirection,
     backRequested,
     actualPlayerId,
     gotoStep,
@@ -474,6 +532,15 @@ export default function EffectManager({
         return "Select one card to steal from the top five cards of the discard pile";
       case "delayTheMurderersEscape":
         return "Reorder the cards of the discard pile that are going to the top of the regular deck";
+      case "selectOwnCard":
+        return "Select one of your own cards to trade";
+      case "selectDirection":
+        return "Select a direction for the card trade effect";
+      case "selectSet":
+        if (step === "selectPlayer")
+          return "Select one player to add a card to their set";
+        if (step === "selectSet") return "Select one set to add a card to";
+        return "";
       default:
         return "";
     }
@@ -487,6 +554,8 @@ export default function EffectManager({
       case "andThenThereWasOneMore":
       case "revealSecret":
       case "hideSecret":
+      case "selectDirection":
+      case "selectSet":
         return playersAll;
       default:
         return [];
@@ -520,10 +589,28 @@ export default function EffectManager({
   }, [currentEvent, secretsOfTarget, ownSecrets]);
 
   const setsForThisStep = setsOfPlayer1;
-  const discardForThisStep = discardTopFive;
+  const cardsForThisStep = useMemo(() => {
+    switch (currentEvent) {
+      case "lookIntoTheAshes":
+      case "delayTheMurderersEscape":
+        return discardTopFive;
+      case "selectOwnCard":
+        return ownCards;
+      default:
+        return [];
+    }
+  }, [currentEvent, discardTopFive, ownCards]);
 
   return (
     <>
+      {step !== null && (
+        <Clock
+          websocket={wsRef.ref}
+          publicPlayers={playersAll}
+          actualPlayerId={actualPlayerId}
+          activeEffect={true}
+        />
+      )}
       {step === "selectPlayer" && (
         <SelectPlayer
           actualPlayerId={actualPlayerId}
@@ -568,18 +655,27 @@ export default function EffectManager({
         />
       )}
 
-      {step === "selectDiscard" && (
-        <SelectDiscardPileCards
-          cards={discardForThisStep}
+      {step === "selectCard" && (
+        <SelectCard
+          cards={cardsForThisStep}
           selectedCardId={setSelCard}
           text={promptText}
         />
       )}
 
       {step === "orderDiscard" && (
-        <OrderDiscardPileCards
-          cards={discardForThisStep}
+        <OrderCards
+          cards={cardsForThisStep}
           selectedCardsOrder={setSelOrderIds}
+          text={promptText}
+        />
+      )}
+
+      {step === "selectDirection" && (
+        <SelectDirection
+          playerId={actualPlayerId}
+          players={playersForThisStep}
+          selectedDirection={setSelDirection}
           text={promptText}
         />
       )}

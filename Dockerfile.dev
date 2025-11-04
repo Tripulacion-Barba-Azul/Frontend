@@ -1,0 +1,23 @@
+# Dockerfile para desarrollo
+FROM node:22-alpine
+
+# Establecer directorio de trabajo
+WORKDIR /app
+
+# Copiar package.json y package-lock.json
+COPY package*.json ./
+
+# Instalar dependencias
+RUN npm ci
+
+# Copiar el resto del código
+COPY . .
+
+# Variable de entorno para la URL del backend
+ENV VITE_API_URL=http://localhost:8000
+
+# Exponer puerto 5173 (puerto por defecto de Vite)
+EXPOSE 5173
+
+# Comando para ejecutar en modo desarrollo
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

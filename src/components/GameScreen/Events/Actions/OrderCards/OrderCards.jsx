@@ -1,14 +1,14 @@
-// OrderDiscardPileCards.jsx
+// OrderCards.jsx
 
 /**
- * @file OrderDiscardPileCards.jsx
+ * @file OrderCards.jsx
  * @description Modal to reorder a small subset (1..5) of discard-pile cards.
  *
  * === Canonical shapes (from API DOCUMENT) ===
  * @typedef {{ id:number, name:string }} SimpleCard
  *
  * === Props ===
- * @typedef {Object} OrderDiscardPileCardsProps
+ * @typedef {Object} OrderCardsProps
  * @property {SimpleCard[]} [cards=[]] - Top N cards from the discard pile to reorder (1..5).
  * @property {(ids:number[])=>void} selectedCardsOrder - Callback fired on confirm with the new order of card ids.
  * @property {string} [text="Reorder the cards"] - Modal title/prompt.
@@ -17,11 +17,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Reorder } from "framer-motion";
-import "./OrderDiscardPileCards.css";
+import "./OrderCards.css";
 import { CARDS_MAP } from "../../../../../utils/generalMaps";
 
-/** @param {OrderDiscardPileCardsProps} props */
-export default function OrderDiscardPileCards({
+/** @param {OrderCardsProps} props */
+export default function OrderCards({
   cards = [],
   selectedCardsOrder,
   text = "Reorder the cards",
