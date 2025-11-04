@@ -1,6 +1,12 @@
 // OwnCards.jsx
 
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import "./OwnCards.css";
 import { CARDS_MAP } from "../../../../../utils/generalMaps";
@@ -10,34 +16,22 @@ import PlayCardsButton from "./PlayButton/PlayCardsButton.jsx";
 
 /**
  * @file OwnCards.jsx
- * @description Draggable, selectable row with the current player's private hand.
- * Controls which action button is shown (play / discard / forced discard / no action).
- *
- * === Canonical shapes (API DOCUMENT) ===
- * @typedef {"waiting"|"playing"|"discarding"|"discardingOpt"|"drawing"} TurnStatus
- * @typedef {{ id:number, name:string, type:string }} HandCard
- *
- * === Props ===
- * @typedef {Object} OwnCardsProps
- * @property {HandCard[]} [cards=[]] - Current player's hand (max 6).
- * @property {string} [className=""] - Optional extra class for the container.
- * @property {TurnStatus} [turnStatus="waiting"] - Controls selection/drag and which action is enabled.
- * @property {boolean} [socialDisgrace=false] - If true, the player must discard exactly one (forced).
+ * @description Private hand row with selection, ordering and a left action area.
+ * - Keeps button color in sync with turnStatus (via data-variant).
+ * - Customizes Play text based on selected cards' type(s) and custom game rules.
  */
 
-/** @param {OwnCardsProps} props */
 export default function OwnCards({
   cards = [],
   className = "",
   turnStatus = "waiting",
   socialDisgrace = false,
 }) {
-  // Selected ids (Set for fast toggle); order state mirrors input (stable across updates)
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [orderedCards, setOrderedCards] = useState(cards);
   const dragStart = useRef(null);
 
-  // Preserve previous order for cards that still exist; append new ones at the end
+  /* ---------- Keep stable order across updates ---------- */
   useEffect(() => {
     setOrderedCards((prev) => {
       const prevIds = prev.map((c) => c.id);
@@ -47,7 +41,7 @@ export default function OwnCards({
     });
   }, [cards]);
 
-  // Reset selection when hand or phase changes
+  /* ---------- Reset selection when hand or phase changes ---------- */
   useEffect(() => setSelectedIds(new Set()), [cards, turnStatus]);
 
   const isDrawingPhase = turnStatus === "drawing";
@@ -60,7 +54,7 @@ export default function OwnCards({
     turnStatus === "discarding" ||
     turnStatus === "discardingOpt";
 
-  /** Toggle selection (single-select when forced discard; multi-select otherwise). */
+  /* ---------- Toggle selection (single when forced discard) ---------- */
   const toggleSelect = useCallback(
     (id) => {
       if (!canSelect) return;
@@ -71,11 +65,10 @@ export default function OwnCards({
             next.delete(id);
             return next;
           }
-          return new Set([id]);
+          return new Set([id]); // single select
         }
         const next = new Set(prev);
-        if (next.has(id)) next.delete(id);
-        else next.add(id);
+        next.has(id) ? next.delete(id) : next.add(id);
         return next;
       });
     },
@@ -84,12 +77,75 @@ export default function OwnCards({
 
   const selectedArray = Array.from(selectedIds);
 
-  /** Rebuild ordered list from the Reorder.Group ids array. */
   const handleReorder = (newOrderIds) => {
     setOrderedCards(
       newOrderIds.map((id) => cards.find((c) => c.id === id)).filter(Boolean)
     );
   };
+
+  /* ---------- Play label logic based on selected card types and rules ---------- */
+  const selectedCards = useMemo(
+    () =>
+      selectedArray
+        .map((id) => cards.find((c) => c?.id === id))
+        .filter(Boolean),
+    [selectedArray, cards]
+  );
+
+  const selectedTypes = useMemo(() => {
+    const set = new Set(
+      selectedCards.map((c) =>
+        String(c?.type ?? "")
+          .trim()
+          .toLowerCase()
+      )
+    );
+    set.delete(""); // ignore empty/equivocal
+    return Array.from(set);
+  }, [selectedCards]);
+
+  const k = selectedCards.length;
+  const hasMixedTypes = selectedTypes.length > 1;
+  const isUniformType = selectedTypes.length === 1;
+  const t = isUniformType ? selectedTypes[0] : null;
+
+  // Rule helpers
+  const containsProhibited = selectedTypes.some(
+    (x) => x === "devious" || x === "instant"
+  );
+  const isEvent = t === "event";
+  const isDetective = t === "detective";
+
+  const isInvalidPlay =
+    (k > 0 && hasMixedTypes) ||
+    containsProhibited ||
+    (isUniformType && isEvent && k > 1);
+
+  const playLabel = useMemo(() => {
+    if (k === 0) return null; // handled by NoActionButton
+    if (isInvalidPlay) return "Invalid play";
+
+    if (isDetective) {
+      return k === 1 ? "Add to any set" : "Play detective's set";
+    }
+
+    return k === 1 ? `Play ${t}` : `Play ${k} ${t}`;
+  }, [k, isInvalidPlay, isDetective, t]);
+
+  /* ---------- Status → color variant ---------- */
+  const turnStatusNorm = String(turnStatus || "").toLowerCase();
+  const variant =
+    turnStatusNorm === "playing"
+      ? "emerald"
+      : turnStatusNorm === "takingaction"
+      ? "lime"
+      : turnStatusNorm === "discarding"
+      ? "amber"
+      : turnStatusNorm === "discardingopt"
+      ? "amber"
+      : turnStatusNorm === "drawing"
+      ? "red"
+      : "gray";
 
   return (
     <div className={`owncards-overlay ${className}`} aria-label="cards-row">
@@ -141,7 +197,7 @@ export default function OwnCards({
                       const dx = Math.abs(e.clientX - dragStart.current.x);
                       const dy = Math.abs(e.clientY - dragStart.current.y);
                       const moved = Math.sqrt(dx * dx + dy * dy);
-                      if (moved < 8) toggleSelect(id); // treat as click
+                      if (moved < 8) toggleSelect(id);
                       dragStart.current = null;
                     }}
                   />
@@ -152,8 +208,12 @@ export default function OwnCards({
         </AnimatePresence>
       </Reorder.Group>
 
-      {/* Action area: forced discard OR (play / discard / no action) */}
-      <div className="owncards-actions">
+      {/* Action area — keeps color via data-variant and phase via data-phase */}
+      <div
+        className="owncards-actions"
+        data-variant={variant}
+        data-phase={turnStatusNorm}
+      >
         {isForcedDiscard ? (
           <DiscardButton
             selectedCards={selectedArray}
@@ -164,22 +224,53 @@ export default function OwnCards({
         ) : (
           <>
             {turnStatus === "playing" &&
-              (selectedArray.length === 0 ? (
+              (k === 0 ? (
                 <NoActionButton />
+              ) : isInvalidPlay ? (
+                <button
+                  type="button"
+                  className="owncards-action owncards-action--invalid"
+                  disabled
+                  aria-disabled="true"
+                  data-testid="OwnCardsInvalidPlay"
+                  title="Invalid play"
+                >
+                  Invalid play
+                </button>
               ) : (
                 <PlayCardsButton
                   selectedCards={selectedArray}
+                  selectedCardsMeta={selectedCards}
+                  label={playLabel}
                   onPlaySuccess={() => setSelectedIds(new Set())}
                 />
               ))}
+
             {(turnStatus === "discarding" ||
               turnStatus === "discardingOpt") && (
               <DiscardButton
                 selectedCards={selectedArray}
                 handSize={cards.length}
                 requireAtLeastOne={turnStatus === "discarding"}
+                labelWhenZero={
+                  turnStatus === "discardingOpt" ? "Discard nothing" : undefined
+                }
                 onDiscardSuccess={() => setSelectedIds(new Set())}
               />
+            )}
+
+            {/* drawing / waiting => show colored but disabled */}
+            {(turnStatusNorm === "drawing" || turnStatusNorm === "waiting") && (
+              <button
+                type="button"
+                className="owncards-action owncards-action--disabled"
+                disabled
+                aria-disabled="true"
+                data-testid="OwnCardsDisabledAction"
+                title={turnStatusNorm === "drawing" ? "Drawing" : "Waiting"}
+              >
+                {turnStatusNorm === "drawing" ? "Drawing ..." : "Waiting ..."}
+              </button>
             )}
           </>
         )}

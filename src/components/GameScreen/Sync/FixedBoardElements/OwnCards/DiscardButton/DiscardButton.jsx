@@ -19,18 +19,20 @@ import { useParams, useSearchParams } from "react-router-dom";
  * @typedef {Object} DiscardButtonProps
  * @property {(string|number)[]} selectedCards - Selected card IDs to discard.
  * @property {number} handSize - Current hand size (used by UI messages).
- * @property {() => void} onDiscardSuccess - Callback after request resolves (success or handled error).
+ * @property {() => void} [onDiscardSuccess] - Callback after request resolves (success or handled error).
  * @property {boolean} [requireAtLeastOne=false] - If true, must discard >= 1.
  * @property {boolean} [requireExactlyOne=false] - If true, must discard exactly 1.
+ * @property {string} [labelWhenZero] - Optional label when k === 0 (e.g., "Discard nothing").
  */
 
 /** @param {DiscardButtonProps} props */
 export default function DiscardButton({
-  selectedCards,
-  handSize,
+  selectedCards = [],
+  handSize = 0,
   onDiscardSuccess,
   requireAtLeastOne = false,
   requireExactlyOne = false,
+  labelWhenZero,
 }) {
   const [searchParams] = useSearchParams();
   const { gameId } = useParams();
@@ -76,15 +78,22 @@ export default function DiscardButton({
         throw new Error(`Discard failed with status ${response.status}`);
       }
 
-      onDiscardSuccess();
+      onDiscardSuccess?.();
     } catch (err) {
       console.error(err);
       setError("Failed to discard");
-      onDiscardSuccess(); // keep existing behavior
+      onDiscardSuccess?.(); // keep existing behavior
     } finally {
       setLoading(false);
     }
   };
+
+  const k = selectedCards.length;
+  const label = loading
+    ? "Discarding..."
+    : k === 0 && labelWhenZero
+    ? labelWhenZero
+    : `Discard (${k})`;
 
   return (
     <div>
@@ -100,7 +109,7 @@ export default function DiscardButton({
             : "Discard (optional)"
         }
       >
-        {loading ? "Discarding..." : `Discard (${selectedCards.length})`}
+        {label}
       </button>
 
       {error && (
