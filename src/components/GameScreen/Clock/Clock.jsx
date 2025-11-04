@@ -13,7 +13,7 @@ export default function Clock({
   websocket,
   publicPlayers,
   actualPlayerId,
-  activeEffect = false, //NEW, must implement
+  activeEffect = false,
 }) {
   const [eventTime, setEventTime] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);

@@ -17,6 +17,11 @@ vi.mock("react-router-dom", async () => {
   return { ...mod, useParams: vi.fn(() => ({ gameId: "42" })) };
 });
 
+/** Matches EffectManager.jsx import "../../Clock/Clock" */
+vi.mock("../../Clock/Clock", () => ({
+  default: () => <div data-testid="Clock" />,
+}));
+
 vi.mock("../Actions/SelectPlayer/SelectPlayer", () => ({
   default: ({ text, players, selectedPlayerId }) => (
     <div data-testid="SelectPlayer">
@@ -94,11 +99,11 @@ vi.mock("../Actions/SelectSecret/SelectSecret", () => ({
   ),
 }));
 
-vi.mock("../Actions/SelectDiscardPileCards/SelectDiscardPileCards", () => ({
+vi.mock("../Actions/SelectCard/SelectCard", () => ({
   default: ({ text, cards, selectedCardId }) => (
-    <div data-testid="SelectDiscardPileCards">
-      <div data-testid="sdc-text">{text}</div>
-      <div data-testid="sdc-count">{cards?.length ?? 0}</div>
+    <div data-testid="SelectCard">
+      <div data-testid="sc-text">{text}</div>
+      <div data-testid="sc-count">{cards?.length ?? 0}</div>
       {cards?.map((c) => (
         <button
           key={c.id}
@@ -112,16 +117,37 @@ vi.mock("../Actions/SelectDiscardPileCards/SelectDiscardPileCards", () => ({
   ),
 }));
 
-vi.mock("../Actions/OrderDiscardPileCards/OrderDiscardPileCards", () => ({
+vi.mock("../Actions/OrderCards/OrderCards", () => ({
   default: ({ text, cards, selectedCardsOrder }) => (
-    <div data-testid="OrderDiscardPileCards">
-      <div data-testid="odpc-text">{text}</div>
-      <div data-testid="odpc-count">{cards?.length ?? 0}</div>
+    <div data-testid="OrderCards">
+      <div data-testid="oc-text">{text}</div>
+      <div data-testid="oc-count">{cards?.length ?? 0}</div>
       <button
         onClick={() => selectedCardsOrder(cards?.map((c) => c.id) ?? [])}
         aria-label="confirm-order"
       >
         ConfirmOrder
+      </button>
+    </div>
+  ),
+}));
+
+/** NEW: matches EffectManager.jsx import "../Actions/SelectDirection/SelectDirection" */
+vi.mock("../Actions/SelectDirection/SelectDirection", () => ({
+  default: ({ text, selectedDirection }) => (
+    <div data-testid="SelectDirection">
+      <div data-testid="sd-text">{text}</div>
+      <button
+        aria-label="pick-direction-left"
+        onClick={() => selectedDirection("left")}
+      >
+        Left
+      </button>
+      <button
+        aria-label="pick-direction-right"
+        onClick={() => selectedDirection("right")}
+      >
+        Right
       </button>
     </div>
   ),
@@ -182,6 +208,11 @@ const PUBLIC_DATA = {
 };
 
 const PRIVATE_DATA = {
+  /** Added cards to support selectOwnCard flow */
+  cards: [
+    { id: 9101, name: "Swap", type: "action" },
+    { id: 9102, name: "Peek", type: "action" },
+  ],
   secrets: [
     { id: 500, revealed: false, name: "You are the murderer" },
     { id: 501, revealed: true, name: "Prankster" },
@@ -198,7 +229,7 @@ const DISCARD_CARDS = [
 
 /* --------------------------- Test helpers --------------------------- */
 function createWs() {
-  // Minimal object for fallback path: EffectManager assigns .onmessage
+  // Minimal object for fallback path; EffectManager assigns .onmessage
   return { onmessage: null };
 }
 
@@ -248,8 +279,9 @@ describe("EffectManager", () => {
     expect(screen.queryByTestId("SelectPlayer")).toBeNull();
     expect(screen.queryByTestId("SelectSecret")).toBeNull();
     expect(screen.queryByTestId("SelectSet")).toBeNull();
-    expect(screen.queryByTestId("SelectDiscardPileCards")).toBeNull();
-    expect(screen.queryByTestId("OrderDiscardPileCards")).toBeNull();
+    expect(screen.queryByTestId("SelectCard")).toBeNull();
+    expect(screen.queryByTestId("OrderCards")).toBeNull();
+    expect(screen.queryByTestId("SelectDirection")).toBeNull();
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
@@ -314,8 +346,8 @@ describe("EffectManager", () => {
     await screen.findByTestId("SelectPlayer");
 
     fireEvent.click(screen.getByLabelText("pick-player-2"));
-
     await screen.findByTestId("SelectSet");
+
     fireEvent.click(screen.getByLabelText("pick-set-202"));
 
     await waitFor(() => expect(global.fetch).toHaveBeenCalled());
@@ -329,7 +361,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("andThenThereWasOneMore: P1 -> secret -> P2 -> POST (ids según implementación)", async () => {
+  it("andThenThereWasOneMore: P1 -> secret -> P2 -> POST", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -345,12 +377,12 @@ describe("EffectManager", () => {
     await screen.findByTestId("SelectPlayer");
     fireEvent.click(screen.getByLabelText("pick-player-2"));
 
-    // Secret revelado de Alice (200)
+    // Secret (revealed) from Alice (200)
     const sec = await screen.findByTestId("SelectSecret");
     expect(sec).toHaveAttribute("data-revealed", "true");
     expect(sec).toHaveAttribute("data-playerid", "2");
 
-    // Back y forward de nuevo
+    // Back -> forward again
     fireEvent.click(screen.getByLabelText("go-back-selectsecret"));
     await screen.findByTestId("SelectPlayer");
     fireEvent.click(screen.getByLabelText("pick-player-2"));
@@ -369,9 +401,6 @@ describe("EffectManager", () => {
       "http://localhost:8000/play/42/actions/and-then-there-was-one-more"
     );
 
-    // IMPORTANTE: el componente envía
-    //   stolenPlayerId = primer jugador (2)
-    //   selectedPlayerId = segundo jugador (3)
     expect(body).toMatchObject({
       event: "andThenThereWasOneMore",
       playerId: 1,
@@ -412,7 +441,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("revealOwnSecret: SelectSecret(revealed=false) sin back, luego POST", async () => {
+  it("revealOwnSecret: SelectSecret(revealed=false) no back, then POST", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -471,7 +500,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("lookIntoTheAshes: SelectDiscardPileCards -> POST con id elegido", async () => {
+  it("lookIntoTheAshes: SelectCard -> POST with chosen id", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -483,9 +512,9 @@ describe("EffectManager", () => {
     await waitHandlerReady(ws);
     sendWs(ws, { event: "lookIntoTheAshes", payload: DISCARD_CARDS });
 
-    const sdc = await screen.findByTestId("SelectDiscardPileCards");
-    expect(sdc).toBeInTheDocument();
-    expect(screen.getByTestId("sdc-count").textContent).toBe("5");
+    const sc = await screen.findByTestId("SelectCard");
+    expect(sc).toBeInTheDocument();
+    expect(screen.getByTestId("sc-count").textContent).toBe("5");
 
     fireEvent.click(screen.getByLabelText("pick-card-8003"));
 
@@ -501,7 +530,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("delayTheMurderersEscape: OrderDiscardPileCards -> POST con ids ordenados", async () => {
+  it("delayTheMurderersEscape: OrderCards -> POST with ordered ids", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -516,9 +545,9 @@ describe("EffectManager", () => {
       payload: DISCARD_CARDS.slice(0, 3),
     });
 
-    const odpc = await screen.findByTestId("OrderDiscardPileCards");
-    expect(odpc).toBeInTheDocument();
-    expect(screen.getByTestId("odpc-count").textContent).toBe("3");
+    const oc = await screen.findByTestId("OrderCards");
+    expect(oc).toBeInTheDocument();
+    expect(screen.getByTestId("oc-count").textContent).toBe("3");
 
     fireEvent.click(screen.getByLabelText("confirm-order"));
 
@@ -531,6 +560,68 @@ describe("EffectManager", () => {
       event: "delayTheMurderersEscape",
       playerId: 1,
       cards: [8001, 8002, 8003],
+    });
+  });
+
+  /** NEW: covers the new effect selectOwnCard using privateData.cards */
+  it("selectOwnCard: shows SelectCard with own cards and POSTs chosen cardId", async () => {
+    render(
+      <EffectManager
+        publicData={PUBLIC_DATA}
+        privateData={PRIVATE_DATA}
+        actualPlayerId={1}
+        wsRef={ws}
+      />
+    );
+    await waitHandlerReady(ws);
+    sendWs(ws, { event: "selectOwnCard" });
+
+    const sc = await screen.findByTestId("SelectCard");
+    expect(sc).toBeInTheDocument();
+    expect(screen.getByTestId("sc-count").textContent).toBe(
+      String(PRIVATE_DATA.cards.length)
+    );
+
+    fireEvent.click(screen.getByLabelText("pick-card-9102"));
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+    const { url, body } = getLastFetchArgs();
+    expect(url).toBe("http://localhost:8000/play/42/actions/select-own-card");
+    expect(body).toMatchObject({
+      event: "selectOwnCard",
+      playerId: 1,
+      cardId: 9102,
+    });
+  });
+
+  /** NEW: covers selectDirection flow and its POST */
+  it("selectDirection: shows SelectDirection and POSTs chosen direction", async () => {
+    render(
+      <EffectManager
+        publicData={PUBLIC_DATA}
+        privateData={PRIVATE_DATA}
+        actualPlayerId={1}
+        wsRef={ws}
+      />
+    );
+    await waitHandlerReady(ws);
+    sendWs(ws, { event: "selectDirection" });
+
+    const sd = await screen.findByTestId("SelectDirection");
+    expect(sd).toBeInTheDocument();
+    expect(screen.getByTestId("sd-text").textContent.toLowerCase()).toContain(
+      "select a direction"
+    );
+
+    fireEvent.click(screen.getByLabelText("pick-direction-left"));
+
+    await waitFor(() => expect(global.fetch).toHaveBeenCalled());
+    const { url, body } = getLastFetchArgs();
+    expect(url).toBe("http://localhost:8000/play/42/actions/select-direction");
+    expect(body).toMatchObject({
+      event: "selectDirection",
+      playerId: 1,
+      direction: "left",
     });
   });
 

@@ -1,13 +1,13 @@
 import React from "react";
 import { describe, test, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
-import OrderDiscardPileCards from "./OrderDiscardPileCards";
+import OrderCards from "./OrderCards";
 
 // Ensure cleanup between tests
 afterEach(cleanup);
 
 // Mock CSS to keep tests quiet
-vi.mock("./OrderDiscardPileCards.css", () => ({}));
+vi.mock("./OrderCards.css", () => ({}));
 
 // Mock generalMaps so the component finds images in CARDS_MAP
 vi.mock("../../../../../utils/generalMaps", () => ({
@@ -40,7 +40,7 @@ vi.mock("framer-motion", () => ({
   },
 }));
 
-describe("OrderDiscardPileCards", () => {
+describe("OrderCards", () => {
   const DEMO_CARDS = [
     { id: 1, name: "Express Train" },
     { id: 2, name: "Blackmail" },
@@ -49,7 +49,7 @@ describe("OrderDiscardPileCards", () => {
 
   test("renders cards and leftmost indicator", () => {
     render(
-      <OrderDiscardPileCards
+      <OrderCards
         cards={DEMO_CARDS}
         selectedCardsOrder={() => {}}
         text="Reorder the cards"
@@ -70,7 +70,7 @@ describe("OrderDiscardPileCards", () => {
   test("confirm returns ids in current order (no reorder)", () => {
     const onOrder = vi.fn();
     const { getByRole } = render(
-      <OrderDiscardPileCards
+      <OrderCards
         cards={DEMO_CARDS}
         selectedCardsOrder={onOrder}
         text="Reorder the cards"
@@ -87,7 +87,7 @@ describe("OrderDiscardPileCards", () => {
   test("reordering changes the order sent to callback", () => {
     const onOrder = vi.fn();
     const { getByRole, container } = render(
-      <OrderDiscardPileCards
+      <OrderCards
         cards={DEMO_CARDS}
         selectedCardsOrder={onOrder}
         text="Reorder the cards"
@@ -138,7 +138,7 @@ describe("OrderDiscardPileCards", () => {
   ])("returns ids in order without reorder (cards=%j)", (cards) => {
     const onOrder = vi.fn();
     const { getByRole, unmount } = render(
-      <OrderDiscardPileCards
+      <OrderCards
         cards={cards}
         selectedCardsOrder={onOrder}
         text="Reorder the cards"
@@ -156,7 +156,7 @@ describe("OrderDiscardPileCards", () => {
   test("disabled confirm button when no cards", () => {
     const onOrder = vi.fn();
     const { getByRole } = render(
-      <OrderDiscardPileCards
+      <OrderCards
         cards={[]}
         selectedCardsOrder={onOrder}
         text="Reorder the cards"

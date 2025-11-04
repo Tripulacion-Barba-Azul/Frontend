@@ -106,11 +106,11 @@ describe("GameScreen", () => {
 
   it("renders WS-dependent components after WebSocket onopen (isConnected=true)", async () => {
     render(<GameScreen />);
-  
+
     act(() => {
       mockWebSocket.onopen?.();
     });
-  
+
     // Simular datos de juego completos → habilita gameDataReady
     act(() => {
       mockWebSocket.onmessage?.({
@@ -118,9 +118,7 @@ describe("GameScreen", () => {
           event: "publicUpdate",
           payload: {
             gameStatus: "in_progress",
-            players: [
-              { id: Number(mockPlayerId), name: "Me", avatar: 1 },
-            ],
+            players: [{ id: Number(mockPlayerId), name: "Me", avatar: 1 }],
           },
         }),
       });
@@ -131,7 +129,7 @@ describe("GameScreen", () => {
         }),
       });
     });
-  
+
     await waitFor(() => {
       expect(screen.getByTestId("game-end-screen")).toBeInTheDocument();
       expect(screen.getByTestId("notifier")).toBeInTheDocument();
@@ -167,7 +165,7 @@ describe("GameScreen", () => {
     act(() => {
       mockWebSocket.onopen?.();
     });
-  
+
     // Simular datos para activar gameDataReady
     act(() => {
       mockWebSocket.onmessage?.({
@@ -175,9 +173,7 @@ describe("GameScreen", () => {
           event: "publicUpdate",
           payload: {
             gameStatus: "in_progress",
-            players: [
-              { id: Number(mockPlayerId), name: "Me", avatar: 1 },
-            ],
+            players: [{ id: Number(mockPlayerId), name: "Me", avatar: 1 }],
           },
         }),
       });
@@ -188,16 +184,16 @@ describe("GameScreen", () => {
         }),
       });
     });
-  
+
     await waitFor(() =>
       expect(screen.getByTestId("game-end-screen")).toBeInTheDocument()
     );
-  
+
     // Cerrar conexión
     act(() => {
       mockWebSocket.onclose?.();
     });
-  
+
     await waitFor(() => {
       // Ya no están los dependientes del socket
       expect(screen.queryByTestId("game-end-screen")).not.toBeInTheDocument();
