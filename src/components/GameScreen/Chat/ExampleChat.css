@@ -1,0 +1,38 @@
+/* Root fills the viewport and creates a stacking context above the board */
+.exampleRoot {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Debug bar for quick testing (optional) */
+.exampleBar {
+  position: absolute;
+  left: 1vw;
+  top: 1vw;
+  z-index: 120; /* above board but below chat window if overlaps */
+  display: flex;
+  gap: 0.6vw;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  padding: 0.6vw 0.8vw;
+  border-radius: 0.6vw;
+  border: 0.1vw solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(2px);
+}
+
+/* Default placement for the chat badge and window (adjust as you like) */
+.chatBadge {
+  position: absolute;
+  right: 1vw;
+  bottom: 1vw;
+  z-index: 130; /* above board HUD */
+}
+
+.chatWindow {
+  position: absolute;
+  right: 1vw;
+  bottom: 5vw; /* opens above the badge */
+  z-index: 130;
+}
