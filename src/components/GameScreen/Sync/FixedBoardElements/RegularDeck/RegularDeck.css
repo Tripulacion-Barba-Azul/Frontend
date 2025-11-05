@@ -1,6 +1,6 @@
 .RegularDeck-container {
   position: absolute;
-  bottom: 20.225vw; /* 39.6% of full width scaling */
+  bottom: 21.225vw; /* 39.6% of full width scaling */
   left: 27.183vw; /* 28% of full width scaling */
   z-index: 20;
   pointer-events: auto;

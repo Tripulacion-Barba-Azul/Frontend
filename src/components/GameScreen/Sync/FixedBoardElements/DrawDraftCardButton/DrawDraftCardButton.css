@@ -1,6 +1,6 @@
 .draw-draft-card-container {
   position: absolute;
-  bottom: 20.7vw; /* 43% of 520px? Convert to vw if scaling for full width */
+  bottom: 22.396vw; /* 43% of 520px? Convert to vw if scaling for full width */
   left: 50%;
   transform: translateX(-50%);
   z-index: 15;
@@ -8,13 +8,13 @@
 
 .draft-cards-row {
   display: flex;
-  gap: 0.5vw; /* 8px / 1920px * 100 */
+  gap: 0.517vw; /* 8px / 1920px * 100 */
   justify-content: center;
   align-items: center;
 }
 
 .draft-card {
-  width: 7vw; /* 120px / 1920px * 100 */
+  width: 6.75vw; /* 120px / 1920px * 100 */
   height: auto;
   border-radius: 0.417vw; /* 8px / 1920px * 100 */
   border: 0.104vw solid rgba(244, 225, 163, 0.3); /* 2px */

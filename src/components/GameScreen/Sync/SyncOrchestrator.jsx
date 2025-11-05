@@ -116,14 +116,14 @@ export default function SyncOrchestrator({
         {/* Quick views */}
         <div
           className="fixed z-50 pointer-events-auto"
-          style={{ right: "24.2vw", bottom: "7.8vw" }}
+          style={{ right: "76.2vw", bottom: "9vw" }}
         >
           <ViewMyCards cards={privateData.cards} />
         </div>
 
         <div
           className="fixed z-50 pointer-events-auto"
-          style={{ right: "87.9271vw", bottom: "4.1vw" }}
+          style={{ right: "89vw", bottom: "5.1vw" }}
         >
           <ViewMySecrets secrets={privateData.secrets} />
         </div>

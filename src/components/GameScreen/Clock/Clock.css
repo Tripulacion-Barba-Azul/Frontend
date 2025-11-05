@@ -1,8 +1,8 @@
 /* Clock minimal styling: only the image is visible. */
 .clock-root {
   position: fixed;
-  bottom: 5.9vw;
-  left: 79.8vw;
+  bottom: 6.5vw;
+  left: 77vw;
   z-index: 20;
   pointer-events: none;
   width: 7vw; /* reserve tight size so stacking works */

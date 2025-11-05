@@ -15,8 +15,7 @@
   font-weight: 500; /* font-medium */
   line-height: 1; /* leading-none */
   padding: 0.417vw 0.833vw; /* px-4 py-2 -> 8px 16px */
-  background:
-    linear-gradient(
+  background: linear-gradient(
       90deg,
       transparent 0%,
       var(--name-bg, rgba(255, 255, 255, 0.95)) 15%,
@@ -39,10 +38,9 @@
   height: 1.65vw;
   transition: all 0.2s ease-in-out;
   /* --- Correct text shadows --- */
-  text-shadow:
-    0 0.052vw 0.104vw rgba(0, 0, 0, 0.25), /* 1px,2px */
-    0 0.104vw 0.208vw rgba(0, 0, 0, 0.15), /* 2px,4px */
-    0 0 0.313vw rgba(78, 26, 21, 0.481); /* 6px glow */
+  text-shadow: 0 0.052vw 0.104vw rgba(0, 0, 0, 0.25),
+    /* 1px,2px */ 0 0.104vw 0.208vw rgba(0, 0, 0, 0.15),
+    /* 2px,4px */ 0 0 0.313vw rgba(78, 26, 21, 0.481); /* 6px glow */
 }
 
 /* ===== Avatar + overlays stack ===== */
@@ -60,8 +58,8 @@
   /* Ring color is set inline via style={{ ["--tw-ring-color"]: ringCol }} */
   --tw-ring-color: rgb(51 65 85 / 0.7);
   --ring-width: 0.26vw; /* 5px */
-  --ring-glow-blur: 1.563vw; /* 30px */
-  --ring-glow-spread: 0.781vw; /* 15px */
+  --ring-glow-blur: 1.63vw; /* 30px */
+  --ring-glow-spread: 0.581vw; /* 15px */
 
   /* Thin black inner edge between the image and the ring */
   border: 1px solid #000;
@@ -74,7 +72,7 @@
     /* subtle colored glow (fallback) */ 0 0 var(--ring-glow-blur)
       var(--ring-glow-spread) var(--tw-ring-color),
     /* soft shadows */ 0 10px 15px -3px rgb(0 0 0 / 0.1),
-    0 4px 6px -4px rgb(0 0 0 / 0.1);
+    0 0px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 /* Prefer a softer glow using color-mix() when available */
@@ -129,7 +127,7 @@
 
 .avatar-placeholder {
   user-select: none;
-  color: rgba(51,65,85,0.8);
+  color: rgba(51, 65, 85, 0.8);
 }
 
 /* ===== Overlays controlled by CSS variables ===== */
@@ -161,9 +159,9 @@
   z-index: 1;
 
   /* anchor edge only */
-  top: 0;       /* or bottom: 0; depending on position */
-  left: 100%;   /* right of avatar, for position-right */
-  
+  top: 0; /* or bottom: 0; depending on position */
+  left: 100%; /* right of avatar, for position-right */
+
   /* remove width/height: let content size naturally */
   width: max-content;
   height: max-content;
@@ -181,7 +179,6 @@
   /* Secrets: top-right */
   --sec-right: -3.8vw;
   --sec-top: -3.73vw;
-
 }
 
 .avatar-stack.badge-small.position-left {
@@ -192,7 +189,6 @@
   /* Secrets: top-left */
   --sec-left: -3.8vw;
   --sec-top: -3.73vw;
-
 }
 
 .avatar-stack.badge-small.position-up {
@@ -203,7 +199,6 @@
   /* Secrets: top-right to avoid overlap */
   --sec-right: 7.1vw;
   --sec-top: -3.7vw;
-
 }
 
 .avatar-stack.position-right .badge-sets {
