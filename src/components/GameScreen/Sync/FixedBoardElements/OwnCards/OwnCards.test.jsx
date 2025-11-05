@@ -57,6 +57,10 @@ vi.mock("./NoActionButton/NoActionButton", () => ({
   default: () => <button aria-label="no-action">Play nothing</button>,
 }));
 
+vi.mock("./PlayNsfButton/PlayNsfButton.jsx", () => ({
+  default: vi.fn(() => <button data-testid="PlayNsfButton">Not so fast</button>),
+}));
+
 /* Mock DiscardButton: reflect flags + labelWhenZero UX */
 vi.mock("./DiscardButton/DiscardButton", () => ({
   default: ({
@@ -530,4 +534,87 @@ describe("OwnCards.jsx — exhaustive behaviors", () => {
     discard = screen.getByTestId("discard-button");
     expect(discard).toHaveAttribute("data-exact", "true");
   });
+  
+    /* ----------------------------- actionStatus & NSF behavior ----------------------------- */
+
+    it("renders NSF button when actionStatus='unblocked' and no cards selected", async () => {
+      renderOwnCards({
+        cards: [CARDS.eventA],
+        turnStatus: "playing",
+        actionStatus: "unblocked",
+      });
+  
+      expect(screen.getByTestId("PlayNsfButton")).toBeInTheDocument();
+      const container = document.querySelector(".owncards-actions");
+      expect(container).toHaveAttribute("data-variant", "blue");
+    });
+  
+    it("renders NSF button when one instant card selected (actionStatus='unblocked')", async () => {
+      renderOwnCards({
+        cards: [CARDS.instant],
+        turnStatus: "playing",
+        actionStatus: "unblocked",
+      });
+  
+      const img = screen.getByAltText("Card Quick Counter");
+      pointerClick(img);
+      await waitFor(() =>
+        expect(screen.getByTestId("PlayNsfButton")).toBeInTheDocument()
+      );
+    });
+  
+    it("cannot select non-instant cards when actionStatus='unblocked'", async () => {
+      renderOwnCards({
+        cards: [CARDS.eventA, CARDS.satter],
+        turnStatus: "playing",
+        actionStatus: "unblocked",
+      });
+  
+      const e = screen.getByAltText("Card Event A");
+      pointerClick(e);
+      expect(e).toHaveClass("owncards-card--disabled");
+      expect(e).not.toHaveClass("owncards-card--selected");
+  
+      // NSF should still be visible
+      expect(screen.getByTestId("PlayNsfButton")).toBeInTheDocument();
+    });
+  
+    it("does not render NSF button when actionStatus='blocked'", async () => {
+      renderOwnCards({
+        cards: [CARDS.instant],
+        turnStatus: "playing",
+        actionStatus: "blocked",
+      });
+  
+      const img = screen.getByAltText("Card Quick Counter");
+      pointerClick(img);
+      await waitFor(() =>
+        expect(screen.queryByTestId("PlayNsfButton")).not.toBeInTheDocument()
+      );
+    });
+  
+    it("resets selected cards when actionStatus changes", async () => {
+      const { rerender } = renderOwnCards({
+        cards: [CARDS.instant, CARDS.eventA],
+        turnStatus: "playing",
+        actionStatus: "blocked",
+      });
+  
+      const img = screen.getByAltText("Card Quick Counter");
+      pointerClick(img);
+      await waitFor(() => expect(img).toHaveClass("owncards-card--selected"));
+  
+      rerender(
+        <OwnCards
+          cards={[CARDS.instant, CARDS.eventA]}
+          turnStatus="playing"
+          actionStatus="unblocked"
+        />
+      );
+  
+      await waitFor(() =>
+        expect(img).not.toHaveClass("owncards-card--selected")
+      );
+    });
+
 });

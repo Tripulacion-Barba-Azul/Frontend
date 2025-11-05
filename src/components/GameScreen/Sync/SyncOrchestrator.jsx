@@ -111,6 +111,7 @@ export default function SyncOrchestrator({
           cards={privateData.cards}
           turnStatus={turnStatus}
           socialDisgrace={socialDisgrace}
+          actionStatus={publicData.actionStatus}
         />
 
         {/* Quick views */}

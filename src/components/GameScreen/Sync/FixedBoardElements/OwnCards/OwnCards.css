@@ -142,6 +142,9 @@
 .owncards-actions[data-variant="red"] .owncards-action {
   background-color: #ef4444; /* red-500 */
 }
+.owncards-actions[data-variant="blue"] .owncards-action {
+  background-color: #0d4da6; /* blue-500 */
+}
 .owncards-actions[data-variant="gray"] .owncards-action {
   background-color: #6b7280; /* gray-500 */
 }
@@ -190,6 +193,12 @@
 .owncards-actions[data-variant="red"] .owncards-action:active,
 .owncards-actions[data-variant="red"] .owncards-action:focus {
   box-shadow: 0 0 2.427vw rgba(239, 68, 68, 0.8);
+}
+
+.owncards-actions[data-variant="blue"] .owncards-action:hover,
+.owncards-actions[data-variant="blue"] .owncards-action:active,
+.owncards-actions[data-variant="blue"] .owncards-action:focus {
+  box-shadow: 0 0 2.427vw rgba(49, 111, 228, 0.8);
 }
 
 .owncards-actions[data-variant="gray"] .owncards-action:hover,

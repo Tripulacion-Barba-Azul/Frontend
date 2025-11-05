@@ -237,6 +237,7 @@ export default function GameScreen() {
               publicPlayers={publicData.players}
               actualPlayerId={currentPlayerId}
               activeEffect={false}
+              actionStatus={publicData.actionStatus}
             />
           )}
 

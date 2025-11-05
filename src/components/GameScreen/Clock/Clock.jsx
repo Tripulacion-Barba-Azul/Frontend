@@ -7,13 +7,16 @@ import "./Clock.css";
  * Props:
  *  - websocket: WebSocket-like (expects addEventListener("message", ...))
  *  - publicPlayers: array of public player data (to get turnStatus)
- * - actualPlayerId: id of the current player (to find own turnStatus)
+ *  - actualPlayerId: id of the current player (to find own turnStatus)
+ *  - activeEffect: bool (if true, clock is forced visible with "active" style)
+ *  - actionStatus: "blocked" | "unblocked"  <-- NUEVO
  */
 export default function Clock({
   websocket,
   publicPlayers,
   actualPlayerId,
   activeEffect = false,
+  actionStatus = "blocked", // <-- nuevo parámetro con default
 }) {
   const [eventTime, setEventTime] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -122,11 +125,15 @@ export default function Clock({
   const turnStatus =
     publicPlayers.find((p) => p?.id === actualPlayerId)?.turnStatus ??
     "waiting";
-  const shouldShowClock =
+
+  const baseShouldShow =
     !(
       (turnStatus === "waiting" || turnStatus == "takingAction") &&
       !finishHoldActive
     ) || activeEffect;
+
+  const shouldShowClock =
+    baseShouldShow || (actionStatus === "unblocked" && !activeEffect); 
 
   // derive image purely from state/refs (no side-effects)
   const imageName = useMemo(() => {
