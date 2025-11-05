@@ -375,4 +375,51 @@ describe("Clock Component", () => {
     );
     expect(screen.getByAltText(/Clock CLOCK_S3/i)).toBeInTheDocument();
   });
+
+  it("muestra el reloj cuando actionStatus es 'unblocked' aunque el jugador esté esperando", () => {
+    const publicPlayers = [{ id: "player1", turnStatus: "waiting" }];
+    render(
+      <Clock
+        websocket={mockWebSocket}
+        publicPlayers={publicPlayers}
+        actualPlayerId="player1"
+        actionStatus="unblocked"
+      />
+    );
+
+    // ✅ debería mostrarse el reloj (por acción unblocked)
+    expect(screen.getByAltText(/Clock CLOCK_0/i)).toBeInTheDocument();
+  });
+
+  it("no muestra el reloj cuando actionStatus es 'blocked' y el jugador está esperando", () => {
+    const publicPlayers = [{ id: "player1", turnStatus: "waiting" }];
+    const { container } = render(
+      <Clock
+        websocket={mockWebSocket}
+        publicPlayers={publicPlayers}
+        actualPlayerId="player1"
+        actionStatus="blocked"
+      />
+    );
+
+    // ✅ nada se renderiza
+    expect(container.firstChild).toBeNull();
+  });
+
+  it("renderiza el reloj sin clase 'active' cuando actionStatus es 'unblocked' y activeEffect es false", () => {
+    const publicPlayers = [{ id: "player1", turnStatus: "playing" }];
+    const { container } = render(
+      <Clock
+        websocket={mockWebSocket}
+        publicPlayers={publicPlayers}
+        actualPlayerId="player1"
+        actionStatus="unblocked"
+        activeEffect={false}
+      />
+    );
+
+    const root = container.querySelector(".clock-root");
+    expect(root).toBeInTheDocument();
+    expect(root).not.toHaveClass("active");
+  });
 });
