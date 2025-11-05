@@ -609,6 +609,7 @@ export default function EffectManager({
           publicPlayers={playersAll}
           actualPlayerId={actualPlayerId}
           activeEffect={true}
+          actionStatus={publicData.actionStatus}
         />
       )}
       {step === "selectPlayer" && (

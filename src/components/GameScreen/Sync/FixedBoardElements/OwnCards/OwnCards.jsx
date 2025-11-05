@@ -13,6 +13,7 @@ import { CARDS_MAP } from "../../../../../utils/generalMaps";
 import DiscardButton from "./DiscardButton/DiscardButton";
 import NoActionButton from "./NoActionButton/NoActionButton";
 import PlayCardsButton from "./PlayButton/PlayCardsButton.jsx";
+import PlayNsfButton from "./PlayNsfButton/PlayNsfButton.jsx";
 
 /**
  * @file OwnCards.jsx
@@ -26,6 +27,7 @@ export default function OwnCards({
   className = "",
   turnStatus = "waiting",
   socialDisgrace = false,
+  actionStatus = "blocked",
 }) {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [orderedCards, setOrderedCards] = useState(cards);
@@ -42,22 +44,34 @@ export default function OwnCards({
   }, [cards]);
 
   /* ---------- Reset selection when hand or phase changes ---------- */
-  useEffect(() => setSelectedIds(new Set()), [cards, turnStatus]);
+  useEffect(() => setSelectedIds(new Set()), [cards, turnStatus, actionStatus]); // 👈 incluir actionStatus
 
   const isDrawingPhase = turnStatus === "drawing";
   const isForcedDiscard =
     socialDisgrace && !isDrawingPhase && !(turnStatus === "waiting");
 
-  const canSelect =
+  const canSelectBase =
     isForcedDiscard ||
     turnStatus === "playing" ||
     turnStatus === "discarding" ||
     turnStatus === "discardingOpt";
 
+  const canSelect = useCallback(
+    (card) => {
+      if (actionStatus === "unblocked") {
+        // solo permiten seleccionar cartas instant
+        return String(card?.type ?? "").toLowerCase() === "instant";
+      }
+      return canSelectBase;
+    },
+    [actionStatus, canSelectBase]
+  );
+
   /* ---------- Toggle selection (single when forced discard) ---------- */
   const toggleSelect = useCallback(
-    (id) => {
-      if (!canSelect) return;
+    (card) => {
+      if (!canSelect(card)) return;
+      const id = card.id;
       setSelectedIds((prev) => {
         if (isForcedDiscard) {
           if (prev.has(id)) {
@@ -135,8 +149,8 @@ export default function OwnCards({
   /* ---------- Status → color variant ---------- */
   const turnStatusNorm = String(turnStatus || "").toLowerCase();
   const variant =
-    turnStatusNorm === "playing"
-      ? "emerald"
+    actionStatus === "unblocked"
+      ? "blue"
       : turnStatusNorm === "takingaction"
       ? "lime"
       : turnStatusNorm === "discarding"
@@ -145,6 +159,8 @@ export default function OwnCards({
       ? "amber"
       : turnStatusNorm === "drawing"
       ? "red"
+      : turnStatusNorm === "playing"
+      ? "emerald"
       : "gray";
 
   return (
@@ -157,9 +173,10 @@ export default function OwnCards({
         className="owncards-row"
       >
         <AnimatePresence initial={false}>
-          {orderedCards.map(({ id, name }) => {
+        {orderedCards.map((card) => {
+            const { id, name } = card;
             const isSelected = selectedIds.has(id);
-            const disabledClass = canSelect ? "" : "owncards-card--disabled";
+            const disabledClass = canSelect(card) ? "" : "owncards-card--disabled";
             const imgSrc = CARDS_MAP[name];
 
             return (
@@ -197,7 +214,7 @@ export default function OwnCards({
                       const dx = Math.abs(e.clientX - dragStart.current.x);
                       const dy = Math.abs(e.clientY - dragStart.current.y);
                       const moved = Math.sqrt(dx * dx + dy * dy);
-                      if (moved < 8) toggleSelect(id);
+                      if (moved < 8) toggleSelect(card); // <-- pasar el card real
                       dragStart.current = null;
                     }}
                   />
@@ -223,55 +240,84 @@ export default function OwnCards({
           />
         ) : (
           <>
-            {turnStatus === "playing" &&
-              (k === 0 ? (
-                <NoActionButton />
-              ) : isInvalidPlay ? (
-                <button
-                  type="button"
-                  className="owncards-action owncards-action--invalid"
-                  disabled
-                  aria-disabled="true"
-                  data-testid="OwnCardsInvalidPlay"
-                  title="Invalid play"
-                >
-                  Invalid play
-                </button>
-              ) : (
-                <PlayCardsButton
-                  selectedCards={selectedArray}
-                  selectedCardsMeta={selectedCards}
-                  label={playLabel}
-                  onPlaySuccess={() => setSelectedIds(new Set())}
-                />
-              ))}
+            {(() => {
+              // k = selectedArray.length (ya lo tienes más arriba como const k = selectedCards.length)
+              // nsfApplicable: actionStatus unblocked y (0 cartas o 1 carta instant)
+              const nsfApplicable =
+                actionStatus === "unblocked" &&
+                (selectedArray.length === 0 ||
+                  (selectedArray.length === 1 &&
+                    String(selectedCards?.[0]?.type ?? "").toLowerCase() ===
+                      "instant"));
 
-            {(turnStatus === "discarding" ||
-              turnStatus === "discardingOpt") && (
-              <DiscardButton
-                selectedCards={selectedArray}
-                handSize={cards.length}
-                requireAtLeastOne={turnStatus === "discarding"}
-                labelWhenZero={
-                  turnStatus === "discardingOpt" ? "Discard nothing" : undefined
-                }
-                onDiscardSuccess={() => setSelectedIds(new Set())}
-              />
-            )}
+              if (nsfApplicable) {
+                // Si aplica NSf, mostrar SOLO ese botón
+                return (
+                  <PlayNsfButton
+                    selectedCards={selectedArray}
+                    selectedCardsMeta={selectedCards}
+                    onPlaySuccess={() => setSelectedIds(new Set())}
+                  />
+                );
+              }
 
-            {/* drawing / waiting => show colored but disabled */}
-            {(turnStatusNorm === "drawing" || turnStatusNorm === "waiting") && (
-              <button
-                type="button"
-                className="owncards-action owncards-action--disabled"
-                disabled
-                aria-disabled="true"
-                data-testid="OwnCardsDisabledAction"
-                title={turnStatusNorm === "drawing" ? "Drawing" : "Waiting"}
-              >
-                {turnStatusNorm === "drawing" ? "Drawing ..." : "Waiting ..."}
-              </button>
-            )}
+              // Si NSf no aplica, caemos al comportamiento normal
+              return (
+                <>
+                  {turnStatus === "playing" &&
+                    (k === 0 ? (
+                      <NoActionButton />
+                    ) : isInvalidPlay ? (
+                      <button
+                        type="button"
+                        className="owncards-action owncards-action--invalid"
+                        disabled
+                        aria-disabled="true"
+                        data-testid="OwnCardsInvalidPlay"
+                        title="Invalid play"
+                      >
+                        Invalid play
+                      </button>
+                    ) : (
+                      <PlayCardsButton
+                        selectedCards={selectedArray}
+                        selectedCardsMeta={selectedCards}
+                        label={playLabel}
+                        onPlaySuccess={() => setSelectedIds(new Set())}
+                      />
+                    ))}
+
+                  {(turnStatus === "discarding" ||
+                    turnStatus === "discardingOpt") && (
+                    <DiscardButton
+                      selectedCards={selectedArray}
+                      handSize={cards.length}
+                      requireAtLeastOne={turnStatus === "discarding"}
+                      labelWhenZero={
+                        turnStatus === "discardingOpt"
+                          ? "Discard nothing"
+                          : undefined
+                      }
+                      onDiscardSuccess={() => setSelectedIds(new Set())}
+                    />
+                  )}
+
+                  {/* drawing / waiting => show colored but disabled */}
+                  {(turnStatusNorm === "drawing" || turnStatusNorm === "waiting") && (
+                    <button
+                      type="button"
+                      className="owncards-action owncards-action--disabled"
+                      disabled
+                      aria-disabled="true"
+                      data-testid="OwnCardsDisabledAction"
+                      title={turnStatusNorm === "drawing" ? "Drawing" : "Waiting"}
+                    >
+                      {turnStatusNorm === "drawing" ? "Drawing ..." : "Waiting ..."}
+                    </button>
+                  )}
+                </>
+              );
+            })()}
           </>
         )}
       </div>
