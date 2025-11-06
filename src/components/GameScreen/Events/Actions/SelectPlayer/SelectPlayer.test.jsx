@@ -133,4 +133,57 @@ describe("SelectPlayer", () => {
     unmount();
     expect(document.body.style.overflow).toBe("");
   });
+
+  // --- NEW TESTS FOR goBack FEATURE ---
+
+  test("does not render Go Back button when goBack is not provided", () => {
+    render(<SelectPlayer {...BASE_PROPS} selectedPlayerId={() => {}} />);
+    const backBtn = screen.queryByRole("button", { name: /go back/i });
+    expect(backBtn).toBeNull();
+  });
+
+  test("renders Go Back button when goBack is provided and calls it on click", () => {
+    const onBack = vi.fn();
+    render(
+      <SelectPlayer
+        {...BASE_PROPS}
+        selectedPlayerId={() => {}}
+        goBack={onBack}
+      />
+    );
+
+    const backBtn = screen.getByRole("button", { name: /go back/i });
+    expect(backBtn).toBeTruthy();
+
+    fireEvent.click(backBtn);
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  test("confirm still works with goBack present and does not call goBack", () => {
+    const onBack = vi.fn();
+    const onSelect = vi.fn();
+
+    render(
+      <SelectPlayer
+        {...BASE_PROPS}
+        selectedPlayerId={onSelect}
+        goBack={onBack}
+      />
+    );
+
+    const confirmBtn = screen.getByRole("button", { name: /confirm/i });
+    expect(confirmBtn).toBeDisabled();
+
+    // Select Alice
+    fireEvent.click(screen.getByText("Alice"));
+    expect(confirmBtn).not.toBeDisabled();
+
+    // Confirm selection
+    fireEvent.click(confirmBtn);
+
+    // selectedPlayerId should be called; goBack should not
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledWith(2);
+    expect(onBack).not.toHaveBeenCalled();
+  });
 });

@@ -30,6 +30,7 @@
  * @property {number|string} actualPlayerId - Current user's id (to tag "(you)").
  * @property {PublicPlayer[]} [players=[]] - Player list to render as choices.
  * @property {(id:number|string)=>void} selectedPlayerId - Called on confirm with the chosen id.
+ * @property {(() => void)|null} [goBack] - Optional “back” handler; if omitted, back button is hidden.
  * @property {string} [text=""] - Prompt text shown above the grid.
  */
 
@@ -43,15 +44,17 @@ export default function SelectPlayer({
   actualPlayerId,
   players = [],
   selectedPlayerId,
+  goBack, // NEW: optional back handler
   text = "",
 }) {
   const [chosenId, setChosenId] = useState(null);
 
   // Lock page scroll while modal is open
   useEffect(() => {
+    const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = prev;
     };
   }, []);
 
@@ -96,13 +99,21 @@ export default function SelectPlayer({
           })}
         </div>
 
-        <button
-          className="selectplayer-confirm"
-          onClick={handleConfirm}
-          disabled={chosenId == null}
-        >
-          Confirm
-        </button>
+        {/* Actions row: Back (optional) + Confirm */}
+        <div className="selectplayer-actions">
+          {goBack && (
+            <button className="selectplayer-back" onClick={goBack}>
+              Go Back
+            </button>
+          )}
+          <button
+            className="selectplayer-confirm"
+            onClick={handleConfirm}
+            disabled={chosenId == null}
+          >
+            Confirm
+          </button>
+        </div>
       </motion.div>
     </div>
   );

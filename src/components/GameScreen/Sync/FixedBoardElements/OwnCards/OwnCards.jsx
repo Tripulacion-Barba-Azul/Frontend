@@ -14,6 +14,7 @@ import DiscardButton from "./DiscardButton/DiscardButton";
 import NoActionButton from "./NoActionButton/NoActionButton";
 import PlayCardsButton from "./PlayButton/PlayCardsButton.jsx";
 import PlayNsfButton from "./PlayNsfButton/PlayNsfButton.jsx";
+import AddDetectiveButton from "./AddDetectiveButton/AddDetectiveButton.jsx";
 
 /**
  * @file OwnCards.jsx
@@ -28,6 +29,7 @@ export default function OwnCards({
   turnStatus = "waiting",
   socialDisgrace = false,
   actionStatus = "blocked",
+  players = [],
 }) {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [orderedCards, setOrderedCards] = useState(cards);
@@ -173,10 +175,12 @@ export default function OwnCards({
         className="owncards-row"
       >
         <AnimatePresence initial={false}>
-        {orderedCards.map((card) => {
+          {orderedCards.map((card) => {
             const { id, name } = card;
             const isSelected = selectedIds.has(id);
-            const disabledClass = canSelect(card) ? "" : "owncards-card--disabled";
+            const disabledClass = canSelect(card)
+              ? ""
+              : "owncards-card--disabled";
             const imgSrc = CARDS_MAP[name];
 
             return (
@@ -278,6 +282,15 @@ export default function OwnCards({
                       >
                         Invalid play
                       </button>
+                    ) : // Special-case: exactly one detective card → start "add to set" flow
+                    isDetective && k === 1 ? (
+                      <AddDetectiveButton
+                        selectedCards={selectedArray}
+                        selectedCardsMeta={selectedCards}
+                        players={players}
+                        label={playLabel /* usually "Add to any set" */}
+                        onPlaySuccess={() => setSelectedIds(new Set())}
+                      />
                     ) : (
                       <PlayCardsButton
                         selectedCards={selectedArray}
@@ -303,16 +316,21 @@ export default function OwnCards({
                   )}
 
                   {/* drawing / waiting => show colored but disabled */}
-                  {(turnStatusNorm === "drawing" || turnStatusNorm === "waiting") && (
+                  {(turnStatusNorm === "drawing" ||
+                    turnStatusNorm === "waiting") && (
                     <button
                       type="button"
                       className="owncards-action owncards-action--disabled"
                       disabled
                       aria-disabled="true"
                       data-testid="OwnCardsDisabledAction"
-                      title={turnStatusNorm === "drawing" ? "Drawing" : "Waiting"}
+                      title={
+                        turnStatusNorm === "drawing" ? "Drawing" : "Waiting"
+                      }
                     >
-                      {turnStatusNorm === "drawing" ? "Drawing ..." : "Waiting ..."}
+                      {turnStatusNorm === "drawing"
+                        ? "Drawing ..."
+                        : "Waiting ..."}
                     </button>
                   )}
                 </>

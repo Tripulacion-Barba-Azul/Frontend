@@ -58,7 +58,9 @@ vi.mock("./NoActionButton/NoActionButton", () => ({
 }));
 
 vi.mock("./PlayNsfButton/PlayNsfButton.jsx", () => ({
-  default: vi.fn(() => <button data-testid="PlayNsfButton">Not so fast</button>),
+  default: vi.fn(() => (
+    <button data-testid="PlayNsfButton">Not so fast</button>
+  )),
 }));
 
 /* Mock DiscardButton: reflect flags + labelWhenZero UX */
@@ -102,7 +104,7 @@ function renderOwnCards(uiProps = {}, { withRouter = false } = {}) {
   return render(
     <MemoryRouter initialEntries={["/play/42?playerId=7"]}>
       <Routes>
-        {/* Route path must provide :gameId for PlayCardsButton */}
+        {/* Route path must provide :gameId for PlayCardsButton/AddDetectiveButton */}
         <Route path="/play/:gameId" element={<OwnCards {...uiProps} />} />
       </Routes>
     </MemoryRouter>
@@ -219,7 +221,6 @@ describe("OwnCards.jsx — exhaustive behaviors", () => {
       expect(screen.getByTestId("OwnCardsInvalidPlay")).toBeInTheDocument()
     );
     // clear and try instant
-    // (click devious again to unselect)
     pointerClick(d);
     pointerClick(i);
     await waitFor(() =>
@@ -230,7 +231,7 @@ describe("OwnCards.jsx — exhaustive behaviors", () => {
   it("in 'playing': mixed types (event + detective) -> Invalid play", async () => {
     renderOwnCards(
       { cards: [CARDS.eventA, CARDS.satter], turnStatus: "playing" },
-      { withRouter: true } // needs Router because first click may mount PlayCardsButton
+      { withRouter: true }
     );
     const e = screen.getByAltText("Card Event A");
     const d = screen.getByAltText("Card Mr Satterthwaite");
@@ -241,7 +242,7 @@ describe("OwnCards.jsx — exhaustive behaviors", () => {
     );
   });
 
-  it("in 'playing': one detective -> 'Add detective to any existing set'", async () => {
+  it("in 'playing': one detective -> 'Add to any set' (AddDetectiveButton)", async () => {
     renderOwnCards(
       { cards: [CARDS.satter], turnStatus: "playing" },
       { withRouter: true }
@@ -265,7 +266,6 @@ describe("OwnCards.jsx — exhaustive behaviors", () => {
       },
       { withRouter: true }
     );
-    // FIX: there are two images with the same alt, use getAllByAltText
     const [a, b] = screen.getAllByAltText("Card Mr Satterthwaite");
     pointerClick(a);
     pointerClick(b);
@@ -293,7 +293,6 @@ describe("OwnCards.jsx — exhaustive behaviors", () => {
   });
 
   it("detective set containing Ariadne Oliver -> error below button and NO fetch", async () => {
-    // Use real PlayCardsButton; click should set error text and not fetch
     const spy = vi.spyOn(global, "fetch");
     renderOwnCards(
       { cards: [CARDS.satter, CARDS.ariadne], turnStatus: "playing" },
@@ -343,7 +342,7 @@ describe("OwnCards.jsx — exhaustive behaviors", () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it('Poirot set with 2 cards -> error: "Hercule Poirot"s sets must have at least 3 cards', async () => {
+  it('Poirot set with 2 cards -> error: "Hercule Poirot"s set must have at least 3 cards', async () => {
     const spy = vi.spyOn(global, "fetch");
     renderOwnCards(
       { cards: [CARDS.poirot1, CARDS.poirot2], turnStatus: "playing" },
@@ -367,7 +366,7 @@ describe("OwnCards.jsx — exhaustive behaviors", () => {
     expect(spy).not.toHaveBeenCalled();
   });
 
-  it('Marple set with 2 cards -> error: "Miss Marple"\'s sets must have at least 3 cards', async () => {
+  it('Marple set with 2 cards -> error: "Miss Marple"\'s set must have at least 3 cards', async () => {
     const spy = vi.spyOn(global, "fetch");
     renderOwnCards(
       {
@@ -419,7 +418,7 @@ describe("OwnCards.jsx — exhaustive behaviors", () => {
     );
   });
 
-  it('single "Harley Quin" selection -> error below button (rule from PlayCardsButton)', async () => {
+  it('single "Harley Quin" selection -> AddDetectiveButton shows error on click and NO fetch', async () => {
     const spy = vi.spyOn(global, "fetch");
     renderOwnCards(
       { cards: [CARDS.harley1], turnStatus: "playing" },
@@ -428,10 +427,10 @@ describe("OwnCards.jsx — exhaustive behaviors", () => {
     const h = screen.getByAltText("Card Harley Quin");
     pointerClick(h);
 
-    const play = await screen.findByRole("button", {
+    const add = await screen.findByRole("button", {
       name: /Add to any set/i,
     });
-    fireEvent.click(play);
+    fireEvent.click(add);
 
     await waitFor(() =>
       expect(
@@ -472,7 +471,7 @@ describe("OwnCards.jsx — exhaustive behaviors", () => {
     expect(images[1]).toHaveAttribute("alt", "Card Event B");
     expect(images[2]).toHaveAttribute("alt", "Card Mr Satterthwaite");
 
-    // Small move => select (this would mount PlayCardsButton)
+    // Small move => select
     pointerClick(images[0], { dx: 2, dy: 2 });
     await waitFor(() =>
       expect(images[0]).toHaveClass("owncards-card--selected")
@@ -489,7 +488,7 @@ describe("OwnCards.jsx — exhaustive behaviors", () => {
     expect(images[1]).not.toHaveClass("owncards-card--selected");
   });
 
-  /** ---------------- socialDisgrace behavior unchanged ---------------- */
+  /** ---------------- socialDisgrace behavior ---------------- */
   it("does not force discard in 'waiting' even if socialDisgrace=true; cards disabled", async () => {
     const cards = [CARDS.eventA, CARDS.eventB];
     renderOwnCards({ cards, turnStatus: "waiting", socialDisgrace: true });
@@ -534,87 +533,84 @@ describe("OwnCards.jsx — exhaustive behaviors", () => {
     discard = screen.getByTestId("discard-button");
     expect(discard).toHaveAttribute("data-exact", "true");
   });
-  
-    /* ----------------------------- actionStatus & NSF behavior ----------------------------- */
 
-    it("renders NSF button when actionStatus='unblocked' and no cards selected", async () => {
-      renderOwnCards({
-        cards: [CARDS.eventA],
-        turnStatus: "playing",
-        actionStatus: "unblocked",
-      });
-  
-      expect(screen.getByTestId("PlayNsfButton")).toBeInTheDocument();
-      const container = document.querySelector(".owncards-actions");
-      expect(container).toHaveAttribute("data-variant", "blue");
-    });
-  
-    it("renders NSF button when one instant card selected (actionStatus='unblocked')", async () => {
-      renderOwnCards({
-        cards: [CARDS.instant],
-        turnStatus: "playing",
-        actionStatus: "unblocked",
-      });
-  
-      const img = screen.getByAltText("Card Quick Counter");
-      pointerClick(img);
-      await waitFor(() =>
-        expect(screen.getByTestId("PlayNsfButton")).toBeInTheDocument()
-      );
-    });
-  
-    it("cannot select non-instant cards when actionStatus='unblocked'", async () => {
-      renderOwnCards({
-        cards: [CARDS.eventA, CARDS.satter],
-        turnStatus: "playing",
-        actionStatus: "unblocked",
-      });
-  
-      const e = screen.getByAltText("Card Event A");
-      pointerClick(e);
-      expect(e).toHaveClass("owncards-card--disabled");
-      expect(e).not.toHaveClass("owncards-card--selected");
-  
-      // NSF should still be visible
-      expect(screen.getByTestId("PlayNsfButton")).toBeInTheDocument();
-    });
-  
-    it("does not render NSF button when actionStatus='blocked'", async () => {
-      renderOwnCards({
-        cards: [CARDS.instant],
-        turnStatus: "playing",
-        actionStatus: "blocked",
-      });
-  
-      const img = screen.getByAltText("Card Quick Counter");
-      pointerClick(img);
-      await waitFor(() =>
-        expect(screen.queryByTestId("PlayNsfButton")).not.toBeInTheDocument()
-      );
-    });
-  
-    it("resets selected cards when actionStatus changes", async () => {
-      const { rerender } = renderOwnCards({
-        cards: [CARDS.instant, CARDS.eventA],
-        turnStatus: "playing",
-        actionStatus: "blocked",
-      });
-  
-      const img = screen.getByAltText("Card Quick Counter");
-      pointerClick(img);
-      await waitFor(() => expect(img).toHaveClass("owncards-card--selected"));
-  
-      rerender(
-        <OwnCards
-          cards={[CARDS.instant, CARDS.eventA]}
-          turnStatus="playing"
-          actionStatus="unblocked"
-        />
-      );
-  
-      await waitFor(() =>
-        expect(img).not.toHaveClass("owncards-card--selected")
-      );
+  /* ----------------------------- actionStatus & NSF behavior ----------------------------- */
+
+  it("renders NSF button when actionStatus='unblocked' and no cards selected", () => {
+    renderOwnCards({
+      cards: [CARDS.eventA],
+      turnStatus: "playing",
+      actionStatus: "unblocked",
     });
 
+    expect(screen.getByTestId("PlayNsfButton")).toBeInTheDocument();
+    const container = document.querySelector(".owncards-actions");
+    expect(container).toHaveAttribute("data-variant", "blue");
+  });
+
+  it("renders NSF button when one instant card selected (actionStatus='unblocked')", async () => {
+    renderOwnCards({
+      cards: [CARDS.instant],
+      turnStatus: "playing",
+      actionStatus: "unblocked",
+    });
+
+    const img = screen.getByAltText("Card Quick Counter");
+    pointerClick(img);
+    await waitFor(() =>
+      expect(screen.getByTestId("PlayNsfButton")).toBeInTheDocument()
+    );
+  });
+
+  it("cannot select non-instant cards when actionStatus='unblocked'", () => {
+    renderOwnCards({
+      cards: [CARDS.eventA, CARDS.satter],
+      turnStatus: "playing",
+      actionStatus: "unblocked",
+    });
+
+    const e = screen.getByAltText("Card Event A");
+    pointerClick(e);
+    expect(e).toHaveClass("owncards-card--disabled");
+    expect(e).not.toHaveClass("owncards-card--selected");
+
+    // NSF should still be visible
+    expect(screen.getByTestId("PlayNsfButton")).toBeInTheDocument();
+  });
+
+  it("does not render NSF button when actionStatus='blocked'", async () => {
+    renderOwnCards({
+      cards: [CARDS.instant],
+      turnStatus: "playing",
+      actionStatus: "blocked",
+    });
+
+    const img = screen.getByAltText("Card Quick Counter");
+    pointerClick(img);
+    await waitFor(() =>
+      expect(screen.queryByTestId("PlayNsfButton")).not.toBeInTheDocument()
+    );
+  });
+
+  it("resets selected cards when actionStatus changes", async () => {
+    const { rerender } = renderOwnCards({
+      cards: [CARDS.instant, CARDS.eventA],
+      turnStatus: "playing",
+      actionStatus: "blocked",
+    });
+
+    const img = screen.getByAltText("Card Quick Counter");
+    pointerClick(img);
+    await waitFor(() => expect(img).toHaveClass("owncards-card--selected"));
+
+    rerender(
+      <OwnCards
+        cards={[CARDS.instant, CARDS.eventA]}
+        turnStatus="playing"
+        actionStatus="unblocked"
+      />
+    );
+
+    await waitFor(() => expect(img).not.toHaveClass("owncards-card--selected"));
+  });
 });

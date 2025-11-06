@@ -112,6 +112,7 @@ export default function SyncOrchestrator({
           turnStatus={turnStatus}
           socialDisgrace={socialDisgrace}
           actionStatus={publicData.actionStatus}
+          players={publicData.players}
         />
 
         {/* Quick views */}
