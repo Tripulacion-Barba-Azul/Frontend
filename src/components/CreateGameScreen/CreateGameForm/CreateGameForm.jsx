@@ -67,6 +67,8 @@ export default function CreateGameForm() {
     GameName: "defaultGame",
     MinPlayers: "2",
     MaxPlayers: "6",
+    IsPrivate: false,
+    Password: "",
     PlayerName: "defaultName",
     PlayerBirthday: "1990-01-01",
     Avatar: "1",
@@ -141,6 +143,11 @@ export default function CreateGameForm() {
       }
     }
 
+    // Password: required only if game is private
+    if (values.IsPrivate && !values.Password) {
+      errors.Password = "Password is required for private games";
+    }
+
     // Cross-field consistency: min ≤ max
     if (!errors.MinPlayers && !errors.MaxPlayers) {
       const minPlayers = Number(values.MinPlayers);
@@ -182,6 +189,7 @@ export default function CreateGameForm() {
         gameName: settings.GameName,
         minPlayers: Number(settings.MinPlayers),
         maxPlayers: Number(settings.MaxPlayers),
+        password: settings.IsPrivate ? settings.Password : null,
       },
     };
 
@@ -295,6 +303,47 @@ export default function CreateGameForm() {
                     </div>
                   </div>
                 </div>
+
+                {/* Private game checkbox */}
+                <div className="form-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={settings.IsPrivate}
+                      onChange={(e) =>
+                        setSettings({ 
+                          ...settings, 
+                          IsPrivate: e.target.checked,
+                          Password: e.target.checked ? settings.Password : ""
+                        })
+                      }
+                      className="checkbox-input"
+                    />
+                    Private
+                  </label>
+                </div>
+
+                {/* Password field - only shown if private */}
+                {settings.IsPrivate && (
+                  <div className="form-group">
+                    <label htmlFor="gamePassword" className="form-label">
+                      Password
+                    </label>
+                    <input
+                      id="gamePassword"
+                      type="password"
+                      value={settings.Password}
+                      onChange={(e) =>
+                        setSettings({ ...settings, Password: e.target.value })
+                      }
+                      className="form-input"
+                      placeholder="Enter the game password"
+                    />
+                    <div className="error-container">
+                      <p className="error-message">{formErrors.Password}</p>
+                    </div>
+                  </div>
+                )}
               </fieldset>
             </div>
 
