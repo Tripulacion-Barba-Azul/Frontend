@@ -6,35 +6,24 @@ import React, {
   useState,
 } from "react";
 import "./Chat.css";
+import { AVATAR_MAP } from "../../../utils/generalMaps.js";
 
 /**
- * Chat component
- * - Renders badge + window as siblings (no outer wrapper).
- * - Opens/closes window by clicking the badge.
- * - Uses VW units in CSS.
- *
- * Props (ONLY):
- * - websocket: WebSocket instance (required)
- * - currentPlayerId: number (required)
- * - player: either
- *     a) Array<{ id:number, name:string }>
- *     b) Record<number,string>
- *     c) (id:number) => string
- * - theme: "gold" | "blue" (default "gold")
+ * Final "gold" chat component with close animation and capped unread badge.
+ * Props:
+ * - websocket: WebSocket ({event:"chatMessage", payload:{playerId,msg}})
+ * - currentPlayerId: number
+ * - players: Array<{id,name,avatar?}> | Record<number,string|{name,avatar?}>
  */
-export default function Chat({
-  websocket,
-  currentPlayerId,
-  player,
-  theme = "gold",
-}) {
+export default function Chat({ websocket, currentPlayerId, players }) {
   const [open, setOpen] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
   const [unread, setUnread] = useState(0);
-  const [messages, setMessages] = useState([]); // {playerId:number,msg:string,ts:number}[]
+  const [messages, setMessages] = useState([]); // {playerId,msg,ts}
   const [input, setInput] = useState("");
   const listRef = useRef(null);
 
-  // Ensure WebSocket.OPEN is defined across environments
+  // Ensure WebSocket.OPEN is defined (defensive for mocks)
   useEffect(() => {
     if (typeof window !== "undefined") {
       if (!("WebSocket" in window)) window.WebSocket = { OPEN: 1 };
@@ -43,7 +32,6 @@ export default function Chat({
     }
   }, []);
 
-  // Connection status
   const isConnected = useMemo(() => {
     try {
       return (
@@ -54,35 +42,68 @@ export default function Chat({
     }
   }, [websocket]);
 
-  // Resolve display name for a given id using the flexible `player` prop
+  // Resolve name
   const nameOf = useCallback(
     (id) => {
-      if (typeof player === "function") return player(id) ?? `Player ${id}`;
-      if (Array.isArray(player))
-        return player.find((p) => p?.id === id)?.name ?? `Player ${id}`;
-      if (player && typeof player === "object")
-        return player[id] ?? `Player ${id}`;
+      if (Array.isArray(players)) {
+        const p = players.find((p) => p?.id === id);
+        if (p?.name) return p.name;
+      } else if (players && typeof players === "object") {
+        const v = players[id];
+        if (typeof v === "string") return v;
+        if (v && typeof v === "object" && v.name) return v.name;
+      }
       return `Player ${id}`;
     },
-    [player]
+    [players]
   );
 
-  // Toggle window; reset unread when opening
-  const toggleOpen = useCallback(() => {
-    setOpen((v) => {
-      const n = !v;
-      if (n) setUnread(0);
-      return n;
-    });
+  // Resolve avatar src
+  const avatarSrcOf = useCallback(
+    (id) => {
+      if (Array.isArray(players)) {
+        const p = players.find((p) => p?.id === id);
+        if (p?.avatar && AVATAR_MAP[p.avatar]) return AVATAR_MAP[p.avatar];
+      } else if (players && typeof players === "object") {
+        const v = players[id];
+        if (v && typeof v === "object" && v.avatar && AVATAR_MAP[v.avatar])
+          return AVATAR_MAP[v.avatar];
+      }
+      return AVATAR_MAP[id];
+    },
+    [players]
+  );
+
+  // Open/close with exit animation
+  const CLOSE_MS = 220;
+
+  const openChat = useCallback(() => {
+    setUnread(0);
+    setIsExiting(false);
+    setOpen(true);
   }, []);
 
-  // Auto-scroll messages
+  const closeChat = useCallback(() => {
+    setIsExiting(true);
+    const t = setTimeout(() => {
+      setOpen(false);
+      setIsExiting(false);
+      clearTimeout(t);
+    }, CLOSE_MS);
+  }, []);
+
+  const onBadgeClick = useCallback(() => {
+    if (!open) openChat();
+    else if (!isExiting) closeChat();
+  }, [open, isExiting, openChat, closeChat]);
+
+  // Auto-scroll
   useEffect(() => {
     const el = listRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages, open]);
 
-  // Handle incoming WS messages
+  // Listen websocket
   useEffect(() => {
     if (!websocket) return;
     const onMessage = (evt) => {
@@ -90,27 +111,23 @@ export default function Chat({
       try {
         if (typeof data === "string") data = JSON.parse(data);
       } catch {
-        return; // ignore non-JSON frames
+        return;
       }
       if (!data || data.event !== "chatMessage" || !data.payload) return;
       const { playerId, msg } = data.payload;
       if (typeof msg !== "string") return;
-
       setMessages((prev) => [...prev, { playerId, msg, ts: Date.now() }]);
       if (!open && playerId !== currentPlayerId) setUnread((u) => u + 1);
     };
-
     websocket.addEventListener("message", onMessage);
     return () => {
       try {
         websocket.removeEventListener("message", onMessage);
-      } catch {
-        /* noop */
-      }
+      } catch {}
     };
   }, [websocket, open, currentPlayerId]);
 
-  // Send a message to server
+  // Send message
   const sendMessage = useCallback(() => {
     const trimmed = input.trim();
     if (!trimmed || !isConnected) return;
@@ -121,7 +138,7 @@ export default function Chat({
           payload: { playerId: currentPlayerId, msg: trimmed },
         })
       );
-      setInput(""); // will re-appear through broadcast to all players
+      setInput("");
     } catch (err) {
       console.warn("Failed to send chat message:", err);
     }
@@ -134,27 +151,47 @@ export default function Chat({
     }
   };
 
+  // Close on Escape (uses same close animation)
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e) => {
+      const isEsc = e.key === "Escape" || e.key === "Esc" || e.keyCode === 27;
+      if (isEsc) {
+        e.preventDefault();
+        if (!isExiting) closeChat();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, isExiting, closeChat]);
+
+  // NEW: cap unread display at 99+
+  const displayUnread = unread > 99 ? "99+" : String(unread);
+
   return (
     <>
-      {/* Badge (position this with your own global CSS) */}
+      {/* Badge */}
       <button
         type="button"
-        className={`chatBadge chatTheme--${theme}`}
+        className="chatBadge"
         aria-label={open ? "Close chat" : "Open chat"}
-        onClick={toggleOpen}
+        onClick={onBadgeClick}
       >
         <ChatIcon />
         {unread > 0 && (
-          <span className="chatBadge__count" aria-label={`${unread} unread`}>
-            {unread}
+          <span
+            className="chatBadge__count"
+            aria-label={`${displayUnread} unread`}
+          >
+            {displayUnread}
           </span>
         )}
       </button>
 
-      {/* Window (position this with your own global CSS) */}
+      {/* Window */}
       {open && (
         <div
-          className={`chatWindow chatTheme--${theme}`}
+          className={`chatWindow${isExiting ? " is-exiting" : ""}`}
           role="dialog"
           aria-label="Game chat"
         >
@@ -164,9 +201,9 @@ export default function Chat({
               type="button"
               className="chatWindow__close"
               aria-label="Close chat"
-              onClick={toggleOpen}
+              onClick={closeChat}
             >
-              ×
+              <span className="chatCloseIcon" aria-hidden="true" />
             </button>
           </div>
 
@@ -177,6 +214,7 @@ export default function Chat({
           >
             {messages.map((m, i) => {
               const mine = m.playerId === currentPlayerId;
+              const avatarSrc = !mine ? avatarSrcOf(m.playerId) : undefined;
               return (
                 <div
                   key={`${m.ts}-${i}`}
@@ -185,7 +223,17 @@ export default function Chat({
                   <div className="chatMessage__name">
                     {mine ? "You" : nameOf(m.playerId)}
                   </div>
-                  <div className="chatMessage__bubble">{m.msg}</div>
+                  <div className="chatMessage__row">
+                    {!mine && avatarSrc && (
+                      <img
+                        className="chatAvatar"
+                        src={avatarSrc}
+                        alt={nameOf(m.playerId)}
+                        draggable="false"
+                      />
+                    )}
+                    <div className="chatMessage__bubble">{m.msg}</div>
+                  </div>
                 </div>
               );
             })}
@@ -217,7 +265,7 @@ export default function Chat({
   );
 }
 
-/** Minimal icon for the badge */
+/** Minimal badge icon (vw units) */
 function ChatIcon() {
   return (
     <svg width="1.6vw" height="1.6vw" viewBox="0 0 24 24" aria-hidden="true">

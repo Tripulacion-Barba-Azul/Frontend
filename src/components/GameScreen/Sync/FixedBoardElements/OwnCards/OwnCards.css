@@ -8,7 +8,7 @@
 
 .owncards-row {
   position: absolute;
-  left: 48%;
+  left: 50%;
   bottom: 0.26vw; /* 0.5% of 1920px -> 10px */
   transform: translateX(-50%);
   display: flex;
@@ -100,7 +100,7 @@
 /* ---- Buttons ---- */
 .owncards-actions {
   position: absolute;
-  right: 13.25vw;
+  right: 10.25vw;
   bottom: 0.8vw; /* Adjust this number to visually match the desired spacing */
   display: flex;
   pointer-events: auto;

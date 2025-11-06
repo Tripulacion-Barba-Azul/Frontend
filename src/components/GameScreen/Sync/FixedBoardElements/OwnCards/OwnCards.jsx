@@ -173,16 +173,22 @@ export default function OwnCards({
         className="owncards-row"
       >
         <AnimatePresence initial={false}>
-        {orderedCards.map((card) => {
+          {orderedCards.map((card) => {
             const { id, name } = card;
             const isSelected = selectedIds.has(id);
-            const disabledClass = canSelect(card) ? "" : "owncards-card--disabled";
+            const disabledClass = canSelect(card)
+              ? ""
+              : "owncards-card--disabled";
             const imgSrc = CARDS_MAP[name];
 
             return (
               <Reorder.Item
                 key={id}
                 value={id}
+                drag="x"
+                dragConstraints={{ left: -75, right: 75 }}
+                dragElastic={0} // prevent overscroll past the bounds
+                dragMomentum={false} // stop drifting after release
                 whileDrag={{
                   scale: 1.05,
                   zIndex: 20,
@@ -214,7 +220,7 @@ export default function OwnCards({
                       const dx = Math.abs(e.clientX - dragStart.current.x);
                       const dy = Math.abs(e.clientY - dragStart.current.y);
                       const moved = Math.sqrt(dx * dx + dy * dy);
-                      if (moved < 8) toggleSelect(card); // <-- pasar el card real
+                      if (moved < 8) toggleSelect(card);
                       dragStart.current = null;
                     }}
                   />
@@ -303,16 +309,21 @@ export default function OwnCards({
                   )}
 
                   {/* drawing / waiting => show colored but disabled */}
-                  {(turnStatusNorm === "drawing" || turnStatusNorm === "waiting") && (
+                  {(turnStatusNorm === "drawing" ||
+                    turnStatusNorm === "waiting") && (
                     <button
                       type="button"
                       className="owncards-action owncards-action--disabled"
                       disabled
                       aria-disabled="true"
                       data-testid="OwnCardsDisabledAction"
-                      title={turnStatusNorm === "drawing" ? "Drawing" : "Waiting"}
+                      title={
+                        turnStatusNorm === "drawing" ? "Drawing" : "Waiting"
+                      }
                     >
-                      {turnStatusNorm === "drawing" ? "Drawing ..." : "Waiting ..."}
+                      {turnStatusNorm === "drawing"
+                        ? "Drawing ..."
+                        : "Waiting ..."}
                     </button>
                   )}
                 </>
