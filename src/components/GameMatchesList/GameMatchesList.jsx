@@ -112,8 +112,12 @@ const GameMatchesList = () => {
 
   // Navigate to the join screen for the selected match
   const handleJoinMatch = (matchId) => {
-    console.log(`Trying to join the game ${matchId}`);
-    navigate(`/join/${matchId}`);
+    // Find the match to determine if it's private or public
+    const match = matches.find(m => m.id === matchId);
+        
+    const routeType = match.private ? 'private' : 'public';
+    console.log(`Trying to join the ${routeType} game ${matchId}`);
+    navigate(`/join/${matchId}/${routeType}`);
   };
 
   // Full-page loading state

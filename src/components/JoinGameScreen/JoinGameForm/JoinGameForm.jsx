@@ -31,12 +31,14 @@
  * @property {string} PlayerName - Display name shown to other players (<= 20 chars).
  * @property {string} PlayerBirthday - ISO date string (YYYY-MM-DD). Must not be in the future.
  * @property {string} Avatar - Avatar id as string (mapped to an image by AVATAR_MAP).
+ * @property {string} [Password] - Password for private games (optional).
  */
 
 /**
  * @typedef {Object} JoinFormErrors
  * @property {string} [PlayerName] - Validation message for PlayerName (optional).
  * @property {string} [PlayerBirthday] - Validation message for PlayerBirthday (optional).
+ * @property {string} [Password] - Validation message for Password (optional).
  */
 
 import "./JoinGameForm.css";
@@ -45,17 +47,18 @@ import { useParams, useNavigate } from "react-router-dom";
 import AvatarPicker from "../AvatarPicker/AvatarPicker";
 import { AVATAR_MAP } from "../../../utils/generalMaps";
 
-export default function JoinGameForm() {
+export default function JoinGameForm(props) {
   /**
    * Local form state.
    * Note: Avatar is stored as string for easy binding with inputs/pickers;
    * convert to number only when sending to the API.
-   * @type {[JoinFormState, (s: JoinFormState) => void]}
+   * @type {[JoinFormState, (s: JoinFormStsate) => void]}
    */
   const [settings, setSettings] = useState({
     PlayerName: "defaultName",
     PlayerBirthday: "1990-01-01",
     Avatar: "1",
+    Password: "",
   });
 
   /** @type {[JoinFormErrors, (e: JoinFormErrors) => void]} */
@@ -63,7 +66,7 @@ export default function JoinGameForm() {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
 
   // Submission lock to prevent duplicate requests (double click / slow network).
-  const [submitting, setSubmitting] = useState(false);
+  const [ submitting, setSubmitting] = useState(false);
 
   // Router utilities
   const { gameId } = useParams(); // Read ":gameId" from the URL.
@@ -96,6 +99,11 @@ export default function JoinGameForm() {
       }
     }
 
+    // Password: required only for private games.
+    if (props.private && !values.Password) {
+      errors.Password = "Password is required for private games!";
+    }
+
     return errors;
   };
 
@@ -121,6 +129,7 @@ export default function JoinGameForm() {
       playerName: settings.PlayerName,
       birthDate: String(settings.PlayerBirthday),
       avatar: settings.Avatar ? Number(settings.Avatar) : undefined,
+      password: props.private  ? settings.Password : null,
     };
 
     try {
@@ -164,16 +173,18 @@ export default function JoinGameForm() {
   };
 
   return (
-    <div className="join-game-container">
+    <div className={`join-game-container ${props.private ? 'private-game' : ''}`}>
       <div className="join-game-wrapper">
         {/* Header area */}
         <div className="join-game-header">
-          <h1 className="join-game-title">Join Game</h1>
+          <h1 className="join-game-title">
+            {props.private ? "Join Private Game" : "Join Game"}
+          </h1>
         </div>
 
         {/* Form: keep groups aligned to CSS Modules for easy theming */}
         <form onSubmit={handleSubmit} className="join-game-form">
-          <fieldset className="form-section">
+          <fieldset className={`form-section ${props.private ? 'form-section-private' : ''}`}>
             {/* Player name */}
             <div className="form-group">
               <label htmlFor="yourName" className="form-label">
@@ -211,6 +222,27 @@ export default function JoinGameForm() {
               />
               <p className="error-message">{formErrors.PlayerBirthday}</p>
             </div>
+
+            {/* Password field - only for private games */}
+            {props.private && (
+              <div className="form-group">
+                <label htmlFor="gamePassword" className="form-label">
+                  Game Password
+                </label>
+                <input
+                  id="gamePassword"
+                  type="password"
+                  value={settings.Password}
+                  onChange={(e) =>
+                    setSettings({ ...settings, Password: e.target.value })
+                  }
+                  className="form-input"
+                  disabled={submitting}
+                  placeholder="Enter the game password"
+                />
+                <p className="error-message">{formErrors.Password}</p>
+              </div>
+            )}
 
             {/* Avatar picker (modal) */}
             <div className="form-group">

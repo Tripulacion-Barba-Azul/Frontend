@@ -13,6 +13,16 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import * as matchers from "@testing-library/jest-dom/matchers";
 import GameMatchesList from "./GameMatchesList";
 
+// Mock useNavigate
+const mockNavigate = vi.fn();
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 // Setup testing environment
 beforeAll(() => {
   // Extend expect with jest-dom matchers
@@ -73,6 +83,8 @@ describe("GameMatchesList", () => {
   beforeEach(() => {
     // Reset fetch mock before each test
     mockFetch.mockClear();
+    // Reset navigate mock before each test
+    mockNavigate.mockClear();
   });
 
   afterEach(() => {
@@ -370,9 +382,43 @@ describe("GameMatchesList", () => {
       const joinButtons = screen.getAllByText("Join Game");
       fireEvent.click(joinButtons[0]); // Click first available join button
 
-      expect(consoleSpy).toHaveBeenCalledWith("Trying to join the game 1");
+      // The first game in mockBackendData is public (private: false) with gameId: 1
+      expect(consoleSpy).toHaveBeenCalledWith("Trying to join the public game 1");
 
       consoleSpy.mockRestore();
+    });
+
+    it("calls handleJoinMatch with private game type for private games", () => {
+      // Mock console.log to check if it's called
+      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+      // Find the join button for the private game (Combat Arena)
+      const privateGameCard = screen.getByText("🔒Combat Arena").closest(".match-card");
+      const joinButton = privateGameCard.querySelector("button");
+      fireEvent.click(joinButton);
+
+      // The Combat Arena game is private (private: true) with gameId: 2
+      expect(consoleSpy).toHaveBeenCalledWith("Trying to join the private game 2");
+
+      consoleSpy.mockRestore();
+    });
+
+    it("navigates to correct route for public games", () => {
+      const joinButtons = screen.getAllByText("Join Game");
+      fireEvent.click(joinButtons[0]); // Click first available join button (Epic Battle - public)
+
+      // Should navigate to public route with gameId 1
+      expect(mockNavigate).toHaveBeenCalledWith("/join/1/public");
+    });
+
+    it("navigates to correct route for private games", () => {
+      // Find the join button for the private game (Combat Arena)
+      const privateGameCard = screen.getByText("🔒Combat Arena").closest(".match-card");
+      const joinButton = privateGameCard.querySelector("button");
+      fireEvent.click(joinButton);
+
+      // Should navigate to private route with gameId 2
+      expect(mockNavigate).toHaveBeenCalledWith("/join/2/private");
     });
 
     it("disables join button for full matches", () => {

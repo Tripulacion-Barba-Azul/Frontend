@@ -191,3 +191,46 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+/* Specific styles for forms with password field (private games) */
+.form-section-private {
+  min-height: 30vw;
+  max-height: 38vw; /* Increased to accommodate password field */
+  overflow-y: auto; /* Allow scrolling if needed */
+}
+
+.form-section-private .form-group {
+  margin-bottom: 1vw; /* Reduced from 1.25vw to save space */
+}
+
+/* Last form group (avatar) in private forms should have less space */
+.form-section-private .form-group:last-of-type {
+  margin-bottom: 0.5vw;
+}
+
+.form-section-private .avatar-row {
+  gap: 1vw; /* Reduced from 1.25vw */
+  margin-top: 0.5vw; /* Reduced from 0.833vw */
+  height: 6vw; /* Reduced from 7vw */
+}
+
+.form-section-private .choose-avatar-button {
+  padding: 0.5vw 1vw; /* Reduced padding */
+  font-size: 0.8vw; /* Slightly smaller font */
+  width: 5.5vw; /* Slightly smaller */
+  height: 3.8vw; /* Slightly smaller */
+}
+
+.form-section-private .avatar-preview {
+  width: 6.5vw; /* Reduced from 7.813vw */
+  height: 6.5vw; /* Reduced from 7.813vw */
+}
+
+/* Adjustments for private game container */
+.private-game .join-game-header {
+  margin-bottom: 1.5vw; /* Reduced from 2.5vw to save space */
+}
+
+.private-game .join-game-submit-button {
+  margin: 1vw auto 0; /* Reduced from 1.667vw to save space */
+}

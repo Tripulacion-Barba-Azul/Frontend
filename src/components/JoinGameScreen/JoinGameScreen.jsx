@@ -2,13 +2,13 @@
 
 /**
  * @description Screen wrapper for the "join game" flow. Renders background and <JoinGameForm />.
- * Props: none (this component does not accept props).
+ * @property {bool} private - Whether the game to join is private (requires password) or public.
  */
 
 import "./JoinGameScreen.css";
 import JoinGameForm from "./JoinGameForm/JoinGameForm";
 
-export default function JoinGameScreen() {
+export default function JoinGameScreen(props) {
   return (
     <div
       className="JoinGameScreen"
@@ -18,7 +18,7 @@ export default function JoinGameScreen() {
       }}
     >
       {/* Delegates the actual join logic/UI to the form component */}
-      <JoinGameForm />
+      <JoinGameForm private={props.private}/>
     </div>
   );
 }
