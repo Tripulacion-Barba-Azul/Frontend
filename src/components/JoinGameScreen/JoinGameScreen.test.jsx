@@ -224,7 +224,7 @@ describe("JoinGameScreen", () => {
     const mockFetch = vi.fn(() =>
       Promise.resolve({
         ok: false,
-        status: 400,
+        status: 500,
         statusText: "Internal Server Error",
       })
     );
@@ -248,5 +248,148 @@ describe("JoinGameScreen", () => {
     await user.click(screen.getByRole("button", { name: /join game/i }));
 
     expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("handles 401 error (incorrect password) for private games", async () => {
+    const user = userEvent.setup();
+    const mockFetch = vi.fn(() =>
+      Promise.resolve({
+        ok: false,
+        status: 401,
+        statusText: "Unauthorized",
+      })
+    );
+    global.fetch = mockFetch;
+
+    render(
+      <MemoryRouter initialEntries={["/join/5"]}>
+        <Routes>
+          <Route path="/join/:gameId" element={<JoinGameScreen private={true} />} />
+          <Route path="/game/:gameId" element={<div>Game Screen</div>} />
+          <Route path="/join" element={<div>Join list</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    // Fill out the form with correct data but wrong password
+    await user.clear(screen.getByLabelText(/your name/i));
+    await user.type(screen.getByLabelText(/your name/i), "TestUser");
+    await user.clear(screen.getByLabelText(/your birthday/i));
+    await user.type(screen.getByLabelText(/your birthday/i), "1990-01-01");
+    
+    const passwordField = screen.getByLabelText(/game password/i);
+    await user.type(passwordField, "wrongpassword");
+
+    await user.click(screen.getByRole("button", { name: /join game/i }));
+
+    // Should call the API
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    
+    // Should show the incorrect password error message
+    expect(screen.getByText(/incorrect password\. please try again\./i)).toBeInTheDocument();
+    
+    // Should NOT navigate away (still on the same form)
+    expect(screen.getByLabelText(/game password/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /join game/i })).toBeInTheDocument();
+  });
+
+  it("shows 401 error message only in password field for private games", async () => {
+    const user = userEvent.setup();
+    const mockFetch = vi.fn(() =>
+      Promise.resolve({
+        ok: false,
+        status: 401,
+        statusText: "Unauthorized",
+      })
+    );
+    global.fetch = mockFetch;
+
+    render(
+      <MemoryRouter initialEntries={["/join/3"]}>
+        <Routes>
+          <Route path="/join/:gameId" element={<JoinGameScreen private={true} />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    // Fill out form and submit
+    await user.clear(screen.getByLabelText(/your name/i));
+    await user.type(screen.getByLabelText(/your name/i), "TestUser");
+    await user.clear(screen.getByLabelText(/your birthday/i));
+    await user.type(screen.getByLabelText(/your birthday/i), "1990-01-01");
+    
+    const passwordField = screen.getByLabelText(/game password/i);
+    await user.type(passwordField, "wrongpassword");
+
+    await user.click(screen.getByRole("button", { name: /join game/i }));
+
+    // Check that error appears only for password, not other fields
+    expect(screen.getByText(/incorrect password\. please try again\./i)).toBeInTheDocument();
+    expect(screen.queryByText(/you must have a name/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/you must say your birthday/i)).not.toBeInTheDocument();
+  });
+
+  it("allows retry after 401 error", async () => {
+    const user = userEvent.setup();
+    
+    // First call returns 401, second call succeeds
+    const mockFetch = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        statusText: "Unauthorized",
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        json: () => Promise.resolve({ gameId: 3, actualPlayerId: "p1" }),
+      });
+    
+    global.fetch = mockFetch;
+
+    render(
+      <MemoryRouter initialEntries={["/join/3"]}>
+        <Routes>
+          <Route path="/join/:gameId" element={<JoinGameScreen private={true} />} />
+          <Route path="/game/:gameId" element={<div>Game Screen</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    // Fill out form with wrong password first
+    await user.clear(screen.getByLabelText(/your name/i));
+    await user.type(screen.getByLabelText(/your name/i), "TestUser");
+    await user.clear(screen.getByLabelText(/your birthday/i));
+    await user.type(screen.getByLabelText(/your birthday/i), "1990-01-01");
+    
+    const passwordField = screen.getByLabelText(/game password/i);
+    await user.type(passwordField, "wrongpassword");
+    await user.click(screen.getByRole("button", { name: /join game/i }));
+
+    // Should show error after first attempt
+    expect(screen.getByText(/incorrect password\. please try again\./i)).toBeInTheDocument();
+
+    // Clear password and enter correct one
+    await user.clear(passwordField);
+    await user.type(passwordField, "correctpassword");
+    await user.click(screen.getByRole("button", { name: /join game/i }));
+
+    // Should make two API calls
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+    
+    // Second call should have correct password
+    expect(mockFetch).toHaveBeenLastCalledWith(
+      "http://localhost:8000/games/3/join",
+      expect.objectContaining({
+        body: JSON.stringify({
+          playerName: "TestUser",
+          birthDate: "1990-01-01",
+          avatar: 1,
+          password: "correctpassword",
+        }),
+      })
+    );
   });
 });

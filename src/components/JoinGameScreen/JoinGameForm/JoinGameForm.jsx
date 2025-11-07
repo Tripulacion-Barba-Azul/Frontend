@@ -143,9 +143,20 @@ export default function JoinGameForm(props) {
         }
       );
 
-      // On any non-2xx, exit to the generic /join screen
+      // On any non-2xx, handle errors
       if (!response.ok) {
         setSubmitting(false);
+
+        // Handle 401 Unauthorized (incorrect password)
+        if (response.status === 401) {
+          setFormErrors((prevErrors) => ({
+            ...prevErrors,
+            Password: "Incorrect password. Please try again.",
+          }));
+          return;
+        }
+
+        // For other errors, navigate to the generic /join screen
         navigate(`/join`);
         return;
       }
