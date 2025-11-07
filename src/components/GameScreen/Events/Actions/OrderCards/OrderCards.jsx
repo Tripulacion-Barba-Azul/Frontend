@@ -3,18 +3,9 @@
 /**
  * @file OrderCards.jsx
  * @description Modal to reorder a small subset (1..5) of discard-pile cards.
- *
- * === Canonical shapes (from API DOCUMENT) ===
- * @typedef {{ id:number, name:string }} SimpleCard
- *
- * === Props ===
- * @typedef {Object} OrderCardsProps
- * @property {SimpleCard[]} [cards=[]] - Top N cards from the discard pile to reorder (1..5).
- * @property {(ids:number[])=>void} selectedCardsOrder - Callback fired on confirm with the new order of card ids.
- * @property {string} [text="Reorder the cards"] - Modal title/prompt.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Reorder } from "framer-motion";
 import "./OrderCards.css";
@@ -45,6 +36,9 @@ export default function OrderCards({
   // Number of columns for the grid (used by CSS via data-cols)
   const COLS = Math.max(1, Math.min(order.length || 1, 5));
 
+  // Panel ref used for drag constraints (limits drag to the gray window)
+  const panelRef = useRef(null);
+
   // Adapt framer-motion's array of ids back into the card array
   const handleReorder = (newOrderIds) => {
     setOrder(
@@ -64,7 +58,7 @@ export default function OrderCards({
       {createPortal(
         <div className="odp-modal" role="dialog" aria-modal="true">
           <div className="odp-overlay" />
-          <div className="odp-panel" data-cols={COLS}>
+          <div className="odp-panel" data-cols={COLS} ref={panelRef}>
             <div className="odp-header">
               <h3 className="odp-title">{text}</h3>
             </div>
@@ -74,7 +68,7 @@ export default function OrderCards({
                 <>
                   <Reorder.Group
                     as="div"
-                    axis="x"
+                    axis="x" // restrict reordering to the X axis
                     values={order.map((c) => c.id)}
                     onReorder={handleReorder}
                     className="odp-grid"
@@ -87,6 +81,10 @@ export default function OrderCards({
                         <Reorder.Item
                           key={card.id}
                           value={card.id}
+                          // Constrain dragging within the gray panel bounds
+                          dragConstraints={panelRef}
+                          dragElastic={0} // no overscroll beyond the bounds
+                          dragMomentum={false} // stop drifting after release
                           whileDrag={{
                             scale: 1.05,
                             zIndex: 20,

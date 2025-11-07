@@ -118,7 +118,7 @@ export default function SyncOrchestrator({
         {/* Quick views */}
         <div
           className="fixed z-50 pointer-events-auto"
-          style={{ right: "76.2vw", bottom: "9vw" }}
+          style={{ right: "77vw", bottom: "9vw" }}
         >
           <ViewMyCards cards={privateData.cards} />
         </div>

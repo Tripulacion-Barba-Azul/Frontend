@@ -7,7 +7,7 @@
 .bmp-btn {
   position: fixed;
   bottom: 0.8333vw; /* 16px -> 0.8333vw */
-  left: 95.57vw;    /* 1835px -> 95.57vw */
+  left: 91.5vw; /* 1835px -> 95.57vw */
   z-index: 50;
   cursor: pointer;
   user-select: none;
@@ -15,7 +15,7 @@
   border: none;
   background: none;
   border-radius: 9999px; /* fully rounded */
-  width: 3.125vw;  /* 60px -> 3.125vw */
+  width: 3.125vw; /* 60px -> 3.125vw */
   height: 3.125vw; /* 60px -> 3.125vw */
 }
 
@@ -28,7 +28,7 @@
 /* Icon image: no extra chrome, smooth hover grow + soft white glow */
 .bmp-icon {
   display: block;
-  width: 3.125vw;  /* 60px -> 3.125vw */
+  width: 3.125vw; /* 60px -> 3.125vw */
   height: 3.125vw; /* 60px -> 3.125vw */
   pointer-events: none;
   transition: transform 150ms ease-out, filter 150ms ease-out;
@@ -40,7 +40,9 @@
 .bmp-btn:hover .bmp-icon,
 .bmp-btn:focus-visible .bmp-icon {
   transform: scale(1.1);
-  filter: drop-shadow(0 0 0.5208vw rgba(255, 255, 255, 0.55)); /* 10px -> 0.5208vw */
+  filter: drop-shadow(
+    0 0 0.5208vw rgba(255, 255, 255, 0.55)
+  ); /* 10px -> 0.5208vw */
 }
 
 .bmp-btn:active .bmp-icon {
