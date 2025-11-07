@@ -28,7 +28,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { Users, User, Clock, Play, RefreshCw, Search } from "lucide-react";
+import { Users, User, Clock, Play, RefreshCw, Search, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import "./GameMatchesList.css";
 import { useNavigate } from "react-router-dom";
 
@@ -40,6 +40,7 @@ const GameMatchesList = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [playerSort, setPlayerSort] = useState("none"); // "none", "asc", "desc"
 
   const navigate = useNavigate();
 
@@ -83,44 +84,64 @@ const GameMatchesList = () => {
   };
 
   /**
-   * Filter and sort matches based on search term
-   * @param {Match[]} matchList - List of matches to filter
-   * @param {string} term - Search term
-   * @returns {Match[]} - Filtered and sorted matches
+   * Sort matches by player count based on current sort state
+   * @param {Match[]} matchList - List of matches to sort
+   * @param {string} sortType - "none", "asc", "desc"
+   * @returns {Match[]} - Sorted matches
    */
-  const filterAndSortMatches = (matchList, term) => {
-    if (!term.trim()) {
-      return matchList; // Return original order when no search term
+  const sortMatchesByPlayers = (matchList, sortType) => {
+    if (sortType === "none") {
+      return matchList; // Return original order
     }
 
-    const lowerTerm = term.toLowerCase();
-    
-    // Filter matches that contain the search term and sort by relevance
-    return matchList
-      .filter(match => 
-        match.name.toLowerCase().includes(lowerTerm)
-      )
-      .sort((a, b) => {
-        const aName = a.name.toLowerCase();
-        const bName = b.name.toLowerCase();
-        
-        // Exact matches first
-        if (aName === lowerTerm && bName !== lowerTerm) return -1;
-        if (bName === lowerTerm && aName !== lowerTerm) return 1;
-        
-        // Matches that start with the term
-        const aStarts = aName.startsWith(lowerTerm);
-        const bStarts = bName.startsWith(lowerTerm);
-        if (aStarts && !bStarts) return -1;
-        if (bStarts && !aStarts) return 1;
-        
-        // Then by alphabetical order
-        return aName.localeCompare(bName);
-      });
+    return [...matchList].sort((a, b) => {
+      if (sortType === "asc") {
+        return a.currentPlayers - b.currentPlayers;
+      } else if (sortType === "desc") {
+        return b.currentPlayers - a.currentPlayers;
+      }
+      return 0;
+    });
   };
 
-  // Get filtered matches based on search term
-  const filteredMatches = filterAndSortMatches(matches, searchTerm);
+  /**
+   * Filter and sort matches based on search term and player sort
+   * @param {Match[]} matchList - List of matches to filter
+   * @param {string} term - Search term
+   * @param {string} sortType - Player sort type
+   * @returns {Match[]} - Filtered and sorted matches
+   */
+  const filterAndSortMatches = (matchList, term, sortType) => {
+    let filtered = matchList;
+
+    // First apply search filter if there's a search term
+    if (term.trim()) {
+      const lowerTerm = term.toLowerCase();
+      
+      filtered = matchList
+        .filter(match => 
+          match.name.toLowerCase().startsWith(lowerTerm) // Cambio: usar startsWith en lugar de includes
+        )
+        .sort((a, b) => {
+          const aName = a.name.toLowerCase();
+          const bName = b.name.toLowerCase();
+          
+          // Exact matches first
+          if (aName === lowerTerm && bName !== lowerTerm) return -1;
+          if (bName === lowerTerm && aName !== lowerTerm) return 1;
+          
+          // All matches already start with the term due to startsWith filter,
+          // so just sort alphabetically
+          return aName.localeCompare(bName);
+        });
+    }
+
+    // Then apply player count sorting
+    return sortMatchesByPlayers(filtered, sortType);
+  };
+
+  // Get filtered and sorted matches
+  const filteredMatches = filterAndSortMatches(matches, searchTerm, playerSort);
 
   // Initial load on mount
   useEffect(() => {
@@ -162,6 +183,43 @@ const GameMatchesList = () => {
     setSearchTerm(event.target.value);
   };
 
+  /**
+   * Handle player sort button click - cycles through none -> asc -> desc -> none
+   */
+  const handlePlayerSortClick = () => {
+    setPlayerSort(prevSort => {
+      if (prevSort === "none") return "asc";
+      if (prevSort === "asc") return "desc";
+      return "none";
+    });
+  };
+
+  /**
+   * Get sort button text and icon based on current sort state
+   */
+  const getSortButtonContent = () => {
+    switch (playerSort) {
+      case "asc":
+        return { 
+          text: "Player Count", 
+          title: "Sorting: Less to More players",
+          icon: <ArrowUp className="sort-arrow-icon" />
+        };
+      case "desc":
+        return { 
+          text: "Player Count", 
+          title: "Sorting: More to Less players",
+          icon: <ArrowDown className="sort-arrow-icon" />
+        };
+      default:
+        return { 
+          text: "Player Count", 
+          title: "Click to sort by player count",
+          icon: null
+        };
+    }
+  };
+
   // Full-page loading state
   if (loading) {
     return (
@@ -201,16 +259,30 @@ const GameMatchesList = () => {
             {refreshing ? "Refreshing..." : "Refresh"}
           </button>
           
-          {/* Search input */}
-          <div className="search-container">
-            <Search className="search-icon" />
-            <input
-              type="text"
-              placeholder="Search games by name..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              className="search-input"
-            />
+          {/* Search and Sort container */}
+          <div className="search-sort-container">
+            {/* Search input */}
+            <div className="search-container">
+              <Search className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search games by name..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="search-input"
+              />
+            </div>
+
+            {/* Player sort button */}
+            <button
+              className="sort-button"
+              onClick={handlePlayerSortClick}
+              title={getSortButtonContent().title}
+            >
+              <ArrowUpDown className="sort-icon" />
+              {getSortButtonContent().text}
+              {getSortButtonContent().icon}
+            </button>
           </div>
         </div>
 
