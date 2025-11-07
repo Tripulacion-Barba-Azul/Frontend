@@ -28,7 +28,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { Users, User, Clock, Play, RefreshCw } from "lucide-react";
+import { Users, User, Clock, Play, RefreshCw, Search } from "lucide-react";
 import "./GameMatchesList.css";
 import { useNavigate } from "react-router-dom";
 
@@ -39,6 +39,7 @@ const GameMatchesList = () => {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const navigate = useNavigate();
 
@@ -81,6 +82,46 @@ const GameMatchesList = () => {
     }
   };
 
+  /**
+   * Filter and sort matches based on search term
+   * @param {Match[]} matchList - List of matches to filter
+   * @param {string} term - Search term
+   * @returns {Match[]} - Filtered and sorted matches
+   */
+  const filterAndSortMatches = (matchList, term) => {
+    if (!term.trim()) {
+      return matchList; // Return original order when no search term
+    }
+
+    const lowerTerm = term.toLowerCase();
+    
+    // Filter matches that contain the search term and sort by relevance
+    return matchList
+      .filter(match => 
+        match.name.toLowerCase().includes(lowerTerm)
+      )
+      .sort((a, b) => {
+        const aName = a.name.toLowerCase();
+        const bName = b.name.toLowerCase();
+        
+        // Exact matches first
+        if (aName === lowerTerm && bName !== lowerTerm) return -1;
+        if (bName === lowerTerm && aName !== lowerTerm) return 1;
+        
+        // Matches that start with the term
+        const aStarts = aName.startsWith(lowerTerm);
+        const bStarts = bName.startsWith(lowerTerm);
+        if (aStarts && !bStarts) return -1;
+        if (bStarts && !aStarts) return 1;
+        
+        // Then by alphabetical order
+        return aName.localeCompare(bName);
+      });
+  };
+
+  // Get filtered matches based on search term
+  const filteredMatches = filterAndSortMatches(matches, searchTerm);
+
   // Initial load on mount
   useEffect(() => {
     fetchMatches(false);
@@ -111,6 +152,14 @@ const GameMatchesList = () => {
   const handleJoinMatch = (matchId) => {
     console.log(`Trying to join the game ${matchId}`);
     navigate(`/join/${matchId}`);
+  };
+
+  /**
+   * Handle search input change
+   * @param {React.ChangeEvent<HTMLInputElement>} event
+   */
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
   };
 
   // Full-page loading state
@@ -151,11 +200,23 @@ const GameMatchesList = () => {
             />
             {refreshing ? "Refreshing..." : "Refresh"}
           </button>
+          
+          {/* Search input */}
+          <div className="search-container">
+            <Search className="search-icon" />
+            <input
+              type="text"
+              placeholder="Search games by name..."
+              value={searchTerm}
+              onChange={handleSearchChange}
+              className="search-input"
+            />
+          </div>
         </div>
 
         {/* Cards grid */}
         <div className="matches-grid">
-          {matches.map((match) => {
+          {filteredMatches.map((match) => {
             const status = getMatchStatus(match);
 
             return (
@@ -240,7 +301,14 @@ const GameMatchesList = () => {
         </div>
 
         {/* Empty state */}
-        {matches.length === 0 && (
+        {filteredMatches.length === 0 && matches.length > 0 && (
+          <div className="empty-state">
+            <div className="empty-icon">🔍</div>
+            <h3 className="empty-title">No games found matching "{searchTerm}"</h3>
+          </div>
+        )}
+
+        {filteredMatches.length === 0 && matches.length === 0 && (
           <div className="empty-state">
             <div className="empty-icon">🎮</div>
             <h3 className="empty-title">There are no available games</h3>
