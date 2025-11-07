@@ -1,0 +1,468 @@
+/* ===== Final GOLD styles ===== */
+
+/* Badge  */
+.chatBadge {
+  position: fixed;
+  z-index: 80;
+  left: 1.5vw;
+  bottom: 1vw;
+  height: 3vw;
+  width: 4vw;
+  border-radius: 0.9vw;
+  border: 0.1vw solid rgba(232, 210, 139, 0.28);
+  background: radial-gradient(80% 80% at 50% 35%, #0f0c10 0%, #120f12 100%);
+  color: #e8d28b;
+  box-shadow: 0 0 0 0.15vw rgba(0, 0, 0, 0.45) inset,
+    0 0.8vw 1.3vw -0.5vw rgba(0, 0, 0, 0.55),
+    0 0 0.7vw 0 rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: transform 120ms ease, box-shadow 200ms ease, filter 150ms ease;
+}
+.chatBadge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 0.8vw 0.4vw rgba(245, 217, 126, 0.22);
+  filter: brightness(1.05);
+}
+.chatBadge__count {
+  position: absolute;
+  top: -0.5vw;
+  right: -0.5vw;
+  min-width: 1.2vw;
+  height: 1.2vw;
+  padding: 0 0.3vw;
+  border-radius: 50vw;
+  background: linear-gradient(180deg, #d43a3a 0%, #b91c1c 100%);
+  color: #fff;
+  font-size: 0.8vw;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+  border: 0.1vw solid #e8d28b;
+  box-shadow: 0 0 0 0.12vw #0d0a0e, 0 0.4vw 0.8vw rgba(0, 0, 0, 0.35);
+}
+
+/* Window */
+.chatWindow {
+  position: fixed;
+  z-index: 81;
+  left: 0.5vw;
+  bottom: 0.5vw;
+  width: 26vw;
+  max-height: 41vw;
+  background: radial-gradient(
+      120% 140% at 50% -20%,
+      rgba(255, 255, 255, 0.05) 0%,
+      transparent 60%
+    ),
+    #141013;
+  color: #ece6d6;
+  border-radius: 0.8vw;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 0.1vw solid rgba(232, 210, 139, 0.28);
+  box-shadow: 0 1.6vw 2.2vw -0.6vw rgba(0, 0, 0, 0.55),
+    0 0.15vw 0 0 rgba(255, 255, 255, 0.06) inset;
+}
+
+/* Header */
+.chatWindow__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8vw 1vw;
+  background: linear-gradient(
+      180deg,
+      rgba(245, 217, 126, 0.06) 0%,
+      rgba(0, 0, 0, 0) 100%
+    ),
+    #141013;
+  border-bottom: 0.1vw solid rgba(232, 210, 139, 0.28);
+  box-shadow: 0 0.1vw 0 rgba(255, 255, 255, 0.06) inset,
+    0 0.7vw 1vw rgba(0, 0, 0, 0.25);
+}
+.chatWindow__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6vw;
+  font-weight: 800;
+  letter-spacing: 0.06vw;
+  color: #e8d28b;
+  text-shadow: 0 0.08vw 0 rgba(0, 0, 0, 0.6);
+  font-size: 1.1vw;
+  font-variant: small-caps;
+}
+.chatWindow__title::after {
+  content: "";
+  display: block;
+  width: 3vw;
+  height: 0.15vw;
+  border-radius: 0.2vw;
+  background: linear-gradient(90deg, #e8d28b 0%, rgba(0, 0, 0, 0) 100%);
+}
+
+/* Close */
+.chatWindow__close {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 2vw;
+  height: 2vw;
+  border-radius: 50vw;
+  border: 0.15vw solid #f4e1a3;
+  background: #2a2a2a;
+  cursor: pointer;
+  box-shadow: 0 0.4vw 0.9vw rgba(0, 0, 0, 0.35);
+  transition: transform 80ms ease, filter 150ms ease, box-shadow 150ms ease,
+    background 150ms ease, border-color 150ms ease;
+}
+.chatCloseIcon,
+.chatCloseIcon::before,
+.chatCloseIcon::after {
+  position: absolute;
+  display: block;
+  content: "";
+  background: #f4e1a3;
+  border-radius: 0.12vw;
+}
+.chatCloseIcon::before,
+.chatCloseIcon::after {
+  top: 50%;
+  left: 50%;
+  width: 1.1vw;
+  height: 0.12vw;
+  transform-origin: center;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.chatCloseIcon::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+.chatWindow__close:hover {
+  background: rgb(163, 34, 34);
+  border-color: #f4e1a3;
+  filter: brightness(1.02);
+}
+.chatWindow__close:active {
+  transform: scale(0.96);
+  background: rgb(115, 23, 23);
+}
+
+/* Messages */
+.chatWindow__messages {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 1vw;
+  display: flex;
+  flex-direction: column;
+  gap: 1.3vw; /* Clear separation between messages */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+.chatMessage {
+  display: inline-flex;
+  max-width: 85%;
+  flex-direction: column;
+  gap: 0.18vw; /* Name closer to the bubble */
+}
+.isMine {
+  align-self: flex-end;
+}
+.isTheirs {
+  align-self: flex-start;
+}
+.chatMessage__name {
+  font-size: 0.8vw;
+  color: #b6a98a;
+  user-select: none;
+}
+.isTheirs .chatMessage__name {
+  margin-left: 2.8vw;
+} /* 2.2 avatar + 0.6 gap */
+.isMine .chatMessage__name {
+  text-align: right;
+  margin-right: 0.2vw;
+}
+.chatMessage__row {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 0.6vw;
+}
+.chatAvatar {
+  width: 2.2vw;
+  height: 2.2vw;
+  border-radius: 50vw;
+  object-fit: cover;
+  border: 0.12vw solid rgba(232, 210, 139, 0.28);
+  box-shadow: 0 0.5vw 1vw rgba(0, 0, 0, 0.35),
+    0 0 0 0.12vw rgba(0, 0, 0, 0.35) inset;
+  background: radial-gradient(80% 80% at 50% 35%, #0f0c10 0%, #0d0a0e 100%);
+  user-select: none;
+  pointer-events: none;
+}
+.chatMessage__bubble {
+  padding: 0.6vw 0.8vw;
+  border-radius: 0.8vw;
+  background: linear-gradient(180deg, #1d181b 0%, #191417 100%);
+  border: 0.1vw solid rgba(232, 210, 139, 0.28);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+  box-shadow: 0 0.08vw 0 rgba(255, 255, 255, 0.04) inset;
+  font-size: 0.95vw;
+}
+.isMine .chatMessage__bubble {
+  background: linear-gradient(180deg, #b3262a 0%, #c53034 100%);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.14);
+  text-shadow: 0 0.08vw 0 rgba(0, 0, 0, 0.35);
+  box-shadow: 0 0.08vw 0 rgba(255, 255, 255, 0.06) inset,
+    0 0.9vw 1.2vw rgba(0, 0, 0, 0.25);
+}
+
+/* Input */
+.chatWindow__inputRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6vw;
+  padding: 0.8vw;
+  border-top: 0.1vw solid rgba(232, 210, 139, 0.28);
+  background: linear-gradient(
+      180deg,
+      rgba(245, 217, 126, 0.06) 0%,
+      rgba(0, 0, 0, 0) 100%
+    ),
+    rgba(2, 6, 23, 0.35);
+}
+.chatInput {
+  flex: 1 1 auto;
+  background: #0f0c10;
+  color: #ece6d6;
+  border: 0.12vw solid rgba(232, 210, 139, 0.28);
+  border-radius: 0.6vw;
+  padding: 0.6vw 0.8vw;
+  outline: none;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+  font-size: 0.95vw;
+}
+.chatInput::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+.chatInput:focus {
+  border-color: #e8d28b;
+  box-shadow: 0 0 0.5vw 0.2vw rgba(245, 217, 126, 0.22);
+}
+.chatInput[disabled] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.chatSend {
+  flex: 0 0 auto;
+  border: 0.1vw solid rgba(0, 0, 0, 0.25);
+  border-radius: 0.6vw;
+  padding: 0.6vw 0.9vw;
+  background: #f6e096;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 80ms ease, filter 120ms ease, box-shadow 120ms ease,
+    border-color 120ms ease;
+  box-shadow: 0 0.9vw 1.2vw rgba(0, 0, 0, 0.25);
+  font-size: 0.95vw;
+}
+.chatSend:hover {
+  box-shadow: 0 1.1vw 1.6vw rgba(0, 0, 0, 0.3),
+    0 0 0 0.1vw rgba(255, 255, 255, 0.2) inset;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+.chatSend:active {
+  transform: translateY(0.1vw);
+}
+.chatSend[disabled] {
+  background: linear-gradient(180deg, #4b5563 0%, #374151 100%);
+  color: #e1e7ef;
+  opacity: 0.7;
+  cursor: not-allowed;
+  text-shadow: none;
+  box-shadow: none;
+}
+
+/* Send button in "typing" mode (enabled) */
+.chatWindow__inputRow:focus-within .chatSend:not([disabled]),
+.chatInput:not(:placeholder-shown) ~ .chatSend:not([disabled]) {
+  color: #000;
+  background-color: #f6e096;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+.chatWindow__inputRow:focus-within .chatSend:not([disabled]):hover,
+.chatInput:not(:placeholder-shown) ~ .chatSend:not([disabled]):hover {
+  transform: scale(1.04);
+  box-shadow: 0 0 0.5vw 0.2vw rgba(245, 217, 126, 0.22);
+  transition: border-color 20ms ease, box-shadow 20ms ease;
+}
+
+/* =========================
+   Lovely open animation 💫
+   (no JSX changes needed)
+   ========================= */
+
+/* Pop-in with slight bounce and blur easing out */
+@keyframes chatPopIn {
+  0% {
+    opacity: 0;
+    transform: translateY(1.2vw) scale(0.96);
+    filter: blur(0.2vw);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(0) scale(1.03);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Soft golden sheen sweeping the surface */
+@keyframes chatSheen {
+  0% {
+    opacity: 0;
+    transform: translateY(0.6vw);
+  }
+  30% {
+    opacity: 0.22;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+}
+
+/* Content lift for header/messages/input */
+@keyframes chatContentUp {
+  0% {
+    opacity: 0;
+    transform: translateY(0.5vw);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Apply animations when the window mounts (each open re-mounts it) */
+.chatWindow {
+  /* Pivot near bottom-left so it "grows" desde el badge */
+  transform-origin: 6% 92%;
+  animation: chatPopIn 360ms cubic-bezier(0.2, 0.9, 0.1, 1) both;
+  will-change: transform, opacity, filter;
+}
+
+/* Subtle golden sheen layer (non-interactive) */
+.chatWindow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(
+    60% 40% at 20% 0%,
+    rgba(232, 210, 139, 0.2),
+    rgba(232, 210, 139, 0) 60%
+  );
+  opacity: 0;
+  animation: chatSheen 900ms ease-out 140ms both;
+}
+
+/* Staggered content entrance for extra polish */
+.chatWindow__header {
+  animation: chatContentUp 280ms ease 110ms both;
+}
+.chatWindow__messages {
+  animation: chatContentUp 300ms ease 160ms both;
+}
+.chatWindow__inputRow {
+  animation: chatContentUp 320ms ease 190ms both;
+}
+
+/* Respect user's reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .chatWindow,
+  .chatWindow::before,
+  .chatWindow__header,
+  .chatWindow__messages,
+  .chatWindow__inputRow {
+    animation: none !important;
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
+/* ==== Close animation (complements the open one) ==== */
+
+@keyframes chatCloseOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(0.2vw) scale(0.997);
+    filter: blur(0.04vw);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(1vw) scale(0.96);
+    filter: blur(0.18vw);
+  }
+}
+
+/* When component is closing, play the exit animation and ignore pointer events */
+.chatWindow.is-exiting {
+  animation: chatCloseOut 220ms cubic-bezier(0.4, 0.14, 0.3, 1) both;
+  pointer-events: none;
+}
+
+/* Optional: stagger tiny fades on inner sections to feel cohesive */
+.chatWindow.is-exiting .chatWindow__header,
+.chatWindow.is-exiting .chatWindow__messages,
+.chatWindow.is-exiting .chatWindow__inputRow {
+  opacity: 0.92;
+  transition: opacity 160ms ease;
+}
+
+/* Respect user's reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .chatWindow.is-exiting {
+    animation: none !important;
+    opacity: 0;
+  }
+}
+
+/* --- Fix long message wrapping (multi-line, no horizontal scroll) --- */
+/* Allow the row to shrink so the bubble can wrap */
+.chatMessage__row {
+  max-width: 100%;
+  min-width: 0; /* critical for flex children to shrink */
+}
+
+/* Make the bubble wrap and never force horizontal scrolling */
+.chatMessage__bubble {
+  max-width: 100%;
+  min-width: 0; /* allow shrinking inside flex */
+  overflow-x: hidden; /* avoid horizontal scrollbar */
+  overflow-wrap: anywhere; /* break anywhere if needed */
+  word-break: break-word; /* break long words/URLs */
+  white-space: pre-wrap; /* preserve newlines, allow wrapping */
+}
+
+/* Prevent container from creating horizontal scrollbars */
+.chatWindow__messages {
+  overflow-x: hidden;
+}

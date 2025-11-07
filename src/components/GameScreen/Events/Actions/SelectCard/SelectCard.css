@@ -29,6 +29,7 @@
 
   position: relative;
   max-width: 96vw;
+  min-width: 50vw;
   width: calc(
     var(--count) * var(--card-w) + max(0, var(--count) - 1) * var(--gap) + 2 *
       var(--panel-pad)
@@ -64,8 +65,7 @@
 .sdp-title {
   margin: 0;
   color: #e6d7a6;
-  letter-spacing: 0.104vw;
-  font-size: 2.4vw; /* keep pure vw to ensure scalable UI */
+  font-size: 1.6vw; /* keep pure vw to ensure scalable UI */
   text-align: center;
 }
 
