@@ -13,7 +13,8 @@
  *   ownerName: string,
  *   minPlayers: number,
  *   maxPlayers: number,
- *   actualPlayers: number
+ *   actualPlayers: number,
+ *   private: boolean
  * }
  */
 
@@ -25,6 +26,7 @@
  * @property {number} minPlayers
  * @property {number} maxPlayers
  * @property {number} currentPlayers
+ * @property {boolean} private
  */
 
 import React, { useState, useEffect } from "react";
@@ -69,6 +71,7 @@ const GameMatchesList = () => {
         minPlayers: game.minPlayers,
         maxPlayers: game.maxPlayers,
         currentPlayers: game.actualPlayers,
+        private: game.private,
       }));
 
       setMatches(mappedData);
@@ -163,7 +166,9 @@ const GameMatchesList = () => {
                 <div className="match-content">
                   {/* Name + status pill */}
                   <div className="match-header">
-                    <h3 className="match-name">{match.name}</h3>
+                    <h3 className="match-name">
+                      {match.private && "🔒"}{match.name}
+                    </h3>
                     <span className={`match-status ${status.color}`}>
                       {status.icon} {status.status}
                     </span>
@@ -270,6 +275,13 @@ const GameMatchesList = () => {
               <span>
                 {" "}
                 Game full <br /> (can't join)
+              </span>
+            </div>
+            <div className="legend-item">
+              <span style={{ fontSize: "16px" }}>🔒</span>
+              <span>
+                {" "}
+                Private game <br /> (requires password)
               </span>
             </div>
           </div>

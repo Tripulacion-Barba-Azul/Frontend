@@ -47,6 +47,7 @@ const mockBackendData = [
     minPlayers: 2,
     maxPlayers: 6,
     actualPlayers: 1, // 1 player currently
+    private: false,
   },
   {
     gameId: 2,
@@ -55,6 +56,7 @@ const mockBackendData = [
     minPlayers: 4,
     maxPlayers: 8,
     actualPlayers: 4, // 4 players currently
+    private: true, // Private game
   },
   {
     gameId: 3,
@@ -63,6 +65,7 @@ const mockBackendData = [
     minPlayers: 3,
     maxPlayers: 5,
     actualPlayers: 5, // 5 players - full
+    private: false,
   },
 ];
 
@@ -109,7 +112,7 @@ describe("GameMatchesList", () => {
 
       // Check if matches are rendered
       expect(screen.getByText("Epic Battle")).toBeInTheDocument();
-      expect(screen.getByText("Combat Arena")).toBeInTheDocument();
+      expect(screen.getByText("🔒Combat Arena")).toBeInTheDocument();
       expect(screen.getByText("Secret Mission")).toBeInTheDocument();
     });
 
@@ -183,7 +186,7 @@ describe("GameMatchesList", () => {
 
     it("shows correct status for ready to play (yellow)", () => {
       // Second match: 4/8 players, min 4 - should be yellow with only icon (no text)
-      const matchCard = screen.getByText("Combat Arena").closest(".match-card");
+      const matchCard = screen.getByText("🔒Combat Arena").closest(".match-card");
       const statusElement = matchCard.querySelector(".match-status");
       expect(statusElement).toHaveTextContent("🟡");
       expect(statusElement).not.toHaveTextContent("Ready to play"); // No text in status
@@ -278,6 +281,7 @@ describe("GameMatchesList", () => {
           minPlayers: 2,
           maxPlayers: 4,
           actualPlayers: 2,
+          private: false,
         },
       ];
 
@@ -469,6 +473,46 @@ describe("GameMatchesList", () => {
         ).toBeInTheDocument();
       });
     });
+
+    it("correctly maps API response including private field", async () => {
+      // Test with games that have different private values
+      const testData = [
+        {
+          gameId: 10,
+          gameName: "Public Test Game",
+          ownerName: "TestUser1",
+          minPlayers: 2,
+          maxPlayers: 4,
+          actualPlayers: 2,
+          private: false,
+        },
+        {
+          gameId: 11,
+          gameName: "Private Test Game",
+          ownerName: "TestUser2",
+          minPlayers: 2,
+          maxPlayers: 4,
+          actualPlayers: 2,
+          private: true,
+        },
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => testData,
+      });
+
+      render(
+        <MemoryRouter>
+          <GameMatchesList />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Public Test Game")).toBeInTheDocument();
+        expect(screen.getByText("🔒Private Test Game")).toBeInTheDocument();
+      });
+    });
   });
 
   describe("Background and Styling", () => {
@@ -557,6 +601,53 @@ describe("GameMatchesList", () => {
 
       // Third match: 5/5 players = 100% width
       expect(progressBars[2]).toHaveStyle("width: 100%");
+    });
+  });
+
+  describe("Private Games Display", () => {
+    beforeEach(async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockBackendData,
+      });
+
+      render(
+        <MemoryRouter>
+          <GameMatchesList />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("List of games")).toBeInTheDocument();
+      });
+    });
+
+    it("displays lock emoji for private games", () => {
+      // Combat Arena is private (gameId: 2)
+      const privateGame = screen.getByText("🔒Combat Arena");
+      expect(privateGame).toBeInTheDocument();
+    });
+
+    it("does not display lock emoji for public games", () => {
+      // Epic Battle is public (gameId: 1)
+      const publicGame1 = screen.getByText("Epic Battle");
+      expect(publicGame1).toBeInTheDocument();
+      expect(publicGame1).not.toHaveTextContent("🔒");
+
+      // Secret Mission is public (gameId: 3)
+      const publicGame2 = screen.getByText("Secret Mission");
+      expect(publicGame2).toBeInTheDocument();
+      expect(publicGame2).not.toHaveTextContent("🔒");
+    });
+
+    it("handles mixed private and public games correctly", () => {
+      // Should have exactly one private game (Combat Arena)
+      const lockEmojis = document.querySelectorAll(".match-name");
+      const privateGamesCount = Array.from(lockEmojis).filter(element => 
+        element.textContent.includes("🔒")
+      ).length;
+      
+      expect(privateGamesCount).toBe(1);
     });
   });
 });
