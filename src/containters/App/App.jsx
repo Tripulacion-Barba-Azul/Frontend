@@ -27,6 +27,7 @@ import JoinGameScreen from "../../components/JoinGameScreen/JoinGameScreen";
 import GameMatchesList from "../../components/GameMatchesList/GameMatchesList";
 import GameScreen from "../../components/GameScreen/GameScreen";
 import GameOwnMatchesList from "../../components/GameOwnMatchesList/GameOwnMatchesList";
+import NotifierTester from "../../components/GameScreen/Events/Notifier/NotifierTester";
 
 function App() {
   return (
@@ -35,7 +36,7 @@ function App() {
         <Route path="/" element={<TitleScreen />} />
         <Route path="/create" element={<CreateGameScreen />} />
         <Route path="/my-games" element={<GameOwnMatchesList />} />
-        <Route path="/join" element={<GameMatchesList />} />
+        <Route path="/join" element={<NotifierTester />} />
         <Route path="/join/:gameId" element={<JoinGameScreen />} />
         <Route path="/game/:gameId" element={<GameScreen />} />
       </Routes>

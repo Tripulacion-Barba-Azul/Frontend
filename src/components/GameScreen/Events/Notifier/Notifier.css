@@ -4,13 +4,14 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.3);
+  background: transparent;
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 100000;
+  z-index: 1000;
   cursor: pointer;
   animation: fadeIn 0.15s ease;
+  pointer-events: none;
 }
 
 .notifier-content {
@@ -22,7 +23,8 @@
   text-align: center;
   cursor: default;
   box-shadow: 0 0 1.563vw rgba(0, 0, 0, 0.3); /* 30px */
-  animation: fadeIn 0.15s ease; /* <-- change this */
+  animation: fadeIn 0.15s ease;
+  pointer-events: auto;
 }
 
 @keyframes fadeIn {

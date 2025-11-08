@@ -189,6 +189,27 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
           case "notifierNoEffect":
             handleNoEffect();
             break;
+          case "notifierCardTrade":
+            handleCardTrade(payload);
+            break;
+          case "notifierCardTradePublic":
+            handleCardTradePublic(payload);
+            break;
+          case "notifierDeadCardFolly":
+            handleDeadCardFolly();
+            break;
+          case "notifierPointYourSuspicious":
+            handlePointYourSuspicious(payload);
+            break;
+          case "notifierBlackmailedCard":
+            handleBlackmailedCard(payload);
+            break;
+          case "notifierBlackmailed":
+            handleBlackmailed(payload);
+            break;
+          case "notifierFauxPass":
+            handleFauxPass(payload);
+            break;
           default:
             // Unknown events are safely ignored (no state changes)
             console.warn("Unknown event type:", eventType);
@@ -202,7 +223,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     const ws = wsRef.current;
     ws.addEventListener("message", handleWebSocketMessage);
     return () => ws.removeEventListener("message", handleWebSocketMessage);
-  }, [wsRef, publicData]);
+  }, [wsRef, publicData, actualPlayerId]);
 
   const PLAYER_COLORS = [
     "#e6194B",
@@ -250,21 +271,9 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     return set ? SETS_MAP[set.setName] : null;
   };
 
-  const createSecretCard = (secret) => {
-    if (!secret) return null;
-    return {
-      id: secret.id,
-      name: secret.name || "Unknown Secret",
-      isSecret: true,
-      revealed: secret.revealed || false,
-    };
-  };
-
   /* === Event-specific handlers (display-only text + optional imagery) === */
 
-  const handleCardsOffTheTable = (
-    payload /*: NotifierCardsOffTheTablePayload */
-  ) => {
+  const handleCardsOffTheTable = (payload) => {
     const { playerId, quantity, selectedPlayerId } = payload;
     const playerName = getPlayerNameColored(playerId);
     const targetName = getPlayerNameColored(selectedPlayerId);
@@ -284,7 +293,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     });
   };
 
-  const handleStealSet = (payload /*: NotifierStealSetPayload */) => {
+  const handleStealSet = (payload) => {
     const { playerId, stolenPlayerId, setId } = payload;
     const playerName = getPlayerNameColored(playerId);
     const stolenFromName = getPlayerNameColored(stolenPlayerId);
@@ -298,9 +307,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     });
   };
 
-  const handleLookIntoTheAshes = (
-    payload /*: NotifierLookIntoTheAshesPayload */
-  ) => {
+  const handleLookIntoTheAshes = (payload) => {
     const { playerId } = payload;
     setCurrentNotification({
       text: `${getPlayerNameColored(playerId)} looked into the ashes`,
@@ -309,9 +316,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     });
   };
 
-  const handleAndThenThereWasOneMore = (
-    payload /*: NotifierAndThenThereWasOneMorePayload */
-  ) => {
+  const handleAndThenThereWasOneMore = (payload) => {
     const { playerId, secretId, secretName, stolenPlayerId, giftedPlayerId } =
       payload;
     const p = getPlayerNameColored(playerId);
@@ -357,7 +362,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     }
   };
 
-  const handleRevealSecret = (payload /*: NotifierRevealSecretPayload */) => {
+  const handleRevealSecret = (payload) => {
     const { playerId, secretId, selectedPlayerId } = payload;
     const p = getPlayerNameColored(playerId);
     const t = getPlayerNameColored(selectedPlayerId);
@@ -382,9 +387,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     });
   };
 
-  const handleRevealSecretForce = (
-    payload /*: NotifierRevealSecretForcePayload */
-  ) => {
+  const handleRevealSecretForce = (payload) => {
     const { playerId, secretId, selectedPlayerId } = payload;
     const p = getPlayerNameColored(playerId);
     const t = getPlayerNameColored(selectedPlayerId);
@@ -398,9 +401,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     });
   };
 
-  const handleSatterthwaiteWild = (
-    payload /*: NotifierSatterthwaiteWildPayload */
-  ) => {
+  const handleSatterthwaiteWild = (payload) => {
     const { playerId, secretId, secretName, selectedPlayerId } = payload;
     const p = getPlayerNameColored(playerId);
     const t = getPlayerNameColored(selectedPlayerId);
@@ -416,7 +417,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     });
   };
 
-  const handleHideSecret = (payload /*: NotifierHideSecretPayload */) => {
+  const handleHideSecret = (payload) => {
     const { playerId, secretId, selectedPlayerId } = payload;
     const p = getPlayerNameColored(playerId);
     const t = getPlayerNameColored(selectedPlayerId);
@@ -430,9 +431,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     });
   };
 
-  const handleDelayTheMurderersEscape = (
-    payload /*: NotifierDelayTheMurderersEscapePayload */
-  ) => {
+  const handleDelayTheMurderersEscape = (payload) => {
     const { playerId } = payload;
     setCurrentNotification({
       text: `${getPlayerNameColored(
@@ -443,7 +442,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     });
   };
 
-  const handleCardsPlayed = (payload /*: CardsPlayedPayload */) => {
+  const handleCardsPlayed = (payload) => {
     const { playerId, cards, actionType } = payload;
     const p = getPlayerNameColored(playerId);
     let actionText = "played cards";
@@ -464,7 +463,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     });
   };
 
-  const handleDiscardEvent = (payload /*: DiscardEventPayload */) => {
+  const handleDiscardEvent = (payload) => {
     const { playerId, cards } = payload;
     const displayCards = cards.map((c) => ({
       ...c,
@@ -482,6 +481,127 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     setCurrentNotification({
       text: `Nothing happened.`,
       cards: [],
+      setImage: null,
+    });
+  };
+
+  const handleCardTrade = (payload) => {
+    const { playerId, cardName } = payload;
+    const p = getPlayerNameColored(playerId);    
+    const card = {
+      id: 0,
+      name: cardName,
+      isSecret: false,
+      revealed: false,
+    };
+
+    setCurrentNotification({
+      text:`${p} gave you a card`,
+      cards: [card],
+      setImage: null,
+    });
+  };
+
+  const handleCardTradePublic = (payload) => {
+    const { playerId, selectedPlayerId } = payload;
+    const p = getPlayerNameColored(playerId);
+    const s = getPlayerNameColored(selectedPlayerId);
+
+    setCurrentNotification({
+      text: `${p} traded cards with ${s}`,
+      cards: [],
+      setImage: null,
+    });
+  };
+
+  const handleDeadCardFolly = () => {
+    setCurrentNotification({
+      text: `Everyone passed a card to their side`,
+      cards: [],
+      setImage: null,
+    });
+  };
+
+  const handlePointYourSuspicious = (payload) => {
+    // Estructura preparada para implementación futura
+    const { playersSelections, selectedPlayerId } = payload;
+    
+    // TODO: Implementar visualización compleja de las selecciones
+    setCurrentNotification({
+      text: `Point Your Suspicious was played`,
+      cards: [],
+      setImage: null,
+    });
+  };
+
+  const handleBlackmailedCard = (payload) => {
+    const { playerId, secretName } = payload;
+    const p = getPlayerNameColored(playerId);
+
+    const card = {
+      id: 0,
+      name: secretName,
+      revealed: true,
+      isSecret: true,
+    };
+
+    setCurrentNotification({
+      text: `You now know one of <br /> ${p}'s secrets`,
+      cards: [card],
+      setImage: null,
+    });
+  };
+
+  const handleBlackmailed = (payload) => {
+    const { playerId, selectedPlayerId } = payload;
+    const p = getPlayerNameColored(playerId);
+    const s = getPlayerNameColored(selectedPlayerId);
+    const isActualPlayerReceiver = selectedPlayerId === actualPlayerId;
+
+    const card = {
+      id: 0,
+      name: "Blackmailed!",
+      revealed: false,
+      isSecret: false,
+    };
+
+    let text;
+    if (isActualPlayerReceiver) {
+      text = `You were blackmailed by ${p}!`;
+    } else {
+      text = `${s} was blackmailed by ${p}!`;
+    }
+
+    setCurrentNotification({
+      text,
+      cards: [card],
+      setImage: null,
+    });
+  };
+
+  const handleFauxPass = (payload) => {
+    const { playerId, selectedPlayerId } = payload;
+    const p = getPlayerNameColored(playerId);
+    const s = getPlayerNameColored(selectedPlayerId);
+    const isActualPlayerSender = playerId === actualPlayerId;
+
+    const card = {
+      id: 0,
+      name: "Social Faux Pas",
+      revealed: false,
+      isSecret: false,
+    };
+
+    let text;
+    if (isActualPlayerSender) {
+      text = `You tricked ${s} <br /> into a Social Faux Pas!`;
+    } else {
+      text = `${s} has been tricked into <br /> a Social Faux Pas by ${p}! `;
+    }
+
+    setCurrentNotification({
+      text,
+      cards: [card],
       setImage: null,
     });
   };
