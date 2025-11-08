@@ -13,6 +13,10 @@
   pointer-events: auto;
 }
 
+.notifier-overlay.closing {
+  animation: fadeOut 0.15s ease;
+}
+
 .notifier-content {
   background: rgba(0, 0, 0, 0.7);
   border-radius: 1.042vw; /* 20px */
@@ -26,9 +30,18 @@
   pointer-events: auto;
 }
 
+.notifier-overlay.closing .notifier-content {
+  animation: fadeOut 0.15s ease;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 .notifier-text {
@@ -73,6 +86,75 @@
   border-radius: 0.521vw; /* 10px */
   box-shadow: 0 0.104vw 0.417vw rgba(0, 0, 0, 0.4); /* 0 2px 8px */
   object-fit: cover;
+}
+
+/* Card flip animations */
+.card-flip-container {
+  width: 100%;
+  height: 100%;
+  perspective: 1000px;
+}
+
+.card-flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.card-flip-container.flip-to-front .card-flip-inner {
+  animation: flipToFront 0.6s ease-in-out;
+  animation-fill-mode: forwards;
+}
+
+.card-flip-container.flip-to-back .card-flip-inner {
+  animation: flipToBack 0.6s ease-in-out;
+  animation-fill-mode: forwards;
+}
+
+.card-flip-front,
+.card-flip-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.card-flip-front {
+  transform: rotateY(0deg);
+}
+
+.card-flip-back {
+  transform: rotateY(180deg);
+}
+
+.card-flip-front img,
+.card-flip-back img {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.521vw; /* 10px */
+  box-shadow: 0 0.104vw 0.417vw rgba(0, 0, 0, 0.4); /* 0 2px 8px */
+  object-fit: cover;
+}
+
+/* Flip animations */
+@keyframes flipToFront {
+  from {
+    transform: rotateY(180deg);
+  }
+  to {
+    transform: rotateY(0deg);
+  }
+}
+
+@keyframes flipToBack {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(180deg);
+  }
 }
 
 .notifier-hint {

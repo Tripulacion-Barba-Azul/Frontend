@@ -182,9 +182,9 @@ export default function NotifierTester() {
       }
     },
     {
-      name: "Reveal Secret (self)",
+      name: "Reveal Secret (self) - WITH FLIP",
       event: "notifierRevealSecret",
-      payload: { playerId: 1, secretId: 1, selectedPlayerId: 1 }
+      payload: { playerId: 1, secretId: 1, selectedPlayerId: 1, secretName: "You are the accomplice" }
     },
     {
       name: "Reveal Secret (other)",
@@ -194,7 +194,12 @@ export default function NotifierTester() {
     {
       name: "Reveal Secret Force",
       event: "notifierRevealSecretForce",
-      payload: { playerId: 3, secretId: 5, selectedPlayerId: 4 }
+      payload: { playerId: 3, secretId: 7, selectedPlayerId: 4 }
+    },
+    {
+      name: "Reveal Secret Force (flip)",
+      event: "notifierRevealSecretForce",
+      payload: { playerId: 3, secretId: 7, selectedPlayerId: 4, secretName: "You are the accomplice" }
     },
     {
       name: "Satterthwaite Wild (self)",
@@ -219,7 +224,7 @@ export default function NotifierTester() {
     {
       name: "Hide Secret (self)",
       event: "notifierHideSecret",
-      payload: { playerId: 1, secretId: 1, selectedPlayerId: 1 }
+      payload: { playerId: 1, secretId: 1, selectedPlayerId: 1, secretName: "You are the accomplice" }
     },
     {
       name: "Hide Secret (other)",
@@ -233,7 +238,7 @@ export default function NotifierTester() {
     },
     {
       name: "Cards Played (set)",
-      event: "cardsPlayed",
+      event: "notifierCardsPlayed",
       payload: {
         playerId: 1,
         actionType: "set",
@@ -246,17 +251,17 @@ export default function NotifierTester() {
     },
     {
       name: "Cards Played (detective)",
-      event: "cardsPlayed",
+      event: "notifierCardsPlayed",
       payload: {
         playerId: 2,
         actionType: "detective",
         cards: [{ id: 20, name: "Miss Marple" }],
-        setOwnerId: 1
+        setOwnerId: 4
       }
     },
     {
       name: "Cards Played (event)",
-      event: "cardsPlayed",
+      event: "notifierCardsPlayed",
       payload: {
         playerId: 3,
         actionType: "event",
@@ -264,17 +269,8 @@ export default function NotifierTester() {
       }
     },
     {
-      name: "Cards Played (instant)",
-      event: "cardsPlayed",
-      payload: {
-        playerId: 4,
-        actionType: "instant",
-        cards: [{ id: 50, name: "Not so Fast!" }]
-      }
-    },
-    {
       name: "Discard Event",
-      event: "discardEvent",
+      event: "notifierDiscardEvent",
       payload: {
         playerId: 4,
         cards: [
@@ -339,6 +335,33 @@ export default function NotifierTester() {
       name: "Faux Pass (other players)",
       event: "notifierFauxPass",
       payload: { playerId: 2, selectedPlayerId: 4 }
+    },
+    {
+      name: "🔄 Test Rapid Notifications (queue)",
+      event: "notifierNoEffect",
+      payload: {},
+      testMultiple: true
+    },
+    {
+      name: "🃏 Hide Secret - WITH FLIP",
+      event: "notifierHideSecret",
+      payload: { playerId: 2, secretId: 3, selectedPlayerId: 2 }
+    },
+    {
+      name: "🃏 And One More - WITH FLIP",
+      event: "notifierAndThenThereWasOneMore",
+      payload: {
+        playerId: 1,
+        secretId: 1,
+        secretName: "You are the murderer",
+        stolenPlayerId: 1,
+        giftedPlayerId: 1
+      }
+    },
+    {
+      name: "🃏 Blackmailed Card - WITH FLIP",
+      event: "notifierBlackmailedCard",
+      payload: { playerId: 3, secretName: "Faked Dead" }
     }
   ];
 
@@ -368,13 +391,32 @@ export default function NotifierTester() {
   }, []);
 
   // Función para enviar evento de prueba
-  const sendTestEvent = (event, payload) => {
+  const sendTestEvent = (event, payload, testMultiple = false) => {
     if (wsRef.current) {
-      const message = {
-        event: event,
-        payload: payload
-      };
-      wsRef.current.send(JSON.stringify(message));
+      if (testMultiple) {
+        // Enviar múltiples notificaciones rápidamente para probar la cola
+        const events = [
+          { event: "notifierNoEffect", payload: {} },
+          { event: "notifierLookIntoTheAshes", payload: { playerId: 1 } },
+          { event: "notifierNoEffect", payload: {} }
+        ];
+        
+        events.forEach((evt, index) => {
+          setTimeout(() => {
+            const message = {
+              event: evt.event,
+              payload: evt.payload
+            };
+            wsRef.current.send(JSON.stringify(message));
+          }, index * 100);
+        });
+      } else {
+        const message = {
+          event: event,
+          payload: payload
+        };
+        wsRef.current.send(JSON.stringify(message));
+      }
     }
   };
 
@@ -426,11 +468,11 @@ export default function NotifierTester() {
         {testEvents.map((test, index) => (
           <button
             key={index}
-            onClick={() => sendTestEvent(test.event, test.payload)}
+            onClick={() => sendTestEvent(test.event, test.payload, test.testMultiple)}
             style={{
               padding: "15px",
               fontSize: "14px",
-              backgroundColor: "#3a3a3a",
+              backgroundColor: test.testMultiple ? "#5a3a5a" : "#3a3a3a",
               color: "#f4e1a3",
               border: "2px solid #f4e1a3",
               borderRadius: "8px",
@@ -443,7 +485,7 @@ export default function NotifierTester() {
               e.target.style.color = "#1a1a1a";
             }}
             onMouseLeave={(e) => {
-              e.target.style.backgroundColor = "#3a3a3a";
+              e.target.style.backgroundColor = test.testMultiple ? "#5a3a5a" : "#3a3a3a";
               e.target.style.color = "#f4e1a3";
             }}
           >
@@ -464,8 +506,10 @@ export default function NotifierTester() {
         <ul style={{ fontSize: "14px", color: "#d1caa0", lineHeight: "1.6" }}>
           <li>Click any button to trigger a test notification</li>
           <li>Change the "Current Player ID" to see different perspectives</li>
-          <li>Notifications will auto-close after 5 seconds</li>
+          <li>Notifications will auto-close after 5 seconds with a fade-out animation</li>
           <li>Click outside the notification to close it manually</li>
+          <li>🃏 Buttons marked with card emoji test the flip animation for secrets</li>
+          <li>🔄 "Test Rapid Notifications" sends 3 notifications quickly to test the queue (1s delay between replacements)</li>
         </ul>
       </div>
 
