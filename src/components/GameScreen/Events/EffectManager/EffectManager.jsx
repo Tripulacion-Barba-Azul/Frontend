@@ -99,6 +99,8 @@ const EFFECT_ENDPOINTS = {
     "http://localhost:8000/play/{id}/actions/delay-the-murderers-escape",
   selectOwnCard: "http://localhost:8000/play/{id}/actions/select-own-card",
   selectDirection: "http://localhost:8000/play/{id}/actions/select-direction",
+  cardTradeSelection:
+    "http://localhost:8000/play/{id}/actions/select-any-player",
 };
 
 const log = (...a) => console.log("[EffectManager]", ...a);
@@ -257,6 +259,11 @@ export default function EffectManager({
           log("WS event:", data.event);
           setCurrentEvent("selectDirection");
           gotoStep("selectDirection");
+          break;
+        case "cardTradeSelection":
+          log("WS event:", data.event);
+          setCurrentEvent("cardTradeSelection");
+          gotoStep("selectPlayer");
           break;
         default:
           warn("Unknown WS event (EffectManager):", data.event);
@@ -458,6 +465,15 @@ export default function EffectManager({
         }
         break;
       }
+      case "cardTradeSelection": {
+        if (step === "selectPlayer" && selPlayer1 != null) {
+          sendEffectResponse("cardTradeSelection", {
+            playerId: actualPlayerId,
+            selectedPlayerId: selPlayer1,
+          });
+        }
+        break;
+      }
 
       default:
         break;
@@ -517,7 +533,8 @@ export default function EffectManager({
         return "Select one of your own cards to trade";
       case "selectDirection":
         return "Select a direction for the card trade effect";
-
+      case "cardTradeSelection":
+        return "Select one player to trade a card with";
       default:
         return "";
     }
@@ -526,6 +543,7 @@ export default function EffectManager({
   const playersForThisStep = useMemo(() => {
     switch (currentEvent) {
       case "stealSet":
+      case "cardTradeSelection":
         return playersExceptMe;
       case "selectAnyPlayer":
       case "andThenThereWasOneMore":
