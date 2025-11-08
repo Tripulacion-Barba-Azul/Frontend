@@ -83,7 +83,10 @@ describe("PlayNsfButton", () => {
     const [url, options] = mockFetch.mock.calls[0];
     expect(url).toBe("http://localhost:8000/play/123/actions/play-nsf");
     expect(options.method).toBe("POST");
-    expect(JSON.parse(options.body)).toEqual({}); // no cardId
+    expect(JSON.parse(options.body)).toEqual({
+      cardId: null,
+      playerId: 42,
+    }); // no cardId
 
     expect(mockOnPlaySuccess).toHaveBeenCalled();
   });

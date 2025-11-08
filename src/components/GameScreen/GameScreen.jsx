@@ -30,6 +30,7 @@ import EffectManager from "./Events/EffectManager/EffectManager";
 import PresentationScreen from "./PresentationScreen/PresentationScreen";
 import BackgroundMusicPlayer from "./BackgroundMusicPlayer/BackgroundMusicPlayer";
 import Clock from "./Clock/Clock";
+import Chat from "./Chat/Chat";
 
 export default function GameScreen() {
   // Router params & query: game and the current player id
@@ -198,11 +199,13 @@ export default function GameScreen() {
               close={setGamePresented} // parent-controlled "dismiss"
             />
           ) : (
-            <SyncOrchestrator
-              publicData={publicData}
-              privateData={privateData}
-              currentPlayerId={currentPlayerId}
-            />
+            <>
+              <SyncOrchestrator
+                publicData={publicData}
+                privateData={privateData}
+                currentPlayerId={currentPlayerId}
+              />
+            </>
           )}
         </>
       ) : (
@@ -230,6 +233,12 @@ export default function GameScreen() {
             privateData={privateData}
             actualPlayerId={currentPlayerId}
             wsRef={wsRef}
+          />
+          <Chat
+            websocket={wsRef.current}
+            currentPlayerId={currentPlayerId}
+            gameId={gameId}
+            players={publicData.players}
           />
           {gamePresented && (
             <Clock

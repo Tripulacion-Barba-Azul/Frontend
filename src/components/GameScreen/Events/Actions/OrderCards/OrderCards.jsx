@@ -146,7 +146,7 @@ export default function OrderCards({
                     key={groupKey} // clean remount on viewport/card-set changes
                     layout="position" // position-only animation (no size jumps)
                     as="div"
-                    axis="x"
+                    axis="x" // restrict reordering to the X axis
                     values={order.map((c) => c.id)}
                     onReorder={handleReorder}
                     className="odp-grid"

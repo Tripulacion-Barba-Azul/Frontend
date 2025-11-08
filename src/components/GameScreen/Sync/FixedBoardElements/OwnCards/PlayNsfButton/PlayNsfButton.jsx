@@ -25,7 +25,8 @@ export default function PlayNsfButton({
   const k = (selectedCards || []).length;
 
   const isInstant = (meta = []) =>
-    meta.length === 1 && String(meta[0]?.type ?? "").toLowerCase() === "instant";
+    meta.length === 1 &&
+    String(meta[0]?.type ?? "").toLowerCase() === "instant";
 
   const handleClick = async () => {
     setError("");
@@ -49,8 +50,8 @@ export default function PlayNsfButton({
 
       const body =
         k === 0
-          ? {} 
-          : { cardId: selectedCards[0], playerId };
+          ? { cardId: null, playerId: playerId }
+          : { cardId: selectedCards[0], playerId: playerId };
 
       const response = await fetch(url, {
         method: "POST",
@@ -75,13 +76,16 @@ export default function PlayNsfButton({
   const buttonText = loading ? "Sending..." : k === 0 ? "Skip" : "Not so fast!";
 
   // If user selected an invalid count, show disabled invalid style
-  const disabled = loading || k > 1 || (k === 1 && !isInstant(selectedCardsMeta));
+  const disabled =
+    loading || k > 1 || (k === 1 && !isInstant(selectedCardsMeta));
 
   return (
     <div>
       <button
         type="button"
-        className={`owncards-action ${disabled ? "owncards-action--invalid" : ""}`}
+        className={`owncards-action ${
+          disabled ? "owncards-action--invalid" : ""
+        }`}
         onClick={handleClick}
         disabled={disabled}
         title={k === 0 ? "Skip" : "Play Not so fast!"}
