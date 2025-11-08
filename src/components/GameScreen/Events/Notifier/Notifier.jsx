@@ -443,19 +443,31 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
   };
 
   const handleCardsPlayed = (payload) => {
-    const { playerId, cards, actionType } = payload;
+    const { playerId, cards, actionType, setOwnerId } = payload;
     const p = getPlayerNameColored(playerId);
+    let s = ""
+    let isActualPlayerSet = false
+    setOwnerId ? (isActualPlayerSet = playerId == setOwnerId,
+                 s =  getPlayerNameColored(setOwnerId))
+                 : isActualPlayerSet = false
+
     let actionText = "played cards";
     if (actionType === "set") actionText = "played a set of detectives";
     else if (actionType === "detective")
-      actionText = "added a detective card to a set";
-    else if (actionType === "event") actionText = "played an event card";
+      actionText = isActualPlayerSet ? `added a detective card <br /> to a set of his own` : 
+                                       `added a detective card <br /> to a set owned by ${s}`;
+    else if (actionType === "event") 
+      actionText = "played an event card";
+    else if (actionType == "instant") {
+      actionText = "played a Not so Fast!";
+    }
 
     const displayCards = cards.map((c) => ({
       ...c,
       isSecret: false,
       revealed: false,
     }));
+
     setCurrentNotification({
       text: `${p} ${actionText}`,
       cards: displayCards,

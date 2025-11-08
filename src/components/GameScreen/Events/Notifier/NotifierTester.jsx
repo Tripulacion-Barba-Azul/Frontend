@@ -250,7 +250,8 @@ export default function NotifierTester() {
       payload: {
         playerId: 2,
         actionType: "detective",
-        cards: [{ id: 20, name: "Miss Marple" }]
+        cards: [{ id: 20, name: "Miss Marple" }],
+        setOwnerId: 1
       }
     },
     {
@@ -260,6 +261,15 @@ export default function NotifierTester() {
         playerId: 3,
         actionType: "event",
         cards: [{ id: 40, name: "Look in to the Ashes" }]
+      }
+    },
+    {
+      name: "Cards Played (instant)",
+      event: "cardsPlayed",
+      payload: {
+        playerId: 4,
+        actionType: "instant",
+        cards: [{ id: 50, name: "Not so Fast!" }]
       }
     },
     {

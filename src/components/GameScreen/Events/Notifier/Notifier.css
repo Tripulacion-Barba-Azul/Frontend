@@ -9,9 +9,8 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  cursor: pointer;
   animation: fadeIn 0.15s ease;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .notifier-content {
