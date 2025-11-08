@@ -10,6 +10,7 @@ import {
   CARDS_MAP,
   SETS_MAP,
   SECRETS_MAP,
+  AVATAR_MAP,
 } from "../../../../utils/generalMaps";
 import "./Notifier.css";
 
@@ -96,6 +97,75 @@ function Notification({ text, cards = [], setImage = null, onClose, shouldAutoCl
     document.body
   );
 }
+
+function PointYourSuspiciousOverlay({ players, actualPlayerId, playersSelections, selectedPlayerId, onClose }) {
+  const containerRef = useRef(null);
+
+  // Calcular orden circular con actualPlayer abajo
+  const total = players.length;
+  const actualIndex = players.findIndex(p => p.id === actualPlayerId);
+  const orderedPlayers = [...players.slice(actualIndex), ...players.slice(0, actualIndex)];
+
+  // Mapear selecciones
+  const selectionsMap = Object.fromEntries(playersSelections);
+
+  const radius = 120; // tamaño del círculo (ajustable)
+  const center = { x: 150, y: 150 }; // centro del círculo
+
+  return createPortal(
+    <div className="notifier-overlay special-pointyour" onClick={onClose}>
+      <div className="notifier-content" onClick={e => e.stopPropagation()}>
+        <div className="notifier-text"></div>
+  
+        <div className="pointyour-container" ref={containerRef}>
+          {orderedPlayers.map((player, i) => {
+            const angle = (Math.PI * 2 * i) / total + Math.PI / 2; // jugador actual abajo
+            const x = center.x + radius * Math.cos(angle);
+            const y = center.y + radius * Math.sin(angle);
+  
+            const targetId = selectionsMap[player.id];
+            const targetIndex = orderedPlayers.findIndex(p => p.id === targetId);
+            const targetAngle = (Math.PI * 2 * targetIndex) / total + Math.PI / 2;
+  
+            // Calcular dirección (rotación de la flecha)
+            const dx = Math.cos(targetAngle - angle);
+            const dy = Math.sin(targetAngle - angle);
+            const rotation = (Math.atan2(dy, dx) * 180) / Math.PI;
+  
+            const isSelected = player.id === selectedPlayerId;
+  
+            return (
+              <div
+                key={player.id}
+                className={`player-avatar-wrapper ${isSelected ? "selected" : ""}`}
+                style={{
+                  left: `${x}px`,
+                  top: `${y}px`,
+                  transform: "translate(-50%, -50%)",
+                }}
+              >
+                <img
+                  className="player-avatar"
+                  src={AVATAR_MAP[player.avatar]}
+                  alt={player.name}
+                />
+                <div
+                  className="arrow-pointer"
+                  style={{
+                    transform: `rotate(${rotation}deg) translateY(-30px)`,
+                  }}
+                />
+              </div>
+            );
+          })}
+        </div>
+  
+        <div className="notifier-hint">Click outside to close</div>
+      </div>
+    </div>,
+    document.body
+  );
+}  
 
 /** Orchestrator: listens WS events and opens one notification at a time (display-only) */
 export default function Notifier({ publicData, actualPlayerId, wsRef }) {
@@ -562,11 +632,16 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
 
   const handlePointYourSuspicious = (payload) => {
     const { playersSelections, selectedPlayerId } = payload;
-    
+    const players = publicData.players;
+  
     showNotification({
-      text: `Point Your Suspicious was played`,
+      text: "Point Your Suspicious",
       cards: [],
       setImage: null,
+      customType: "pointYourSuspicious",
+      players,
+      playersSelections,
+      selectedPlayerId,
     });
   };
 
@@ -646,6 +721,18 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
 
   if (!currentNotification) return null;
 
+  if (currentNotification.customType === "pointYourSuspicious") {
+    return (
+      <PointYourSuspiciousOverlay
+        players={currentNotification.players}
+        actualPlayerId={actualPlayerId}
+        playersSelections={currentNotification.playersSelections}
+        selectedPlayerId={currentNotification.selectedPlayerId}
+        onClose={closeNotification}
+      />
+    );
+  }
+  
   return (
     <Notification
       text={currentNotification.text}
@@ -655,4 +742,5 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
       shouldAutoClose={!pendingNotification}
     />
   );
+  
 }

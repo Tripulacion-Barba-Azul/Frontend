@@ -14,7 +14,7 @@
 }
 
 .notifier-overlay.closing {
-  animation: fadeOut 0.15s ease;
+  animation: fadeOut 0.5s ease;
 }
 
 .notifier-content {
@@ -183,4 +183,59 @@
     width: 4.063vw; /* 78px */
     height: 4.063vw; /* 78px */
   }
+}
+
+/* --- base already correct, keeping transparent overlay --- */
+
+/* POINT YOUR MODE (inside notifier-content) */
+.special-pointyour .notifier-content {
+  background: rgba(0, 0, 0, 0.6); /* un poco más oscuro para resaltar */
+  padding: 2.083vw; /* ~40px */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pointyour-container {
+  position: relative;
+  width: 15.625vw; /* 300px */
+  height: 15.625vw;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1.042vw auto;
+}
+
+.player-avatar-wrapper {
+  position: absolute;
+  width: 3.333vw; /* 64px */
+  height: 3.333vw;
+  transition: all 0.3s ease;
+  transform-origin: center center;
+}
+
+.player-avatar-wrapper.selected img {
+  border: 0.156vw solid #fff; /* 3px */
+  box-shadow: 0 0 0.625vw #fff; /* 12px */
+}
+
+.player-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.arrow-pointer {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  border-left: 0.313vw solid transparent; /* 6px */
+  border-right: 0.313vw solid transparent;
+  border-top: 0.625vw solid rgba(255, 255, 255, 0.8); /* 12px */
+  transform-origin: center top;
+  transition: transform 0.3s ease;
 }
