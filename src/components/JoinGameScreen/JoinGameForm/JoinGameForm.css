@@ -234,3 +234,26 @@
 .private-game .join-game-submit-button {
   margin: 1vw auto 0; /* Reduced from 1.667vw to save space */
 }
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input {
+  width: 100%;
+  padding-right: 2vw; /* espacio para el botón del ojo */
+}
+
+.toggle-password-visibility {
+  position: absolute;
+  right: 0.8vw;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
