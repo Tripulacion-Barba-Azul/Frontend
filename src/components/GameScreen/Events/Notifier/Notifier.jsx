@@ -119,7 +119,7 @@ function PointYourSuspiciousOverlay({
 
   // Posiciones circulares
   const positions = orderedPlayers.map((player, i) => {
-    const angle = (Math.PI * 2 * i) / total + Math.PI / 2; // jugador actual abajo
+    const angle = Math.PI / 2 - (Math.PI * 2 * i) / total;
     const x = 50 + radiusPercent * Math.cos(angle);
     const y = 50 + radiusPercent * Math.sin(angle);
     return { id: player.id, player, angle, x, y };
@@ -156,12 +156,12 @@ function PointYourSuspiciousOverlay({
                 id="arrowhead"
                 markerWidth="6"
                 markerHeight="6"
-                refX="4"
+                refX="3"
                 refY="3"
                 orient="auto"
                 markerUnits="strokeWidth"
               >
-                <path d="M0,0 L6,3 L0,6 z" fill="rgba(244,225,163,1)" />
+                <path d="M0,0.95 L5,3 L0,5 z" fill="rgba(244,225,163,1)" />
               </marker>
             </defs>
 
@@ -177,7 +177,7 @@ function PointYourSuspiciousOverlay({
               const ux = vx / dist;
               const uy = vy / dist;
 
-              const len = 19; // 🔹 más corto que antes
+              const len = 22; // 🔹 más corto que antes
               const x1 = pos.x + ux * 4;
               const y1 = pos.y + uy * 4;
               const x2 = pos.x + ux * len;
