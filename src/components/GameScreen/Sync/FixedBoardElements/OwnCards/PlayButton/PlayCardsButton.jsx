@@ -72,7 +72,7 @@ function validateDetectiveSet(meta = []) {
   if (uniqNames.length === 1 && uniqNames[0] === norm("Harley Quin")) {
     return {
       ok: false,
-      message: `Detective set cannot be composed only of "Harley Quin"`,
+      message: `Set cannot be composed only of "Harley Quin"`,
     };
   }
 
@@ -84,7 +84,7 @@ function validateDetectiveSet(meta = []) {
   if (uniqNoHQ.length === 0) {
     return {
       ok: false,
-      message: `Detective set cannot be composed only of "Harley Quin"`,
+      message: `Set cannot be composed only of "Harley Quin"`,
     };
   }
 
