@@ -26,13 +26,17 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .notifier-text {
   color: #f4e1a3;
-  font-size: 1.510vw; /* 1.82rem -> 29.12px */
+  font-size: 1.51vw; /* 1.82rem -> 29.12px */
   font-weight: bold;
   margin-bottom: 1.354vw; /* 26px */
   font-family: "Metropolis", sans-serif;
@@ -87,15 +91,15 @@
     margin: 1.354vw; /* 26px */
     padding: 1.354vw; /* 26px */
   }
-  
+
   .notifier-text {
     font-size: 1.302vw; /* 1.56rem -> 24.96px */
   }
-  
+
   .notifier-card {
     width: 6.771vw; /* 130px */
   }
-  
+
   .notifier-set img {
     width: 4.063vw; /* 78px */
     height: 4.063vw; /* 78px */
