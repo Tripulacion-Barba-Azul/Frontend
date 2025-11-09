@@ -133,7 +133,71 @@ export default function NotifierTester() {
           }
         ],
         sets: []
-      }
+      },
+      {
+        id: 5,
+        name: "ppplatte",
+        avatar: 5,
+        socialDisgrace: false,
+        turnOrder: 1,
+        turnStatus: "playing",
+        cardCount: 5,
+        secrets: [
+          {
+            id: 1,
+            revealed: true,
+            name: "You are the murderer"
+          },
+          {
+            id: 2,
+            revealed: false,
+            name: "Prankster"
+          }
+        ],
+        sets: [
+          {
+            setId: 1,
+            setName: "Hercule Poirot",
+            cards: [
+              { id: 10, name: "Hercule Poirot" },
+              { id: 11, name: "Hercule Poirot" },
+              { id: 12, name: "Hercule Poirot" }
+            ]
+          }
+        ]
+      },
+      {
+        id: 6,
+        name: "jajiajsdfa",
+        avatar: 6,
+        socialDisgrace: false,
+        turnOrder: 1,
+        turnStatus: "playing",
+        cardCount: 5,
+        secrets: [
+          {
+            id: 1,
+            revealed: true,
+            name: "You are the murderer"
+          },
+          {
+            id: 2,
+            revealed: false,
+            name: "Prankster"
+          }
+        ],
+        sets: [
+          {
+            setId: 1,
+            setName: "Hercule Poirot",
+            cards: [
+              { id: 10, name: "Hercule Poirot" },
+              { id: 11, name: "Hercule Poirot" },
+              { id: 12, name: "Hercule Poirot" }
+            ]
+          }
+        ]
+      },
     ]
   };
 
@@ -304,11 +368,14 @@ export default function NotifierTester() {
       event: "notifierPointYourSuspicious",
       payload: {
         playersSelections: [
-          [1, 2],
+          [1, 3],
           [2, 3],
-          [3, 4]
+          [3, 2],
+          [4, 1],
+          [5, 4],
+          [6, 3]
         ],
-        selectedPlayerId: 2
+        selectedPlayerId: 3
       }
     },
     {

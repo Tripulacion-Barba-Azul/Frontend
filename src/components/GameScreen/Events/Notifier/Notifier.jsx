@@ -98,74 +98,147 @@ function Notification({ text, cards = [], setImage = null, onClose, shouldAutoCl
   );
 }
 
-function PointYourSuspiciousOverlay({ players, actualPlayerId, playersSelections, selectedPlayerId, onClose }) {
-  const containerRef = useRef(null);
-
-  // Calcular orden circular con actualPlayer abajo
+function PointYourSuspiciousOverlay({
+  players,
+  actualPlayerId,
+  playersSelections,
+  selectedPlayerId,
+  onClose,
+  getPlayerNameColored, 
+}) {
+  // Ordenar jugadores para que el actual quede abajo
   const total = players.length;
-  const actualIndex = players.findIndex(p => p.id === actualPlayerId);
-  const orderedPlayers = [...players.slice(actualIndex), ...players.slice(0, actualIndex)];
+  const actualIndex = Math.max(0, players.findIndex((p) => p.id === actualPlayerId));
+  const orderedPlayers =
+    total > 0
+      ? [...players.slice(actualIndex), ...players.slice(0, actualIndex)]
+      : players;
 
-  // Mapear selecciones
-  const selectionsMap = Object.fromEntries(playersSelections);
+  const selectionsMap = Object.fromEntries(playersSelections || []);
+  const radiusPercent = 43.5;
 
-  const radius = 120; // tamaño del círculo (ajustable)
-  const center = { x: 150, y: 150 }; // centro del círculo
+  // Posiciones circulares
+  const positions = orderedPlayers.map((player, i) => {
+    const angle = (Math.PI * 2 * i) / total + Math.PI / 2; // jugador actual abajo
+    const x = 50 + radiusPercent * Math.cos(angle);
+    const y = 50 + radiusPercent * Math.sin(angle);
+    return { id: player.id, player, angle, x, y };
+  });
+
+  const selectedPlayer = players.find((p) => p.id === selectedPlayerId);
+
+  const headline = `${getPlayerNameColored(selectedPlayer?.id ?? "Unknown")} was pointed as a suspicious!`;
 
   return createPortal(
     <div className="notifier-overlay special-pointyour" onClick={onClose}>
-      <div className="notifier-content" onClick={e => e.stopPropagation()}>
-        <div className="notifier-text"></div>
-  
-        <div className="pointyour-container" ref={containerRef}>
-          {orderedPlayers.map((player, i) => {
-            const angle = (Math.PI * 2 * i) / total + Math.PI / 2; // jugador actual abajo
-            const x = center.x + radius * Math.cos(angle);
-            const y = center.y + radius * Math.sin(angle);
-  
-            const targetId = selectionsMap[player.id];
-            const targetIndex = orderedPlayers.findIndex(p => p.id === targetId);
-            const targetAngle = (Math.PI * 2 * targetIndex) / total + Math.PI / 2;
-  
-            // Calcular dirección (rotación de la flecha)
-            const dx = Math.cos(targetAngle - angle);
-            const dy = Math.sin(targetAngle - angle);
-            const rotation = (Math.atan2(dy, dx) * 180) / Math.PI;
-  
-            const isSelected = player.id === selectedPlayerId;
-  
+      <div className="notifier-content" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="notifier-text"
+          style={{ marginBottom: "1vw" }}
+          dangerouslySetInnerHTML={{ __html: headline }}
+        />
+
+        <div
+          className="pointyour-container"
+          role="img"
+          aria-label="Point your suspicious"
+          onClick={(e) => e.stopPropagation()} // 🔹 evita cierre accidental
+        >
+          {/* Flechas (más cortas) */}
+          <svg
+            className="pointyour-svg"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            aria-hidden
+          >
+            <defs>
+              <marker
+                id="arrowhead"
+                markerWidth="6"
+                markerHeight="6"
+                refX="4"
+                refY="3"
+                orient="auto"
+                markerUnits="strokeWidth"
+              >
+                <path d="M0,0 L6,3 L0,6 z" fill="rgba(244,225,163,1)" />
+              </marker>
+            </defs>
+
+            {positions.map((pos) => {
+              const targetId = selectionsMap[pos.id];
+              if (!targetId) return null;
+              const targetPos = positions.find((p) => p.id === targetId);
+              if (!targetPos) return null;
+
+              const vx = targetPos.x - pos.x;
+              const vy = targetPos.y - pos.y;
+              const dist = Math.sqrt(vx * vx + vy * vy) || 1;
+              const ux = vx / dist;
+              const uy = vy / dist;
+
+              const len = 19; // 🔹 más corto que antes
+              const x1 = pos.x + ux * 4;
+              const y1 = pos.y + uy * 4;
+              const x2 = pos.x + ux * len;
+              const y2 = pos.y + uy * len;
+
+              return (
+                <line
+                  key={`line-${pos.id}`}
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  stroke="rgba(244,225,163,1)"
+                  strokeWidth={1.2}
+                  strokeLinecap="round"
+                  markerEnd="url(#arrowhead)"
+                />
+              );
+            })}
+          </svg>
+
+          {/* Avatares y nombres coloreados */}
+          {positions.map((pos) => {
+            const isSelected = pos.id === selectedPlayerId;
+            const coloredName = getPlayerNameColored(pos.id);
             return (
               <div
-                key={player.id}
+                key={pos.id}
                 className={`player-avatar-wrapper ${isSelected ? "selected" : ""}`}
                 style={{
-                  left: `${x}px`,
-                  top: `${y}px`,
+                  left: `${pos.x}%`,
+                  top: `${pos.y}%`,
                   transform: "translate(-50%, -50%)",
                 }}
+                title={pos.player.name}
+                onClick={(e) => e.stopPropagation()}
               >
+                <div
+                  className="player-label"
+                  aria-hidden
+                  dangerouslySetInnerHTML={{ __html: coloredName }}
+                />
                 <img
                   className="player-avatar"
-                  src={AVATAR_MAP[player.avatar]}
-                  alt={player.name}
-                />
-                <div
-                  className="arrow-pointer"
-                  style={{
-                    transform: `rotate(${rotation}deg) translateY(-30px)`,
-                  }}
+                  src={AVATAR_MAP[pos.player.avatar]}
+                  alt={pos.player.name}
                 />
               </div>
             );
           })}
         </div>
-  
-        <div className="notifier-hint">Click outside to close</div>
+
+        <div className="notifier-hint" style={{ marginTop: "1vw" }}>
+          Click anywhere to close
+        </div>
       </div>
     </div>,
     document.body
   );
-}  
+}
+
 
 /** Orchestrator: listens WS events and opens one notification at a time (display-only) */
 export default function Notifier({ publicData, actualPlayerId, wsRef }) {
@@ -729,6 +802,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
         playersSelections={currentNotification.playersSelections}
         selectedPlayerId={currentNotification.selectedPlayerId}
         onClose={closeNotification}
+        getPlayerNameColored={getPlayerNameColored}
       />
     );
   }
