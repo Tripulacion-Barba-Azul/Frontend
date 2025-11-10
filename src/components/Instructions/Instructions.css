@@ -2,7 +2,7 @@
 .ins-launcher {
   position: fixed;
   bottom: 1vw; /* 20px -> 20/19.2 = 1.042vw */
-  left: 95.302vw; /* 25px -> 25/19.2 = 1.302vw */
+  left: 96vw; /* 25px -> 25/19.2 = 1.302vw */
   padding: 0;
   border: 0;
   background: none;

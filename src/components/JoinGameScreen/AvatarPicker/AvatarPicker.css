@@ -22,9 +22,8 @@
   background: #1e1e1ee4;
   border-radius: 0.9375vw;             /* 18px -> 18/19.2 = 0.9375vw */
   padding: 5vw;                        /* 6rem -> 96px -> 96/19.2 = 5vw */
-  width: 62.5vw;                       /* 1200px -> 1200/19.2 = 62.5vw */
-  max-width: 62.5vw;
-  height: 45vw;
+  width: 92vw;                       /* 1200px -> 1200/19.2 = 62.5vw */
+  height: 41vw;
   color: #f4e1a3;
   font-family: "Metropolis", sans-serif;
   box-shadow: 0 0 2.344vw rgba(0, 0, 0, 0.7); /* 45px blur -> 45/19.2 = 2.344vw */
@@ -71,7 +70,7 @@
 /* Close button (positioned within modal header), explicit offsets and paddings */
 .ap-close {
   position: absolute;
-  right: -4.042vw;                     /* ~20px -> 20/19.2 = 1.042vw from modal inner edge */
+  right: -18.9vw;                     /* ~20px -> 20/19.2 = 1.042vw from modal inner edge */
   top: -4.25vw;                       /* give a small top offset: ~12px -> 12/19.2 = 0.625vw */
   background: transparent;
   border: 0.104vw solid #f4e1a30d;    /* 2px */
@@ -85,7 +84,7 @@
 }
 
 .ap-close:hover {
-  background: rgba(244, 225, 163, 0.1);
+  background: rgb(163, 34, 34);
   border-color: #f4e1a34d;
 }
 
@@ -96,15 +95,16 @@
 */
 .ap-grid {
   display: grid;
-  grid-template-columns: repeat(3, 13.542vw); /* 260px each */
-  gap: 2.5vw;                                  /* 3rem -> 48px -> 48/19.2 = 2.5vw */
-  width: 56.5vw;                               /* inner width */
-  height: 45vw;
+  grid-template-columns: repeat(5, 15vw);  
+  gap: 2.5vw;
+  width: 56.5vw;
+  height: auto;
   justify-items: center;
+  align-content: center;
+  justify-content: center;
   box-sizing: border-box;
-  align-content: center;   /* Center rows vertically */
-  justify-content: center; /* Center grid horizontally */
 }
+
 
 /* Avatar button */
 .ap-avatarBtn {

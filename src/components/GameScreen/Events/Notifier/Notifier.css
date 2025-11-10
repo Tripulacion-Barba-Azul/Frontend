@@ -4,13 +4,17 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(0, 0, 0, 0.3);
+  background: transparent;
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 100000;
-  cursor: pointer;
+  z-index: 1000;
   animation: fadeIn 0.15s ease;
+  pointer-events: auto;
+}
+
+.notifier-overlay.closing {
+  animation: fadeOut 0.15s ease;
 }
 
 .notifier-content {
@@ -22,12 +26,22 @@
   text-align: center;
   cursor: default;
   box-shadow: 0 0 1.563vw rgba(0, 0, 0, 0.3); /* 30px */
-  animation: fadeIn 0.15s ease; /* <-- change this */
+  animation: fadeIn 0.15s ease;
+  pointer-events: auto;
+}
+
+.notifier-overlay.closing .notifier-content {
+  animation: fadeOut 0.15s ease;
 }
 
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 .notifier-text {
@@ -74,6 +88,75 @@
   object-fit: cover;
 }
 
+/* Card flip animations */
+.card-flip-container {
+  width: 100%;
+  height: 100%;
+  perspective: 1000px;
+}
+
+.card-flip-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.card-flip-container.flip-to-front .card-flip-inner {
+  animation: flipToFront 0.6s ease-in-out;
+  animation-fill-mode: forwards;
+}
+
+.card-flip-container.flip-to-back .card-flip-inner {
+  animation: flipToBack 0.6s ease-in-out;
+  animation-fill-mode: forwards;
+}
+
+.card-flip-front,
+.card-flip-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.card-flip-front {
+  transform: rotateY(0deg);
+}
+
+.card-flip-back {
+  transform: rotateY(180deg);
+}
+
+.card-flip-front img,
+.card-flip-back img {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.521vw; /* 10px */
+  box-shadow: 0 0.104vw 0.417vw rgba(0, 0, 0, 0.4); /* 0 2px 8px */
+  object-fit: cover;
+}
+
+/* Flip animations */
+@keyframes flipToFront {
+  from {
+    transform: rotateY(180deg);
+  }
+  to {
+    transform: rotateY(0deg);
+  }
+}
+
+@keyframes flipToBack {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(180deg);
+  }
+}
+
 .notifier-hint {
   color: #d1caa0;
   font-size: 0.651vw; /* 0.78rem -> 12.48px */
@@ -81,23 +164,92 @@
   opacity: 0.8;
 }
 
-/* Responsive design */
+/* PointYourSuspicious: container sizing in vw, SVG arrows and labels */
+.special-pointyour .notifier-content {
+  /* slightly different padding for this mode */
+  padding: 2.083vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Container size (responsive via vw) */
+.pointyour-container {
+  position: relative;
+  width: 20.625vw; /* ~300px */
+  height: 20.625vw;
+  border-radius: 50%;
+  display: block;
+  margin: 1.5vw 0;
+}
+
+/* SVG covers the whole container and uses percentages (viewBox 0 0 100 100) */
+.pointyour-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none; /* allow clicks through to overlay (close) */
+}
+
+/* Avatar wrapper size in vw */
+.player-avatar-wrapper {
+  position: absolute;
+  width: 4.2vw; /* ~64px */
+  height: 4.2vw;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Avatar image */
+.player-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  border: 0.208vw solid rgb(42, 42, 42); /* subtle inner border */
+}
+
+/* Label over avatar */
+.player-label {
+  position: absolute;
+  top: 4.2vw; /* sits above the avatar, overlapping */
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.9vw;
+  padding: 0.05vw 0.4vw;
+  border-radius: 0.5vw;
+  background: rgba(0,0,0,0.6);
+  color: #f4e1a3;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Highlight selected player */
+.player-avatar-wrapper.selected .player-avatar {
+  border: 0.16vw solid #f32727;
+  box-shadow: 0 0 1.5vw 0.5vw #f32727;
+}
+
+/* Small screens tweak */
 @media (max-width: 768px) {
-  .notifier-content {
-    margin: 1.354vw; /* 26px */
-    padding: 1.354vw; /* 26px */
+  .pointyour-container {
+    width: 40vw;
+    height: 40vw;
   }
-  
-  .notifier-text {
-    font-size: 1.302vw; /* 1.56rem -> 24.96px */
+  .player-avatar-wrapper {
+    width: 10vw;
+    height: 10vw;
   }
-  
-  .notifier-card {
-    width: 6.771vw; /* 130px */
-  }
-  
-  .notifier-set img {
-    width: 4.063vw; /* 78px */
-    height: 4.063vw; /* 78px */
+  .player-label {
+    font-size: 2.4vw;
+    top: -2.6vw;
+    padding: 0.4vw 1vw;
   }
 }

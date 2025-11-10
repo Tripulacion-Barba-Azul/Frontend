@@ -15,7 +15,7 @@
  * @property {boolean} revealed - Selection rule: `true` → only revealed; `false` → only hidden.
  * @property {string} text - Prompt shown at the top.
  * @property {(id:number)=>void} selectedSecretId - Called after confirm animation with chosen secret id.
- * @property {(() => void)|null} [goBack] - Optional “back” handler; if omitted, back button is hidden.
+ * @property {(() => void)|null} [goBack] - Optional "back" handler; if omitted, back button is hidden.
  */
 
 import React, { useState, useMemo, useCallback } from "react";
@@ -36,6 +36,7 @@ export default function SelectSecret({
   const [isFlipping, setIsFlipping] = useState({});
   const [localSecrets, setLocalSecrets] = useState(secrets);
   const [isConfirming, setIsConfirming] = useState(false);
+  const [flippedCards, setFlippedCards] = useState({}); // Track permanently flipped cards
 
   // Sync local secrets when props change; clear transient UI state
   React.useEffect(() => {
@@ -43,6 +44,7 @@ export default function SelectSecret({
     setSelectedCardId(null);
     setIsConfirming(false);
     setIsFlipping({});
+    // Keep flippedCards state - don't reset it
   }, [secrets]);
 
   // Only allow selection that matches the `revealed` rule
@@ -70,25 +72,26 @@ export default function SelectSecret({
   const handleConfirm = () => {
     if (!selectionInvalid && selectedCardId && !isConfirming) {
       setIsConfirming(true);
-      setIsFlipping((prev) => ({ ...prev, [selectedCardId]: true }));
-
-      setTimeout(() => {
-        // Local flip for user feedback
-        setLocalSecrets((prevSecrets) =>
-          prevSecrets.map((secret) =>
-            secret.id === selectedCardId
-              ? { ...secret, revealed: !secret.revealed }
-              : secret
-          )
-        );
+      
+      // Solo flipear si revealed es true
+      if (revealed) {
+        setIsFlipping((prev) => ({ ...prev, [selectedCardId]: true }));
 
         setTimeout(() => {
-          setIsFlipping((prev) => ({ ...prev, [selectedCardId]: false }));
-        }, 50);
+          // Mark this card as permanently flipped
+          setFlippedCards((prev) => ({ ...prev, [selectedCardId]: true }));
 
-        // Notify parent
+          setTimeout(() => {
+            setIsFlipping((prev) => ({ ...prev, [selectedCardId]: false }));
+          }, 50);
+
+          // Notify parent
+          selectedSecretId(selectedCardId);
+        }, 600);
+      } else {
+        // Si revealed es false, solo notificar sin flipear
         selectedSecretId(selectedCardId);
-      }, 600);
+      }
     }
   };
 
@@ -104,6 +107,7 @@ export default function SelectSecret({
             localSecrets.map((secret) => {
               const isSelectable = canSelectSecret(secret);
               const isSelected = selectedCardId === secret.id;
+              const isFlipped = flippedCards[secret.id];
 
               return (
                 <div
@@ -123,15 +127,16 @@ export default function SelectSecret({
                   <div
                     className={[
                       "card-flip-container",
-                      isFlipping[secret.id] && secret.revealed
-                        ? "flipping"
-                        : "",
+                      isFlipping[secret.id] ? "flipping" : "",
+                      isFlipped ? "flipped" : "",
                     ].join(" ")}
                   >
+                    {/* CARD FRONT - Lo que se ve inicialmente */}
                     <div className="card-face card-front">
                       {!secret.revealed &&
                       actualPlayerId === playerId &&
                       secret.name ? (
+                        // Carta propia no revelada: mostrar secreto con overlay
                         <>
                           {SECRETS_MAP[secret.name] && (
                             <img
@@ -147,6 +152,7 @@ export default function SelectSecret({
                           />
                         </>
                       ) : secret.revealed ? (
+                        // Carta revelada: mostrar imagen del secreto
                         SECRETS_MAP[secret.name] && (
                           <img
                             src={SECRETS_MAP[secret.name]}
@@ -154,6 +160,7 @@ export default function SelectSecret({
                           />
                         )
                       ) : (
+                        // Carta oculta: mostrar dorso
                         <img
                           src="/Cards/05-secret_front.png"
                           alt="Secret hidden"
@@ -161,10 +168,12 @@ export default function SelectSecret({
                       )}
                     </div>
 
+                    {/* CARD BACK - Lo que se ve después del flip */}
                     <div className="card-face card-back">
                       {!secret.revealed &&
                       actualPlayerId === playerId &&
                       secret.name ? (
+                        // Carta propia no revelada: al girar mostrar el secreto limpio
                         SECRETS_MAP[secret.name] && (
                           <img
                             src={SECRETS_MAP[secret.name]}
@@ -172,11 +181,13 @@ export default function SelectSecret({
                           />
                         )
                       ) : secret.revealed ? (
+                        // Carta revelada: al girar debe mostrar el DORSO
                         <img
                           src="/Cards/05-secret_front.png"
-                          alt="Secret hidden"
+                          alt="Secret back"
                         />
                       ) : (
+                        // Carta oculta de otro jugador: mostrar secreto
                         SECRETS_MAP[secret.name] && (
                           <img
                             src={SECRETS_MAP[secret.name]}

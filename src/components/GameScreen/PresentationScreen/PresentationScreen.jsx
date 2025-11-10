@@ -5,26 +5,15 @@ import { useEffect, useRef } from "react";
 import { AVATAR_MAP } from "../../../utils/generalMaps";
 
 /**
- * PresentationScreen
+ * @component PresentationScreen
+ * @description Intro screen that shows the player's role, explanatory text,
+ * optional ally chip, and a "Ready" CTA. All sizing uses vw-based CSS to stay
+ * visually consistent across zoom/resolution changes.
  *
- * Props (see API DOCUMENT for canonical shapes):
+ * Props:
  * - actualPlayer: { name: string; role: "murderer" | "accomplice" | "detective" | string }
  * - ally?: { name: string; avatar?: number|string } | null
  * - close: (v: boolean) => void
- *
- * Behavior (unchanged when an ally exists):
- * - murderer/accomplice:
- *    - shows role image
- *    - left text box: role overview
- *    - right text box: ally description
- *    - ally chip: to the RIGHT, outside the textbox
- * - detective:
- *    - shows detective image
- *    - single text box only (placement controlled by .solo-box/.detective-box)
- *
- * Extra:
- * - "I am ready" calls close(true) immediately.
- * - Auto-calls close(true) after 20 seconds.
  */
 export default function PresentationScreen({
   actualPlayer,
@@ -33,7 +22,7 @@ export default function PresentationScreen({
 }) {
   const timeoutRef = useRef(null);
 
-  // Auto-close via parent's setter after 20s
+  // Auto-close after 20s
   useEffect(() => {
     timeoutRef.current = setTimeout(() => {
       try {
@@ -60,16 +49,16 @@ export default function PresentationScreen({
   const role = String(actualPlayer?.role || "detective").toLowerCase();
   const isDetective = role === "detective";
 
-  /** Flag: should we collapse to a single box? */
+  // Collapse to a single text box in detective or when murderer/accomplice has no ally
   const shouldSolo =
     isDetective || (!ally && (role === "murderer" || role === "accomplice"));
 
-  /** Colored name inline */
+  /* Inline colored name */
   const Name = ({ name, role }) => (
     <strong className={`role-name role-${role}`}>{name}</strong>
   );
 
-  /** Ally chip (name box + avatar) following PlayerBadge minimal aesthetics */
+  /* Ally chip (name plate + avatar) */
   const AllyChip = ({ name, avatarSrc, role }) => {
     if (!name || !avatarSrc) return null;
     const ring =
@@ -110,15 +99,16 @@ export default function PresentationScreen({
   let rightChip = null;
 
   if (role === "murderer") {
-    // Ally is the accomplice
     cardSrc = murdererSrc || cardSrc;
     leftContent = (
       <p>
         <Name name={playerName} role="murderer" />, you are the murderer.
         <br />
-        <br /> Your goal is to escape without being caught. When the deck runs
-        out of cards, you escape and win the game. <br /> Beware, detectives may
-        find you suspicious if you are not careful. <br></br>
+        <br />
+        Your goal is to escape without being caught. When the deck runs out of
+        cards, you escape and win the game. Beware, detectives may find you
+        suspicious if you are not careful.
+        <br />
         <span style={{ fontWeight: 700, fontStyle: "italic" }}>
           Use your cards wisely to buy time and mislead the other players.
         </span>
@@ -131,27 +121,27 @@ export default function PresentationScreen({
         ) : (
           "Your accomplice"
         )}{" "}
-        is your accomplice. <br />
+        is your accomplice.
+        <br />
         <br />
         They&apos;ll help you achieve your goals, but you won&apos;t lose if
-        they get caught. <br />
-        Work together to outsmart the detectives.
+        they get caught. Work together to outsmart the detectives.
       </p>
     );
     rightChip = (
       <AllyChip name={allyName} avatarSrc={allyAvatarSrc} role="accomplice" />
     );
   } else if (role === "accomplice") {
-    // Ally is the murderer
     cardSrc = accompliceSrc || cardSrc;
     leftContent = (
       <p>
-        <Name name={playerName} role="accomplice" />, you are the accomplice.{" "}
+        <Name name={playerName} role="accomplice" />, you are the accomplice.
         <br />
         <br />
         Your goal is to help the murderer escape. When the deck runs out of
-        cards, both of you escape and win the game. <br /> But beware,
-        detectives may find you suspicious if you are not careful. <br></br>{" "}
+        cards, both of you escape and win the game. Beware, detectives may find
+        you suspicious if you are not careful.
+        <br />
         <span style={{ fontWeight: 700, fontStyle: "italic" }}>
           Work together to buy time and mislead the other players.
         </span>
@@ -162,9 +152,9 @@ export default function PresentationScreen({
         {allyName ? <Name name={allyName} role="murderer" /> : "The murderer"}{" "}
         is the murderer.
         <br />
-        <br /> If the murderer is caught, both of you lose. If you are caught,
-        the murderer can still escape. <br /> Work together to outsmart the
-        detectives.
+        <br />
+        If the murderer is caught, both of you lose. If you are caught, the
+        murderer can still escape. Work together to outsmart the detectives.
       </p>
     );
     rightChip = (
@@ -177,25 +167,25 @@ export default function PresentationScreen({
       <p>
         <Name name={playerName} role="detective" />, you are a detective.
         <br />
-        <br /> Your goal is to find the murderer and stop them before they
-        escape. <br />
+        <br />
+        Your goal is to find the murderer and stop them before they escape.
+        <br />
         You win if you reveal the murderer’s secret card before the deck runs
-        out. Use your skills to gather clues and identify suspicious subjects.{" "}
-        <br></br>
+        out.
+        <br />
+        Use your skills to gather clues and identify suspicious subjects.
+        <br />
         <span style={{ fontWeight: 700, fontStyle: "italic" }}>
           Time is crucial. Trust no one.
         </span>
       </p>
     );
-    rightContent = null;
-    rightChip = null;
   }
 
   const hasRightChip = Boolean(rightChip);
   const showRightContent = Boolean(rightContent) && !shouldSolo;
   const showRightChip = hasRightChip && !shouldSolo;
 
-  // CTA: mark as ready and clear pending timeout
   const handleReady = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -232,10 +222,8 @@ export default function PresentationScreen({
           <div
             className={`textBox ${shouldSolo ? "solo-box" : ""}`}
             data-variant="big"
-            data-det={isDetective ? "true" : "false"} /* legacy flag for CSS */
-            data-solo={
-              shouldSolo ? "true" : "false"
-            } /* single-box layout flag */
+            data-det={isDetective ? "true" : "false"}
+            data-solo={shouldSolo ? "true" : "false"}
           >
             {leftContent}
           </div>
@@ -246,7 +234,6 @@ export default function PresentationScreen({
             </div>
           )}
 
-          {/* Ally chip OUTSIDE the textbox, to the RIGHT */}
           {showRightChip && <div className="ally-chipWrap">{rightChip}</div>}
         </div>
 

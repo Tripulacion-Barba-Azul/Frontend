@@ -258,11 +258,6 @@ export default function EffectManager({
           setCurrentEvent("selectDirection");
           gotoStep("selectDirection");
           break;
-        case "selectSet":
-          log("WS event:", data.event);
-          setCurrentEvent("selectSet");
-          gotoStep("selectPlayer");
-          break;
         default:
           warn("Unknown WS event (EffectManager):", data.event);
           setCurrentEvent(null);
@@ -321,10 +316,7 @@ export default function EffectManager({
     if (!currentEvent) return;
 
     if (backRequested) {
-      if (
-        step === "selectSet" &&
-        (currentEvent === "stealSet" || currentEvent === "selectSet")
-      ) {
+      if (step === "selectSet" && currentEvent === "stealSet") {
         setSelSet(null);
         setSelPlayer1(null);
         setBackRequested(false);
@@ -466,18 +458,7 @@ export default function EffectManager({
         }
         break;
       }
-      case "selectSet": {
-        if (step === "selectPlayer" && selPlayer1 != null) {
-          gotoStep("selectSet");
-        } else if (step === "selectSet" && selSet != null) {
-          sendEffectResponse("selectSet", {
-            playerId: actualPlayerId,
-            setId: selSet,
-            stolenPlayerId: selPlayer1,
-          });
-        }
-        break;
-      }
+
       default:
         break;
     }
@@ -536,11 +517,7 @@ export default function EffectManager({
         return "Select one of your own cards to trade";
       case "selectDirection":
         return "Select a direction for the card trade effect";
-      case "selectSet":
-        if (step === "selectPlayer")
-          return "Select one player to add a card to their set";
-        if (step === "selectSet") return "Select one set to add a card to";
-        return "";
+
       default:
         return "";
     }

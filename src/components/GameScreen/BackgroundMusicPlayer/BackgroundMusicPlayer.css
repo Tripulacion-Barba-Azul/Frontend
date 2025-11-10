@@ -7,7 +7,7 @@
 .bmp-btn {
   position: fixed;
   bottom: 0.8333vw; /* 16px -> 0.8333vw */
-  left: 90.57vw; /* 1835px -> 95.57vw */
+  left: 91.5vw; /* 1835px -> 95.57vw */
   z-index: 50;
   cursor: pointer;
   user-select: none;
@@ -15,8 +15,8 @@
   border: none;
   background: none;
   border-radius: 9999px; /* fully rounded */
-  width: 3.425vw;
-  height: 3.425vw;
+  width: 3.125vw; /* 60px -> 3.125vw */
+  height: 3.125vw; /* 60px -> 3.125vw */
 }
 
 /* Accessible focus ring */
@@ -28,8 +28,8 @@
 /* Icon image: no extra chrome, smooth hover grow + soft white glow */
 .bmp-icon {
   display: block;
-  width: 3.425vw;
-  height: 3.425vw;
+  width: 3.125vw; /* 60px -> 3.125vw */
+  height: 3.125vw; /* 60px -> 3.125vw */
   pointer-events: none;
   transition: transform 150ms ease-out, filter 150ms ease-out;
   will-change: transform;

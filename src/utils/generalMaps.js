@@ -48,10 +48,14 @@ export const SETS_MAP = {
 };
 
 export const AVATAR_MAP = {
-  1: "/Board/Avatars/avatar_barba-azul.png",
-  2: "/Board/Avatars/avatar_robotito.png",
-  3: "/Board/Avatars/avatar_duran.png",
-  4: "/Board/Avatars/avatar_wolovick.png",
-  5: "/Board/Avatars/avatar_penazzi.png",
-  6: "/Board/Avatars/avatar_colorado-guri.png",
+  1:  "/Board/Avatars/avatar_barba-azul.png",
+  2:  "/Board/Avatars/avatar_robotito.png",
+  3:  "/Board/Avatars/avatar_duran.png",
+  4:  "/Board/Avatars/avatar_wolovick.png",
+  5:  "/Board/Avatars/avatar_penazzi.png",
+  6:  "/Board/Avatars/avatar_colorado-guri.png",
+  7:  "/Board/Avatars/avatar_lunajere.png",
+  8:  "/Board/Avatars/avatar_aguscurto.png",
+  9:  "/Board/Avatars/avatar_peladoODC.png",
+  10: "/Board/Avatars/avatar_mariano.png"
 };
