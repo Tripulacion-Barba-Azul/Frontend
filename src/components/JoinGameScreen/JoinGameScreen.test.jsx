@@ -8,8 +8,10 @@ import { vi } from "vitest";
 describe("JoinGameScreen", () => {
   it("renders the join form for public games", () => {
     render(
-      <MemoryRouter>
-        <JoinGameScreen private={false} />
+      <MemoryRouter initialEntries={["/join/3/public"]}>
+        <Routes>
+          <Route path="/join/:gameId/:private" element={<JoinGameScreen />} />
+        </Routes>
       </MemoryRouter>
     );
 
@@ -31,8 +33,10 @@ describe("JoinGameScreen", () => {
     global.fetch = vi.fn();
 
     render(
-      <MemoryRouter>
-        <JoinGameScreen private={false} />
+      <MemoryRouter initialEntries={["/join/3/public"]}>
+        <Routes>
+          <Route path="/join/:gameId/:private" element={<JoinGameScreen />} />
+        </Routes>
       </MemoryRouter>
     );
 
@@ -54,8 +58,10 @@ describe("JoinGameScreen", () => {
     global.fetch = vi.fn();
 
     render(
-      <MemoryRouter>
-        <JoinGameScreen private={false} />
+      <MemoryRouter initialEntries={["/join/3/public"]}>
+        <Routes>
+          <Route path="/join/:gameId/:private" element={<JoinGameScreen />} />
+        </Routes>
       </MemoryRouter>
     );
 
@@ -90,9 +96,9 @@ describe("JoinGameScreen", () => {
     global.fetch = mockFetch;
 
     render(
-      <MemoryRouter initialEntries={["/join/3"]}>
+      <MemoryRouter initialEntries={["/join/3/public"]}>
         <Routes>
-          <Route path="/join/:gameId" element={<JoinGameScreen private={false} />} />
+          <Route path="/join/:gameId/:private" element={<JoinGameScreen />} />
           <Route path="/game/:gameId" element={<div>Game Screen</div>} />
         </Routes>
       </MemoryRouter>
@@ -135,9 +141,9 @@ describe("JoinGameScreen", () => {
     global.fetch = mockFetch;
 
     render(
-      <MemoryRouter initialEntries={["/join/5"]}>
+      <MemoryRouter initialEntries={["/join/5/private"]}>
         <Routes>
-          <Route path="/join/:gameId" element={<JoinGameScreen private={true} />} />
+          <Route path="/join/:gameId/:private" element={<JoinGameScreen />} />
           <Route path="/game/:gameId" element={<div>Game Screen</div>} />
         </Routes>
       </MemoryRouter>
@@ -175,8 +181,10 @@ describe("JoinGameScreen", () => {
   it("shows password field only for private games", () => {
     // Test public game - no password field
     const { unmount } = render(
-      <MemoryRouter>
-        <JoinGameScreen private={false} />
+      <MemoryRouter initialEntries={["/join/3/public"]}>
+        <Routes>
+          <Route path="/join/:gameId/:private" element={<JoinGameScreen />} />
+        </Routes>
       </MemoryRouter>
     );
 
@@ -187,8 +195,10 @@ describe("JoinGameScreen", () => {
 
     // Test private game - password field should be visible
     render(
-      <MemoryRouter>
-        <JoinGameScreen private={true} />
+      <MemoryRouter initialEntries={["/join/5/private"]}>
+        <Routes>
+          <Route path="/join/:gameId/:private" element={<JoinGameScreen />} />
+        </Routes>
       </MemoryRouter>
     );
 
@@ -201,8 +211,10 @@ describe("JoinGameScreen", () => {
     global.fetch = vi.fn();
 
     render(
-      <MemoryRouter>
-        <JoinGameScreen private={true} />
+      <MemoryRouter initialEntries={["/join/5/private"]}>
+        <Routes>
+          <Route path="/join/:gameId/:private" element={<JoinGameScreen />} />
+        </Routes>
       </MemoryRouter>
     );
 
@@ -232,9 +244,9 @@ describe("JoinGameScreen", () => {
     console.error = vi.fn();
 
     render(
-      <MemoryRouter initialEntries={["/"]}>
+      <MemoryRouter initialEntries={["/join/3/public"]}>
         <Routes>
-          <Route path="/" element={<JoinGameScreen private={false} />} />
+          <Route path="/join/:gameId/:private" element={<JoinGameScreen />} />
           <Route path="/join" element={<div>Join list</div>} />
         </Routes>
       </MemoryRouter>
@@ -262,9 +274,9 @@ describe("JoinGameScreen", () => {
     global.fetch = mockFetch;
 
     render(
-      <MemoryRouter initialEntries={["/join/5"]}>
+      <MemoryRouter initialEntries={["/join/5/private"]}>
         <Routes>
-          <Route path="/join/:gameId" element={<JoinGameScreen private={true} />} />
+          <Route path="/join/:gameId/:private" element={<JoinGameScreen />} />
           <Route path="/game/:gameId" element={<div>Game Screen</div>} />
           <Route path="/join" element={<div>Join list</div>} />
         </Routes>
@@ -305,9 +317,9 @@ describe("JoinGameScreen", () => {
     global.fetch = mockFetch;
 
     render(
-      <MemoryRouter initialEntries={["/join/3"]}>
+      <MemoryRouter initialEntries={["/join/3/private"]}>
         <Routes>
-          <Route path="/join/:gameId" element={<JoinGameScreen private={true} />} />
+          <Route path="/join/:gameId/:private" element={<JoinGameScreen />} />
         </Routes>
       </MemoryRouter>
     );
@@ -350,9 +362,9 @@ describe("JoinGameScreen", () => {
     global.fetch = mockFetch;
 
     render(
-      <MemoryRouter initialEntries={["/join/3"]}>
+      <MemoryRouter initialEntries={["/join/3/private"]}>
         <Routes>
-          <Route path="/join/:gameId" element={<JoinGameScreen private={true} />} />
+          <Route path="/join/:gameId/:private" element={<JoinGameScreen />} />
           <Route path="/game/:gameId" element={<div>Game Screen</div>} />
         </Routes>
       </MemoryRouter>

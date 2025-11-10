@@ -168,10 +168,17 @@ const GameMatchesList = () => {
             return (
               <div key={match.id} className="match-card">
                 <div className="match-content">
+                  {/* Private indicator */}
+                  {match.private && (
+                    <div className="private-indicator">
+                      <span>Private</span>
+                    </div>
+                  )}
+                  
                   {/* Name + status pill */}
                   <div className="match-header">
                     <h3 className="match-name">
-                      {match.private && "🔒"}{match.name}
+                      {match.name}
                     </h3>
                     <span className={`match-status ${status.color}`}>
                       {status.icon} {status.status}

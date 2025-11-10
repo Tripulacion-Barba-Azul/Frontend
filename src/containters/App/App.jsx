@@ -36,8 +36,8 @@ function App() {
         <Route path="/create" element={<CreateGameScreen />} />
         <Route path="/my-games" element={<GameOwnMatchesList />} />
         <Route path="/join" element={<GameMatchesList />} />
-        <Route path="/join/:gameId/:private" element={<JoinGameScreen private={true}/>} />
-        <Route path="/join/:gameId/:public" element={<JoinGameScreen private={false}/>} />
+        <Route path="/join/:gameId/:public" element={<JoinGameScreen />} />
+        <Route path="/join/:gameId/:private" element={<JoinGameScreen />} />
         <Route path="/game/:gameId" element={<GameScreen />} />
       </Routes>
     </BrowserRouter>

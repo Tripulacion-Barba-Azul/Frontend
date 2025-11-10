@@ -124,7 +124,7 @@ describe("GameMatchesList", () => {
 
       // Check if matches are rendered
       expect(screen.getByText("Epic Battle")).toBeInTheDocument();
-      expect(screen.getByText("🔒Combat Arena")).toBeInTheDocument();
+      expect(screen.getByText("Combat Arena")).toBeInTheDocument();
       expect(screen.getByText("Secret Mission")).toBeInTheDocument();
     });
 
@@ -198,7 +198,7 @@ describe("GameMatchesList", () => {
 
     it("shows correct status for ready to play (yellow)", () => {
       // Second match: 4/8 players, min 4 - should be yellow with only icon (no text)
-      const matchCard = screen.getByText("🔒Combat Arena").closest(".match-card");
+      const matchCard = screen.getByText("Combat Arena").closest(".match-card");
       const statusElement = matchCard.querySelector(".match-status");
       expect(statusElement).toHaveTextContent("🟡");
       expect(statusElement).not.toHaveTextContent("Ready to play"); // No text in status
@@ -393,7 +393,7 @@ describe("GameMatchesList", () => {
       const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 
       // Find the join button for the private game (Combat Arena)
-      const privateGameCard = screen.getByText("🔒Combat Arena").closest(".match-card");
+      const privateGameCard = screen.getByText("Combat Arena").closest(".match-card");
       const joinButton = privateGameCard.querySelector("button");
       fireEvent.click(joinButton);
 
@@ -413,7 +413,7 @@ describe("GameMatchesList", () => {
 
     it("navigates to correct route for private games", () => {
       // Find the join button for the private game (Combat Arena)
-      const privateGameCard = screen.getByText("🔒Combat Arena").closest(".match-card");
+      const privateGameCard = screen.getByText("Combat Arena").closest(".match-card");
       const joinButton = privateGameCard.querySelector("button");
       fireEvent.click(joinButton);
 
@@ -556,7 +556,7 @@ describe("GameMatchesList", () => {
 
       await waitFor(() => {
         expect(screen.getByText("Public Test Game")).toBeInTheDocument();
-        expect(screen.getByText("🔒Private Test Game")).toBeInTheDocument();
+        expect(screen.getByText("Private Test Game")).toBeInTheDocument();
       });
     });
   });
@@ -668,32 +668,35 @@ describe("GameMatchesList", () => {
       });
     });
 
-    it("displays lock emoji for private games", () => {
+    it("displays 'Private' indicator for private games", () => {
       // Combat Arena is private (gameId: 2)
-      const privateGame = screen.getByText("🔒Combat Arena");
+      const privateGame = screen.getByText("Combat Arena");
       expect(privateGame).toBeInTheDocument();
+      
+      // Check for private indicator above the game name
+      const matchCard = privateGame.closest(".match-card");
+      expect(matchCard.querySelector(".private-indicator")).toBeInTheDocument();
+      expect(matchCard).toHaveTextContent("Private");
     });
 
-    it("does not display lock emoji for public games", () => {
+    it("does not display 'Private' indicator for public games", () => {
       // Epic Battle is public (gameId: 1)
       const publicGame1 = screen.getByText("Epic Battle");
       expect(publicGame1).toBeInTheDocument();
-      expect(publicGame1).not.toHaveTextContent("🔒");
+      const matchCard1 = publicGame1.closest(".match-card");
+      expect(matchCard1.querySelector(".private-indicator")).not.toBeInTheDocument();
 
       // Secret Mission is public (gameId: 3)
       const publicGame2 = screen.getByText("Secret Mission");
       expect(publicGame2).toBeInTheDocument();
-      expect(publicGame2).not.toHaveTextContent("🔒");
+      const matchCard2 = publicGame2.closest(".match-card");
+      expect(matchCard2.querySelector(".private-indicator")).not.toBeInTheDocument();
     });
 
     it("handles mixed private and public games correctly", () => {
-      // Should have exactly one private game (Combat Arena)
-      const lockEmojis = document.querySelectorAll(".match-name");
-      const privateGamesCount = Array.from(lockEmojis).filter(element => 
-        element.textContent.includes("🔒")
-      ).length;
-      
-      expect(privateGamesCount).toBe(1);
+      // Should have exactly one private indicator (for Combat Arena)
+      const privateIndicators = document.querySelectorAll(".private-indicator");      
+      expect(privateIndicators).toHaveLength(1);
     });
   });
 });

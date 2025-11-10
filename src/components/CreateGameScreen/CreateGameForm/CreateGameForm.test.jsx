@@ -248,22 +248,23 @@ describe("CreateGameForm (simple & robust)", () => {
   it("shows and hides password field when private checkbox is toggled", () => {
     render(<CreateGameForm />);
 
-    const privateCheckbox = screen.getByLabelText(/private/i);
+    const privateCheckbox = screen.getByRole("checkbox");
     
     // Initially, password field should not be visible
-    expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument();
+    expect(screen.queryByDisplayValue("")).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/enter the game password/i)).not.toBeInTheDocument();
     
     // Check the private checkbox
     fireEvent.click(privateCheckbox);
     
     // Now password field should be visible
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/enter the game password/i)).toBeInTheDocument();
     
     // Uncheck the private checkbox
     fireEvent.click(privateCheckbox);
     
     // Password field should be hidden again
-    expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/enter the game password/i)).not.toBeInTheDocument();
   });
 
   it("requires password when private game is selected", () => {
@@ -319,8 +320,8 @@ describe("CreateGameForm (simple & robust)", () => {
     });
 
     // Check private checkbox and add password
-    fireEvent.click(screen.getByLabelText(/private/i));
-    fireEvent.change(screen.getByLabelText(/password/i), {
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.change(screen.getByPlaceholderText(/enter the game password/i), {
       target: { value: "secretpassword" },
     });
 
