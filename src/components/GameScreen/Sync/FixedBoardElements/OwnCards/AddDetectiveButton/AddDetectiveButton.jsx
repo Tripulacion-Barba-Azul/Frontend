@@ -247,7 +247,7 @@ export default function AddDetectiveButton({
 
       {/* Error text under the play button */}
       {error && (
-        <div role="alert" style={{ color: "#f4e1a3", fontSize: "12px" }}>
+        <div role="alert" style={{ color: "#f4e1a3", fontSize: "0.7vw" }}>
           {error}
         </div>
       )}

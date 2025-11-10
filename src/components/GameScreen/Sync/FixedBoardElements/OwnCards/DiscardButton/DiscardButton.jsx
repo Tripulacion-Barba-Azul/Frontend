@@ -113,7 +113,7 @@ export default function DiscardButton({
       </button>
 
       {error && (
-        <div style={{ color: "#f4e1a3", fontSize: "12px" }}>{error}</div>
+        <div style={{ color: "#f4e1a3", fontSize: "0.7vw" }}>{error}</div>
       )}
     </div>
   );

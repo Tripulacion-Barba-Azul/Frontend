@@ -330,7 +330,7 @@ export default function EffectManager({
     } else {
       return [];
     }
-  }, [publicData, playersAll]);
+  }, [currentEvent]);
 
   const discardTopFive = useMemo(
     () =>
@@ -569,7 +569,7 @@ export default function EffectManager({
       case "cardTradeSelection":
         return "Select one player to trade a card with";
       case "selectHiddenSecret":
-        return `Select one of these hidden secrets to see`;
+        return "Select one of these hidden secrets to see";
       default:
         return "";
     }
@@ -670,7 +670,8 @@ export default function EffectManager({
           revealed={revealedForThisStep}
           selectedSecretId={setSelSecret}
           goBack={
-            currentEvent === "revealOwnSecret"
+            currentEvent === "revealOwnSecret" ||
+            currentEvent === "selectHiddenSecret"
               ? null
               : () => setBackRequested(true)
           }

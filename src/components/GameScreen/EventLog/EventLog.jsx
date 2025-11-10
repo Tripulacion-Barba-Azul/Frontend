@@ -4,13 +4,13 @@ import "./EventLog.css";
 
 /**
  * @file EventLog.jsx
- * @description Compact window (Chat-like) listing past notifications using the
- *              same visual layout as Notifier: text (left) + media rail (right).
+ * @description Compact window (Chat-like) listing past notifications using a
+ *              text (left) + media rail (right) layout, namespaced to avoid CSS collisions.
  * Props:
  *  - eventLog: Array<{ event: string, payload: object }>
  *  - publicData: { players: Array<{id,name,avatar,sets?,secrets?}> }
  *  - actualPlayerId: number | null
- *  - buttonLabel?: string ("Event Log" by default)
+ *  - buttonLabel?: string ("Events" by default)
  */
 export default function EventLog({
   eventLog = [],
@@ -63,6 +63,7 @@ export default function EventLog({
   ];
   const colorName = (name, index) => {
     const color = PLAYER_COLORS[index % PLAYER_COLORS.length];
+    // Render as HTML because the component uses dangerouslySetInnerHTML
     return `<span style="color:${color}; font-weight:bold">${name}</span>`;
   };
 
@@ -100,6 +101,7 @@ export default function EventLog({
   };
 
   const getCardImage = (card) => {
+    // Secret cards: use revealed art if name is known, otherwise generic front
     if (card.isSecret) {
       if (card.revealed && card.name) {
         return SECRETS_MAP[card.name] || "/Cards/05-secret_front.png";
@@ -455,29 +457,35 @@ export default function EventLog({
 
             {items.map(({ key, text, cards, setImage }) => (
               <li key={key} className="eventLogRow">
-                <div className="notifier-content">
-                  <div className="notifier-left">
+                <div className="evlog-content">
+                  <div className="evlog-left">
                     <div
-                      className="notifier-text"
+                      className="evlog-text"
                       dangerouslySetInnerHTML={{ __html: text }}
                     />
                   </div>
 
                   {(setImage || (cards && cards.length > 0)) && (
-                    <div className="notifier-right" aria-label="Media rail">
+                    <div className="evlog-right" aria-label="Media rail">
                       {setImage && (
-                        <div className="notifier-set">
-                          <img src={setImage} alt="Set" className="is-set" />
+                        <div className="evlog-set">
+                          <img
+                            src={setImage}
+                            alt="Set"
+                            className="evlog-is-set"
+                          />
                         </div>
                       )}
                       {cards && cards.length > 0 && (
-                        <div className="notifier-cards">
+                        <div className="evlog-cards">
                           {cards.slice(0, 6).map((card, index) => (
-                            <div key={index} className="notifier-card">
+                            <div key={index} className="evlog-card">
                               <img
                                 src={getCardImage(card)}
                                 alt={card.name}
-                                className={card.isSecret ? "is-secret" : ""}
+                                className={
+                                  card.isSecret ? "evlog-is-secret" : ""
+                                }
                               />
                             </div>
                           ))}
