@@ -3,7 +3,7 @@
 /* Badge  */
 .chatBadge {
   position: fixed;
-  z-index: 80;
+  z-index: 50;
   left: 1.5vw;
   bottom: 1vw;
   height: 3vw;

@@ -101,6 +101,8 @@ const EFFECT_ENDPOINTS = {
   selectDirection: "http://localhost:8000/play/{id}/actions/select-direction",
   cardTradeSelection:
     "http://localhost:8000/play/{id}/actions/select-any-player",
+  selectHiddenSecret:
+    "http://localhost:8000/play/{id}/actions/select-hidden-secret",
 };
 
 const log = (...a) => console.log("[EffectManager]", ...a);
@@ -265,6 +267,11 @@ export default function EffectManager({
           setCurrentEvent("cardTradeSelection");
           gotoStep("selectPlayer");
           break;
+        case "selectHiddenSecret":
+          log("WS event:", data.event);
+          setCurrentEvent("selectHiddenSecret");
+          gotoStep("selectSecret");
+          break;
         default:
           warn("Unknown WS event (EffectManager):", data.event);
           setCurrentEvent(null);
@@ -315,7 +322,24 @@ export default function EffectManager({
 
   const ownSecrets = useMemo(() => privateData?.secrets ?? [], [privateData]);
 
-  const discardTopFive = useMemo(() => payload ?? [], [payload]);
+  const hiddenSecretsOf = useMemo(() => {
+    if (currentEvent === "selectHiddenSecret") {
+      const playerId = payload.secretOwnerId;
+      const target = playersAll.find((p) => String(p.id) === String(playerId));
+      return target?.secrets ?? [];
+    } else {
+      return [];
+    }
+  }, [publicData, playersAll]);
+
+  const discardTopFive = useMemo(
+    () =>
+      currentEvent === "lookIntoTheAshes" ||
+      currentEvent === "delayTheMurderersEscape"
+        ? payload
+        : [],
+    [payload]
+  );
 
   const ownCards = useMemo(() => privateData?.cards ?? [], [privateData]);
 
@@ -474,6 +498,15 @@ export default function EffectManager({
         }
         break;
       }
+      case "selectHiddenSecret": {
+        if (step === "selectSecret" && selSecret != null) {
+          sendEffectResponse("selectHiddenSecret", {
+            playerId: actualPlayerId,
+            secretId: selSecret,
+          });
+        }
+        break;
+      }
 
       default:
         break;
@@ -535,6 +568,8 @@ export default function EffectManager({
         return "Select a direction for the card trade effect";
       case "cardTradeSelection":
         return "Select one player to trade a card with";
+      case "selectHiddenSecret":
+        return `Select one of these hidden secrets to see`;
       default:
         return "";
     }
@@ -578,6 +613,8 @@ export default function EffectManager({
         return secretsOfTarget;
       case "revealOwnSecret":
         return ownSecrets;
+      case "selectHiddenSecret":
+        return hiddenSecretsOf;
       default:
         return [];
     }

@@ -1,0 +1,353 @@
+/* =========================================================
+   EventLog.css — Stable, zoom-proof, single-column Event Log
+   Uses vmin as the single metric to keep proportions constant
+   across zoom levels, DPI and device sizes.
+   ========================================================= */
+
+/* Global box-model consistency */
+*,
+*::before,
+*::after {
+  box-sizing: border-box; /* keep sizes stable when zooming */
+}
+
+/* ===============================
+   Window (Chat-like, vmin-based)
+   =============================== */
+.eventLogWindow {
+  position: fixed;
+  z-index: 81;
+  right: 1.2vmin;
+  bottom: 1.2vmin;
+
+  /* Window size derived from viewport's smaller dimension to stay consistent */
+  width: 75vmin;
+  max-height: 97vmin;
+
+  background: radial-gradient(
+      120% 140% at 50% -20%,
+      rgba(255, 255, 255, 0.05) 0%,
+      transparent 60%
+    ),
+    #141013;
+  color: #ece6d6;
+
+  border-radius: 1.6vmin;
+  border: 0.3vmin solid rgba(232, 210, 139, 0.28);
+
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  box-shadow: 0 3.2vmin 4.4vmin -1.2vmin rgba(0, 0, 0, 0.55),
+    0 0.3vmin 0 0 rgba(255, 255, 255, 0.06) inset;
+
+  /* Chat-like entry animation (pop-in) */
+  animation: elog-pop-in 180ms ease;
+}
+.eventLogWindow.is-exiting {
+  animation: elog-pop-out 180ms ease forwards;
+}
+
+@keyframes elog-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(2vmin) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes elog-pop-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(2vmin) scale(0.98);
+  }
+}
+
+/* ===============================
+   Header (Chat-like)
+   =============================== */
+.eventLogWindow__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.4vmin 1.8vmin;
+
+  background: linear-gradient(
+      180deg,
+      rgba(245, 217, 126, 0.06) 0%,
+      rgba(0, 0, 0, 0) 100%
+    ),
+    #141013;
+  border-bottom: 0.2vmin solid rgba(232, 210, 139, 0.28);
+  box-shadow: 0 0.2vmin 0 rgba(255, 255, 255, 0.06) inset,
+    0 1.2vmin 1.8vmin rgba(0, 0, 0, 0.25);
+}
+
+.eventLogWindow__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 1vmin;
+  font-weight: 800;
+  letter-spacing: 0.12vmin;
+  color: #e8d28b;
+  text-shadow: 0 0.16vmin 0 rgba(0, 0, 0, 0.6);
+  font-size: 2vmin;
+  font-variant: small-caps;
+}
+.eventLogWindow__title::after {
+  content: "";
+  display: block;
+  width: 5vmin;
+  height: 0.28vmin;
+  border-radius: 0.36vmin;
+  background: linear-gradient(90deg, #e8d28b 0%, rgba(0, 0, 0, 0) 100%);
+}
+
+/* Close button (Chat-like) */
+.eventLogWindow__close {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 3.6vmin;
+  height: 3.6vmin;
+  border-radius: 50vmin;
+  border: 0.28vmin solid #f4e1a3;
+  background: #2a2a2a;
+  cursor: pointer;
+  box-shadow: 0 0.8vmin 1.6vmin rgba(0, 0, 0, 0.35);
+  transition: transform 80ms ease, filter 150ms ease, box-shadow 150ms ease,
+    background 150ms ease, border-color 150ms ease;
+}
+.elogCloseIcon,
+.elogCloseIcon::before,
+.elogCloseIcon::after {
+  position: absolute;
+  display: block;
+  content: "";
+  background: #f4e1a3;
+  border-radius: 0.2vmin;
+}
+.elogCloseIcon::before,
+.elogCloseIcon::after {
+  top: 50%;
+  left: 50%;
+  width: 2vmin;
+  height: 0.2vmin;
+  transform-origin: center;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.elogCloseIcon::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+.eventLogWindow__close:hover {
+  background: rgb(163, 34, 34);
+  border-color: #f4e1a3;
+  filter: brightness(1.02);
+}
+.eventLogWindow__close:active {
+  transform: scale(0.96);
+  background: rgb(115, 23, 23);
+}
+
+/* ===============================
+   Launcher badge (no unread/red counter)
+   =============================== */
+.eventLogBadge {
+  position: fixed;
+  z-index: 50;
+  right: 2vmin;
+  bottom: 9vmin;
+
+  height: 6vmin;
+  padding: 0 3.5vmin;
+
+  border-radius: 1.6vmin;
+  border: 0.2vmin solid rgba(232, 210, 139, 0.28);
+  background: radial-gradient(80% 80% at 50% 35%, #0f0c10 0%, #120f12 100%);
+  color: #e8d28b;
+
+  box-shadow: 0 0 0 0.28vmin rgba(0, 0, 0, 0.45) inset,
+    0 1.6vmin 2.6vmin -1vmin rgba(0, 0, 0, 0.55),
+    0 0 1.4vmin 0 rgba(255, 255, 255, 0.05);
+
+  cursor: pointer;
+  display: inline-grid;
+  grid-auto-flow: column;
+  align-items: center;
+  gap: 1vmin;
+
+  font-weight: 500;
+  letter-spacing: 0.12vmin;
+  font-size: 2.2vmin;
+
+  transition: transform 120ms ease, box-shadow 200ms ease, filter 150ms ease;
+}
+.eventLogBadge:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 1.6vmin 0.8vmin rgba(245, 217, 126, 0.22);
+  filter: brightness(1.05);
+}
+.eventLogIcon {
+  width: 3vmin;
+  height: 3vmin;
+  border-radius: 0.6vmin;
+  background: linear-gradient(180deg, #1d181b 0%, #191417 100%);
+  border: 0.2vmin solid rgba(232, 210, 139, 0.28);
+  box-shadow: 0 0.16vmin 0 rgba(255, 255, 255, 0.04) inset;
+}
+.eventLogBadge__label {
+  user-select: none;
+}
+
+/* ===============================
+   List area (one column, robust)
+   =============================== */
+.eventLogWindow__list {
+  list-style: none;
+  margin: 0;
+  padding: 1.8vmin;
+
+  flex: 1 1 auto;
+  overflow-y: auto;
+
+  display: flex;
+  flex-direction: column; /* one column to preserve order perception */
+  gap: 1.6vmin;
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+.eventLogWindow__list::-webkit-scrollbar {
+  width: 1vmin;
+}
+.eventLogWindow__list::-webkit-scrollbar-thumb {
+  background: rgba(232, 210, 139, 0.28);
+  border-radius: 2vmin;
+}
+.eventLogWindow__list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.eventLogRow {
+  width: 100%;
+}
+.eventLogWindow__empty {
+  text-align: center;
+  color: #a6a6a6;
+  font-size: 1.6vmin;
+  padding: 3.6vmin 1.6vmin;
+}
+
+/* =========================================================
+   Compact Notifier visuals inside EventLog (self-contained)
+   — exact same “text left + media right” look,
+     but vmin-based and with perfect vertical centering.
+   ========================================================= */
+
+.notifier-content {
+  /* sizing tokens — keep them stable with vmin */
+  --gap: 1vmin; /* horizontal gap between media items */
+  --card-h: 10vmin; /* canonical card height */
+  --slot: calc(var(--card-h) * 2 / 3); /* per-card width for 2:3 aspect */
+
+  position: relative;
+  width: auto; /* shrink to content */
+  max-width: 100%;
+  min-height: calc(var(--card-h) + 1.6vmin); /* card + vertical paddings */
+
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 1.6vmin;
+  padding: 0.8vmin 1.2vmin;
+
+  display: inline-flex;
+  align-items: center; /* ensures vertical centering of both columns */
+  gap: 1.2vmin;
+
+  text-align: left;
+  box-shadow: 0 1.2vmin 4vmin rgba(0, 0, 0, 0.35);
+}
+
+.notifier-left {
+  flex: 0 1 auto; /* take only the width needed by text */
+  min-width: 0;
+  align-self: center; /* explicit vertical centering insurance */
+}
+
+.notifier-text {
+  color: #f4e1a3;
+  font-size: 1.8vmin;
+  font-weight: 600;
+  line-height: 1.35;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: "Metropolis", sans-serif;
+}
+
+/* Right rail — perfectly centered vertically */
+.notifier-right {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center; /* perfect vertical centering of media */
+  gap: var(--gap);
+  white-space: nowrap;
+  overflow: hidden;
+  align-self: center; /* double insurance */
+}
+
+/* Set image — circular, contained, no weird background */
+.notifier-set {
+  display: inline-flex;
+}
+.notifier-set img.is-set {
+  width: 8vmin;
+  height: 8vmin;
+  border-radius: 50%;
+  object-fit: contain;
+  object-position: center; /* ensure artwork is centered */
+  background: radial-gradient(80% 80% at 50% 50%, #0f0c10 0%, #120f12 100%);
+  box-shadow: 0 0.24vmin 1.2vmin rgba(0, 0, 0, 0.4);
+}
+
+/* Cards — up to 6 in a single row; no scroll, no scaling glitches */
+.notifier-cards {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center; /* fix for top-biased look */
+  gap: var(--gap);
+}
+.notifier-card {
+  width: var(--slot);
+  height: var(--card-h);
+  flex: 0 0 auto;
+}
+.notifier-card img {
+  width: 100%;
+  height: 100%;
+  border-radius: 0.9vmin;
+  object-fit: cover; /* standard cards fill the frame */
+  object-position: center; /* center within the frame */
+  image-rendering: auto;
+  background: #0f0c10; /* neutral backdrop for transparent PNGs */
+  box-shadow: 0 0.24vmin 1.2vmin rgba(0, 0, 0, 0.4);
+}
+/* Secrets — avoid strange zoom/crop: keep full artwork visible */
+.notifier-card img.is-secret {
+  object-fit: contain;
+  object-position: center;
+  background: radial-gradient(80% 80% at 50% 50%, #0f0c10 0%, #120f12 100%);
+}
+
+/* =========================================================
+   Notes:
+   - All sizes use vmin to keep visuals consistent regardless
+     of zoom, DPI, or viewport orientation.
+   - No px-based media queries: avoids layout “jumps” when zooming.
+   - Vertical centering is enforced at container and item levels.
+   ========================================================= */

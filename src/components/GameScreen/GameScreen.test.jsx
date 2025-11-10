@@ -1,3 +1,4 @@
+// src/components/GameScreen/GameScreen.test.jsx
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import {
@@ -10,14 +11,18 @@ import {
 import { useParams, useSearchParams } from "react-router-dom";
 import GameScreen from "./GameScreen";
 
-/* ---------------------- Router mocks ---------------------- */
+/* ------------------------------------------------------------------ */
+/* Router mocks                                                        */
+/* ------------------------------------------------------------------ */
 vi.mock("react-router-dom", () => ({
   useParams: vi.fn(),
   useSearchParams: vi.fn(),
 }));
 
-/* ---------------------- Child component mocks ---------------------- */
-// Expose refreshTrigger so we can assert player_joined bumps it
+/* ------------------------------------------------------------------ */
+/* Child component mocks                                               */
+/* Keep UI surface minimal and stable: assert mount/unmount semantics  */
+/* ------------------------------------------------------------------ */
 vi.mock("../Lobby/Lobby", () => ({
   default: ({ isConnected, refreshTrigger }) => (
     <div data-testid="lobby">
@@ -48,8 +53,8 @@ vi.mock("./Events/EffectManager/EffectManager", () => ({
   default: () => <div data-testid="effect-manager">EffectManager</div>,
 }));
 
-// Presentation with a button that triggers close(true)
 vi.mock("./PresentationScreen/PresentationScreen", () => ({
+  // Expose a control to simulate closing the one-time presentation
   default: ({ close }) => (
     <div data-testid="presentation-screen">
       Presentation
@@ -60,22 +65,25 @@ vi.mock("./PresentationScreen/PresentationScreen", () => ({
   ),
 }));
 
-// Background music mounted whenever gameDataReady=true
+// Music/Chat/Clock appear only when the presentation has been closed (gamePresented=true)
 vi.mock("./BackgroundMusicPlayer/BackgroundMusicPlayer", () => ({
   default: () => <div data-testid="bgm">BGM</div>,
 }));
-
-// NEW: Chat is global when connected + data ready
 vi.mock("./Chat/Chat", () => ({
   default: () => <div data-testid="chat">Chat</div>,
 }));
-
-// NEW: Clock appears only after gamePresented=true
 vi.mock("./Clock/Clock", () => ({
   default: () => <div data-testid="clock">Clock</div>,
 }));
 
-/* ---------------------- Minimal WebSocket mock ---------------------- */
+// Keep EventLog isolated so its internals don't affect GameScreen tests
+vi.mock("./EventLog/EventLog", () => ({
+  default: () => <div data-testid="event-log">EventLog</div>,
+}));
+
+/* ------------------------------------------------------------------ */
+/* Minimal WebSocket mock                                              */
+/* ------------------------------------------------------------------ */
 const createMockWebSocket = () => ({
   close: vi.fn(),
   send: vi.fn(),
@@ -88,7 +96,7 @@ const createMockWebSocket = () => ({
 
 let mockWebSocket;
 
-describe("GameScreen (updated)", () => {
+describe("GameScreen (current behavior)", () => {
   const mockGameId = "123";
   const mockPlayerId = "456";
 
@@ -101,12 +109,14 @@ describe("GameScreen (updated)", () => {
       new URLSearchParams(`playerId=${mockPlayerId}`),
     ]);
 
-    // WebSocket stub per test
+    // WebSocket factory
     mockWebSocket = createMockWebSocket();
     global.WebSocket = vi.fn(() => mockWebSocket);
   });
 
-  it("initially renders Lobby and NOT the WS-dependent components", () => {
+  /* ------------------------------ Smoke ------------------------------ */
+
+  it("initially renders Lobby; nothing WS-dependent is mounted", () => {
     render(<GameScreen />);
 
     expect(screen.getByTestId("lobby")).toBeInTheDocument();
@@ -115,8 +125,8 @@ describe("GameScreen (updated)", () => {
     expect(screen.queryByTestId("effect-manager")).not.toBeInTheDocument();
     expect(screen.queryByTestId("chat")).not.toBeInTheDocument();
     expect(screen.queryByTestId("clock")).not.toBeInTheDocument();
-    // BGM should not render until gameDataReady is true
     expect(screen.queryByTestId("bgm")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("event-log")).not.toBeInTheDocument();
   });
 
   it("creates a WebSocket connection on mount", () => {
@@ -132,6 +142,8 @@ describe("GameScreen (updated)", () => {
     expect(WebSocket).not.toHaveBeenCalled();
   });
 
+  /* ------------------------- Connection flags ------------------------ */
+
   it("handles onopen by marking Lobby as connected", () => {
     render(<GameScreen />);
     act(() => {
@@ -140,53 +152,7 @@ describe("GameScreen (updated)", () => {
     expect(screen.getByText(/Lobby - Connected: true/i)).toBeInTheDocument();
   });
 
-  it("handles onclose by marking disconnected and hides WS-dependent components", async () => {
-    render(<GameScreen />);
-    act(() => {
-      mockWebSocket.onopen?.();
-    });
-
-    // Feed game data to reach gameDataReady
-    act(() => {
-      mockWebSocket.onmessage?.({
-        data: JSON.stringify({
-          event: "publicUpdate",
-          payload: {
-            gameStatus: "in_progress",
-            players: [{ id: Number(mockPlayerId), name: "Me", avatar: 1 }],
-          },
-        }),
-      });
-      mockWebSocket.onmessage?.({
-        data: JSON.stringify({
-          event: "privateUpdate",
-          payload: { role: "detective", ally: null },
-        }),
-      });
-    });
-
-    await waitFor(() => {
-      expect(screen.getByTestId("presentation-screen")).toBeInTheDocument();
-      expect(screen.getByTestId("bgm")).toBeInTheDocument();
-      expect(screen.getByTestId("notifier")).toBeInTheDocument();
-      expect(screen.getByTestId("effect-manager")).toBeInTheDocument();
-      expect(screen.getByTestId("chat")).toBeInTheDocument();
-    });
-
-    // Close the connection
-    act(() => {
-      mockWebSocket.onclose?.();
-    });
-
-    await waitFor(() => {
-      expect(screen.queryByTestId("notifier")).not.toBeInTheDocument();
-      expect(screen.queryByTestId("effect-manager")).not.toBeInTheDocument();
-      expect(screen.queryByTestId("chat")).not.toBeInTheDocument();
-      // Presentation and BGM are tied to data readiness, but global systems are connection-bound
-    });
-  });
-
-  it("handles onerror by logging and setting disconnected (does not close explicitly)", () => {
+  it("handles onerror by logging and flipping connected=false (without closing explicitly)", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     render(<GameScreen />);
 
@@ -203,7 +169,9 @@ describe("GameScreen (updated)", () => {
     spy.mockRestore();
   });
 
-  it("handles publicUpdate and stays in Lobby if private/started are missing", () => {
+  /* --------------------------- Message flow -------------------------- */
+
+  it("handles publicUpdate alone and stays in Lobby", () => {
     render(<GameScreen />);
     act(() => {
       mockWebSocket.onmessage?.({
@@ -218,7 +186,7 @@ describe("GameScreen (updated)", () => {
     expect(screen.queryByTestId("bgm")).not.toBeInTheDocument();
   });
 
-  it("handles privateUpdate and stays in Lobby if public/started are missing", () => {
+  it("handles privateUpdate alone and stays in Lobby", () => {
     render(<GameScreen />);
     act(() => {
       mockWebSocket.onmessage?.({
@@ -234,7 +202,7 @@ describe("GameScreen (updated)", () => {
 
   it("bumps Lobby refreshTrigger when player_joined arrives", () => {
     render(<GameScreen />);
-    // First render should show Refresh: 0
+    // Initial render
     expect(screen.getByText(/Refresh: 0/i)).toBeInTheDocument();
 
     act(() => {
@@ -242,12 +210,10 @@ describe("GameScreen (updated)", () => {
         data: JSON.stringify({ event: "player_joined" }),
       });
     });
-
-    // After bump, it should re-render with Refresh: 1
     expect(screen.getByText(/Refresh: 1/i)).toBeInTheDocument();
   });
 
-  it("handles gameStarted alone and keeps Lobby until public/private exist", () => {
+  it("handles gameStarted alone but keeps Lobby until public & private exist", () => {
     render(<GameScreen />);
     act(() => {
       mockWebSocket.onmessage?.({
@@ -270,9 +236,12 @@ describe("GameScreen (updated)", () => {
     warn.mockRestore();
   });
 
-  it("with public(in_progress) + private -> shows Presentation + BGM + global systems; then Sync + Clock after close()", async () => {
+  /* ----------------------- Game data + presentation ------------------ */
+
+  it("with public(in_progress)+private and connected -> shows Presentation + global systems; after close -> Sync + BGM/Clock/Chat/EventLog", async () => {
     render(<GameScreen />);
 
+    // Connected is required for global systems (Notifier/Effect/Clock/Chat/BGM/EventLog)
     act(() => {
       mockWebSocket.onopen?.();
     });
@@ -304,23 +273,27 @@ describe("GameScreen (updated)", () => {
       });
     });
 
+    // Presentation first: only connection-bound global systems outside the gate
     await waitFor(() => {
       expect(screen.getByTestId("presentation-screen")).toBeInTheDocument();
-      expect(screen.getByTestId("bgm")).toBeInTheDocument();
       expect(screen.getByTestId("notifier")).toBeInTheDocument();
       expect(screen.getByTestId("effect-manager")).toBeInTheDocument();
-      expect(screen.getByTestId("chat")).toBeInTheDocument();
-      // Clock must NOT be visible before closing the presentation
+      // Gated UI must NOT be visible before closing the presentation
       expect(screen.queryByTestId("clock")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("chat")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("bgm")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("event-log")).not.toBeInTheDocument();
     });
 
-    // Close presentation -> Sync appears; BGM stays; Clock now mounts
+    // Close presentation -> live game surface appears
     fireEvent.click(screen.getByLabelText("finish-presentation"));
 
     await waitFor(() => {
       expect(screen.getByTestId("sync-orchestrator")).toBeInTheDocument();
       expect(screen.getByTestId("bgm")).toBeInTheDocument();
       expect(screen.getByTestId("clock")).toBeInTheDocument();
+      expect(screen.getByTestId("chat")).toBeInTheDocument();
+      expect(screen.getByTestId("event-log")).toBeInTheDocument();
     });
 
     expect(
@@ -331,6 +304,7 @@ describe("GameScreen (updated)", () => {
   it('also sets started when publicUpdate has gameStatus "inProgress" (camelCase)', async () => {
     render(<GameScreen />);
 
+    // Feed camelCase status + private snapshot
     act(() => {
       mockWebSocket.onmessage?.({
         data: JSON.stringify({
@@ -356,14 +330,20 @@ describe("GameScreen (updated)", () => {
       });
     });
 
+    // Being connected is not required to show the presentation once the data is ready
     await waitFor(() =>
       expect(screen.getByTestId("presentation-screen")).toBeInTheDocument()
     );
-    expect(screen.getByTestId("bgm")).toBeInTheDocument();
+    // BGM/Chat/Clock are gated by "gamePresented" and connection -> do NOT expect them here
+    expect(screen.queryByTestId("bgm")).not.toBeInTheDocument();
   });
 
-  it("with public(waiting) + private + gameStarted -> shows Presentation; after close -> Sync; BGM stays mounted", async () => {
+  it("with public(waiting)+private+gameStarted and connected -> shows Presentation; after close -> Sync + BGM/Clock/Chat mount", async () => {
     render(<GameScreen />);
+
+    act(() => {
+      mockWebSocket.onopen?.();
+    });
 
     act(() => {
       mockWebSocket.onmessage?.({
@@ -397,7 +377,10 @@ describe("GameScreen (updated)", () => {
     await waitFor(() =>
       expect(screen.getByTestId("presentation-screen")).toBeInTheDocument()
     );
-    expect(screen.getByTestId("bgm")).toBeInTheDocument();
+    // Still gated: nothing of the live game UI should be visible yet
+    expect(screen.queryByTestId("bgm")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("clock")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("chat")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByLabelText("finish-presentation"));
 
@@ -405,7 +388,63 @@ describe("GameScreen (updated)", () => {
       expect(screen.getByTestId("sync-orchestrator")).toBeInTheDocument()
     );
     expect(screen.getByTestId("bgm")).toBeInTheDocument();
+    expect(screen.getByTestId("clock")).toBeInTheDocument();
+    expect(screen.getByTestId("chat")).toBeInTheDocument();
   });
+
+  it("handles onclose by marking disconnected and unmounting connection-bound systems", async () => {
+    render(<GameScreen />);
+
+    // Connect + provide data + close presentation to mount all gated modules
+    act(() => {
+      mockWebSocket.onopen?.();
+    });
+    act(() => {
+      mockWebSocket.onmessage?.({
+        data: JSON.stringify({
+          event: "publicUpdate",
+          payload: {
+            gameStatus: "in_progress",
+            players: [{ id: Number(mockPlayerId), name: "Me", avatar: 1 }],
+          },
+        }),
+      });
+      mockWebSocket.onmessage?.({
+        data: JSON.stringify({
+          event: "privateUpdate",
+          payload: { role: "detective", ally: null },
+        }),
+      });
+    });
+
+    await screen.findByTestId("presentation-screen");
+    fireEvent.click(screen.getByLabelText("finish-presentation"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("sync-orchestrator")).toBeInTheDocument();
+      expect(screen.getByTestId("bgm")).toBeInTheDocument();
+      expect(screen.getByTestId("clock")).toBeInTheDocument();
+      expect(screen.getByTestId("chat")).toBeInTheDocument();
+      expect(screen.getByTestId("notifier")).toBeInTheDocument();
+      expect(screen.getByTestId("effect-manager")).toBeInTheDocument();
+    });
+
+    // Close socket -> all connection-bound systems should go away
+    act(() => {
+      mockWebSocket.onclose?.();
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByTestId("notifier")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("effect-manager")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("chat")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("clock")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("bgm")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("event-log")).not.toBeInTheDocument();
+    });
+  });
+
+  /* ------------------------------ Cleanup ---------------------------- */
 
   it("closes the WebSocket on unmount", () => {
     const { unmount } = render(<GameScreen />);

@@ -1,4 +1,4 @@
-// EffectManager.test.jsx
+// src/components/GameScreen/Events/EffectManager/EffectManager.test.jsx
 import React from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import "@testing-library/jest-dom/vitest";
@@ -11,13 +11,16 @@ import {
 } from "@testing-library/react";
 import EffectManager from "./EffectManager";
 
-/* --------------------------- Router + child mocks --------------------------- */
+/* ------------------------------------------------------------------ */
+/* Router + children mocks                                             */
+/* ------------------------------------------------------------------ */
+// Keep useParams stable because EffectManager builds POST URLs with :gameId
 vi.mock("react-router-dom", async () => {
   const mod = await vi.importActual("react-router-dom");
   return { ...mod, useParams: vi.fn(() => ({ gameId: "42" })) };
 });
 
-/** Matches EffectManager.jsx import "../../Clock/Clock" */
+/** Match EffectManager import "../../Clock/Clock" */
 vi.mock("../../Clock/Clock", () => ({
   default: () => <div data-testid="Clock" />,
 }));
@@ -132,7 +135,7 @@ vi.mock("../Actions/OrderCards/OrderCards", () => ({
   ),
 }));
 
-/** NEW: matches EffectManager.jsx import "../Actions/SelectDirection/SelectDirection" */
+// New effect in component: selectDirection
 vi.mock("../Actions/SelectDirection/SelectDirection", () => ({
   default: ({ text, selectedDirection }) => (
     <div data-testid="SelectDirection">
@@ -153,7 +156,9 @@ vi.mock("../Actions/SelectDirection/SelectDirection", () => ({
   ),
 }));
 
-/* --------------------------- Shared fixtures --------------------------- */
+/* ------------------------------------------------------------------ */
+/* Shared fixtures                                                     */
+/* ------------------------------------------------------------------ */
 const PUBLIC_DATA = {
   players: [
     {
@@ -208,7 +213,7 @@ const PUBLIC_DATA = {
 };
 
 const PRIVATE_DATA = {
-  /** Added cards to support selectOwnCard flow */
+  // Added for selectOwnCard flow
   cards: [
     { id: 9101, name: "Swap", type: "action" },
     { id: 9102, name: "Peek", type: "action" },
@@ -227,9 +232,11 @@ const DISCARD_CARDS = [
   { id: 8005, name: "Social Faux Pas" },
 ];
 
-/* --------------------------- Test helpers --------------------------- */
+/* ------------------------------------------------------------------ */
+/* Test helpers                                                        */
+/* ------------------------------------------------------------------ */
+// Minimal ws object for the fallback path: EffectManager assigns .onmessage
 function createWs() {
-  // Minimal object for fallback path; EffectManager assigns .onmessage
   return { onmessage: null };
 }
 
@@ -251,7 +258,9 @@ function getLastFetchArgs() {
   return { url, opts, body: JSON.parse(opts.body) };
 }
 
-/* --------------------------- Test suite --------------------------- */
+/* ------------------------------------------------------------------ */
+/* Test suite                                                          */
+/* ------------------------------------------------------------------ */
 describe("EffectManager", () => {
   let ws;
 
@@ -264,7 +273,7 @@ describe("EffectManager", () => {
     vi.clearAllMocks();
   });
 
-  it("ignores non-effect messages and renders nothing", async () => {
+  it("ignores non-effect messages and renders no selection UI", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -285,7 +294,7 @@ describe("EffectManager", () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
-  it("selectAnyPlayer: shows SelectPlayer and POSTs selected player", async () => {
+  it("selectAnyPlayer -> shows SelectPlayer and POSTs chosen player", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -318,7 +327,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("stealSet: SelectPlayer (except me) -> SelectSet -> POST; supports goBack", async () => {
+  it("stealSet -> SelectPlayer (except me) → SelectSet → POST; supports goBack", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -342,9 +351,9 @@ describe("EffectManager", () => {
     expect(ss).toBeInTheDocument();
     expect(screen.getByTestId("ss-count").textContent).toBe("1");
 
+    // Back once, then proceed again
     fireEvent.click(screen.getByLabelText("go-back-selectset"));
     await screen.findByTestId("SelectPlayer");
-
     fireEvent.click(screen.getByLabelText("pick-player-2"));
     await screen.findByTestId("SelectSet");
 
@@ -361,7 +370,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("andThenThereWasOneMore: P1 -> secret -> P2 -> POST", async () => {
+  it("andThenThereWasOneMore -> P1 → secret → P2 → POST (with back on secret step)", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -410,7 +419,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("revealSecret: SelectPlayer -> SelectSecret(revealed=false) -> POST", async () => {
+  it("revealSecret -> SelectPlayer → SelectSecret(revealed=false) → POST", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -441,7 +450,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("revealOwnSecret: SelectSecret(revealed=false) no back, then POST", async () => {
+  it("revealOwnSecret -> SelectSecret(revealed=false) without back, then POST", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -469,7 +478,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("hideSecret: SelectPlayer -> SelectSecret(revealed=true) -> POST", async () => {
+  it("hideSecret -> SelectPlayer → SelectSecret(revealed=true) → POST", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -500,7 +509,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("lookIntoTheAshes: SelectCard -> POST with chosen id", async () => {
+  it("lookIntoTheAshes -> SelectCard → POST with chosen id", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -530,7 +539,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("delayTheMurderersEscape: OrderCards -> POST with ordered ids", async () => {
+  it("delayTheMurderersEscape -> OrderCards → POST with ordered ids", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -563,8 +572,8 @@ describe("EffectManager", () => {
     });
   });
 
-  /** NEW: covers the new effect selectOwnCard using privateData.cards */
-  it("selectOwnCard: shows SelectCard with own cards and POSTs chosen cardId", async () => {
+  // NEW: single-step effect using privateData.cards
+  it("selectOwnCard -> SelectCard with own cards → POST chosen cardId", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -594,8 +603,8 @@ describe("EffectManager", () => {
     });
   });
 
-  /** NEW: covers selectDirection flow and its POST */
-  it("selectDirection: shows SelectDirection and POSTs chosen direction", async () => {
+  // NEW: direction picker effect
+  it("selectDirection -> SelectDirection → POST chosen direction", async () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
@@ -625,7 +634,7 @@ describe("EffectManager", () => {
     });
   });
 
-  it("does not crash without wsRef and never posts", () => {
+  it("does not crash without wsRef and never POSTs", () => {
     render(
       <EffectManager
         publicData={PUBLIC_DATA}
