@@ -162,11 +162,11 @@
 .eventLogBadge {
   position: fixed;
   z-index: 50;
-  right: 2vmin;
-  bottom: 9vmin;
+  right: 0.7vw;
+  bottom: 5vw;
 
-  height: 6vmin;
-  padding: 0 3.5vmin;
+  height: 3.5vw;
+  padding: 0 2vw;
 
   border-radius: 1.6vmin;
   border: 0.2vmin solid rgba(232, 210, 139, 0.28);
@@ -185,7 +185,7 @@
 
   font-weight: 500;
   letter-spacing: 0.12vmin;
-  font-size: 2.2vmin;
+  font-size: 1vw;
 
   transition: transform 120ms ease, box-shadow 200ms ease, filter 150ms ease;
 }
