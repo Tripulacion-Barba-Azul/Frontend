@@ -85,6 +85,7 @@ describe("Lobby Component", () => {
     playerId: 5,
     refreshTrigger: 0,
     onStartGame: vi.fn(),
+    setGameName: () => null
   };
 
   const renderWithRouter = (component) => {
