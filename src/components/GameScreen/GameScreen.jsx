@@ -43,7 +43,7 @@ export default function GameScreen() {
   const [isConnected, setIsConnected] = useState(false);
   const [started, setStarted] = useState(false);
   const [refreshLobby, setRefreshLobby] = useState(0);
-
+  const [gameName, setGameName] = useState("");
   // One-time presentation gate (true after user closes it)
   const [gamePresented, setGamePresented] = useState(false);
 
@@ -179,17 +179,28 @@ export default function GameScreen() {
     }
   }
 
+  //Easter egg
+  const normalizedName = gameName?.toLowerCase().replace(/\s+/g, "");
+
   return (
     <>
       {gameDataReady ? (
         <>
           {/* Global BGM (mounted once for Presentation + Live game) */}
-          <BackgroundMusicPlayer
-            src="/Music/BoardMusic.mp3" // 30s loop recommended
-            // sources={["/audio/bgm.mp3","/audio/bgm.ogg"]} // optional fallbacks
+
+          {normalizedName === "sheriffmustdie"
+          ? 
+          (<BackgroundMusicPlayer
+            src="/Music/Surrender_To_The_King.mp3"
+            volume={0.05}
+            persistKey="bgm-muted" 
+          />)
+          : 
+          (<BackgroundMusicPlayer
+            src="/Music/BoardMusic.mp3" 
             volume={0.4}
-            persistKey="bgm-muted" // shared setting across sessions
-          />
+            persistKey="bgm-muted" 
+          />)}
 
           {/* Gate: first show the role/ally presentation, then the live game */}
           {!gamePresented ? (
@@ -217,6 +228,7 @@ export default function GameScreen() {
           ws={wsRef.current}
           isConnected={isConnected}
           refreshTrigger={refreshLobby}
+          setGameName={setGameName}
         />
       )}
 
