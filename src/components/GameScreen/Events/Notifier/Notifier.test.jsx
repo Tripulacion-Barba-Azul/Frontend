@@ -93,9 +93,7 @@ describe("Notifier Component", () => {
 
   /** Helper: fires the WS "message" listener that the component registers */
   const simulateWebSocketMessage = (eventType, payload) => {
-    const handler = wsMock.addEventListener.mock.calls.find(
-      (c) => c[0] === "message"
-    )?.[1];
+    const handler = wsMock.addEventListener.mock.calls.find((c) => c[0] === "message")?.[1];
     if (handler) {
       act(() => {
         handler({ data: JSON.stringify({ event: eventType, payload }) });
@@ -114,12 +112,8 @@ describe("Notifier Component", () => {
 
     const html = document.body.innerHTML;
     // Alice -> first color, Bob -> second color
-    expect(html).toContain(
-      '<span style="color:#e6194B; font-weight:bold">Alice</span>'
-    );
-    expect(html).toContain(
-      '<span style="color:#3cb44b; font-weight:bold">Bob</span>'
-    );
+    expect(html).toContain('<span style="color:#e6194B; font-weight:bold">Alice</span>');
+    expect(html).toContain('<span style="color:#3cb44b; font-weight:bold">Bob</span>');
   });
 
   it("different players get different colors", () => {
@@ -135,8 +129,7 @@ describe("Notifier Component", () => {
     expect(spans.length).toBeGreaterThanOrEqual(2);
 
     const aliceColor = spans.find((s) => s.textContent === "Alice").style.color;
-    const charlieColor = spans.find((s) => s.textContent === "Charlie").style
-      .color;
+    const charlieColor = spans.find((s) => s.textContent === "Charlie").style.color;
 
     expect(aliceColor).not.toBe(charlieColor);
   });
@@ -447,7 +440,7 @@ describe("Notifier Component", () => {
       document.querySelector(".notifier-overlay")?.click();
       vi.advanceTimersByTime(300);
     });
-
+    
     simulateWebSocketMessage("notifierCardsPlayed", {
       playerId: 1,
       cards: [{ id: 1, name: "Not so Fast!" }],
@@ -460,7 +453,7 @@ describe("Notifier Component", () => {
       document.querySelector(".notifier-overlay")?.click();
       vi.advanceTimersByTime(300);
     });
-
+    
     simulateWebSocketMessage("notifierCardsPlayed", {
       playerId: 1,
       cards: [{ id: 1, name: "Hercule Poirot" }],
@@ -514,10 +507,8 @@ describe("Notifier Component", () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     render(<Notifier {...defaultProps} />);
 
-    const handler = wsMock.addEventListener.mock.calls.find(
-      (c) => c[0] === "message"
-    )?.[1];
-
+    const handler = wsMock.addEventListener.mock.calls.find((c) => c[0] === "message")?.[1];
+    
     if (handler) {
       act(() => {
         handler({ data: "invalid json" });
@@ -549,7 +540,7 @@ describe("Notifier Component", () => {
 
     // Should catch the error but not crash the application
     expect(consoleSpy).toHaveBeenCalled();
-
+    
     // No notification should be rendered due to error
     const notifierElement = document.querySelector(".notifier-text");
     expect(notifierElement).toBeNull();
@@ -578,7 +569,7 @@ describe("Notifier Component", () => {
 
     const spans = Array.from(document.querySelectorAll(".notifier-text span"));
     expect(spans.length).toBeGreaterThanOrEqual(2);
-
+    
     const firstPlayerSpan = spans.find((s) => s.textContent === "Player7");
     const lastPlayerSpan = spans.find((s) => s.textContent === "Player8");
     expect(firstPlayerSpan.style.color).toBe("rgb(230, 25, 75)"); // #e6194B
@@ -623,7 +614,7 @@ describe("Notifier Component", () => {
     });
 
     // Should use the secret map for revealed secrets
-    expect(document.querySelector("img")).toBeInTheDocument();
+    expect(document.querySelector('img')).toBeInTheDocument();
   });
 
   it("renders nothing when no current notification", () => {
@@ -656,6 +647,27 @@ describe("Notifier Component", () => {
         [3, 2],
       ],
       selectedPlayerId: 3,
+    });
+
+    // Should render overlay and text containing colored selected player name
+    const textEl = document.querySelector(".notifier-text");
+    expect(textEl).toBeInTheDocument();
+    expect(textEl.innerHTML).toContain("was pointed as a suspicious");
+    // the selected player's colored span should be present
+    expect(textEl.innerHTML).toContain("Charlie");
+    // container for avatars should exist
+    expect(document.querySelector(".pointyour-container")).toBeInTheDocument();
+  });
+
+  it("renders Point Your Suspicious overlay and highlights selected player", () => {
+    render(<Notifier {...defaultProps} />);
+    simulateWebSocketMessage("notifierPointYourSuspicious", {
+      playersSelections: [
+        [1, 3],
+        [2, 3],
+        [3, 2],
+      ],
+      selectedPlayerId: 3
     });
 
     // Should render overlay and text containing colored selected player name

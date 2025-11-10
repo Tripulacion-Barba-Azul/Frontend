@@ -52,6 +52,11 @@
   }
 }
 
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
 .notifier-text {
   color: #f4e1a3;
   font-size: 1.51vw; /* 1.82rem -> 29.12px */
@@ -232,7 +237,7 @@
   font-size: 0.9vw;
   padding: 0.05vw 0.4vw;
   border-radius: 0.5vw;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0,0,0,0.6);
   color: #f4e1a3;
   font-weight: 600;
   pointer-events: none;

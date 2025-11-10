@@ -15,19 +15,13 @@ import {
 import "./Notifier.css";
 
 /** Presentation-only card notification; auto-hides after a delay */
-function Notification({
-  text,
-  cards = [],
-  setImage = null,
-  onClose,
-  shouldAutoClose = true,
-}) {
+function Notification({ text, cards = [], setImage = null, onClose, shouldAutoClose = true }) {
   const [isVisible, setIsVisible] = useState(true);
   const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
     if (!shouldAutoClose) return;
-
+    
     const t = setTimeout(() => {
       handleClose();
     }, 5000);
@@ -78,13 +72,7 @@ function Notification({
             {cards.map((card, index) => (
               <div key={index} className="notifier-card">
                 {card.shouldFlip ? (
-                  <div
-                    className={`card-flip-container ${
-                      card.flipDirection === "reveal"
-                        ? "flip-to-front"
-                        : "flip-to-back"
-                    }`}
-                  >
+                  <div className={`card-flip-container ${card.flipDirection === "reveal" ? "flip-to-front" : "flip-to-back"}`}>
                     <div className="card-flip-inner">
                       <div className="card-flip-front">
                         <img src={getCardImage(card)} alt={card.name} />
@@ -116,14 +104,11 @@ function PointYourSuspiciousOverlay({
   playersSelections,
   selectedPlayerId,
   onClose,
-  getPlayerNameColored,
+  getPlayerNameColored, 
 }) {
   // Ordenar jugadores para que el actual quede abajo
   const total = players.length;
-  const actualIndex = Math.max(
-    0,
-    players.findIndex((p) => p.id === actualPlayerId)
-  );
+  const actualIndex = Math.max(0, players.findIndex((p) => p.id === actualPlayerId));
   const orderedPlayers =
     total > 0
       ? [...players.slice(actualIndex), ...players.slice(0, actualIndex)]
@@ -142,9 +127,7 @@ function PointYourSuspiciousOverlay({
 
   const selectedPlayer = players.find((p) => p.id === selectedPlayerId);
 
-  const headline = `${getPlayerNameColored(
-    selectedPlayer?.id ?? "Unknown"
-  )} was pointed as a suspicious!`;
+  const headline = `${getPlayerNameColored(selectedPlayer?.id ?? "Unknown")} was pointed as a suspicious!`;
 
   return createPortal(
     <div className="notifier-overlay special-pointyour" onClick={onClose}>
@@ -223,9 +206,7 @@ function PointYourSuspiciousOverlay({
             return (
               <div
                 key={pos.id}
-                className={`player-avatar-wrapper ${
-                  isSelected ? "selected" : ""
-                }`}
+                className={`player-avatar-wrapper ${isSelected ? "selected" : ""}`}
                 style={{
                   left: `${pos.x}%`,
                   top: `${pos.y}%`,
@@ -257,6 +238,7 @@ function PointYourSuspiciousOverlay({
     document.body
   );
 }
+
 
 /** Orchestrator: listens WS events and opens one notification at a time (display-only) */
 export default function Notifier({ publicData, actualPlayerId, wsRef }) {
@@ -522,10 +504,10 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     const secret = targetPlayer?.secrets?.find((s) => s.id === secretId);
     const card = {
       id: secret.id,
-      name: secretName ? secretName : secret.name,
+      name: secretName? secretName : secret.name,
       revealed: true,
       isSecret: true,
-      shouldFlip: secretName ? true : false,
+      shouldFlip: secretName? true : false,
       flipDirection: "reveal",
     };
 
@@ -549,10 +531,10 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     const secret = targetPlayer?.secrets?.find((s) => s.id === secretId);
     const card = {
       id: secret.id,
-      name: secretName ? secretName : secret.name,
+      name: secretName? secretName : secret.name,
       revealed: true,
       isSecret: true,
-      shouldFlip: secretName ? true : false,
+      shouldFlip: secretName? true : false,
       flipDirection: "reveal",
     };
 
@@ -593,18 +575,18 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     const { playerId, secretId, selectedPlayerId, secretName } = payload;
     const p = getPlayerNameColored(playerId);
     const t = getPlayerNameColored(selectedPlayerId);
-
+    
     const targetPlayer = publicData.players.find(
       (pl) => pl.id === selectedPlayerId
     );
     const secret = targetPlayer?.secrets?.find((s) => s.id === secretId);
-
+    
     const card = {
       id: secretId,
-      name: secretName ? secretName : secret?.name || "Secret",
-      revealed: secretName ? true : false,
+      name: secretName? secretName : (secret?.name || "Secret"),
+      revealed: secretName? true : false,
       isSecret: true,
-      shouldFlip: secretName ? true : false,
+      shouldFlip: secretName? true : false,
       flipDirection: "hide",
     };
 
@@ -634,18 +616,17 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     const p = getPlayerNameColored(playerId);
     let s = "";
     let isActualPlayerSet = false;
-    setOwnerId
-      ? ((isActualPlayerSet = playerId == setOwnerId),
-        (s = getPlayerNameColored(setOwnerId)))
-      : (isActualPlayerSet = false);
+    setOwnerId ? (isActualPlayerSet = playerId == setOwnerId,
+                 s =  getPlayerNameColored(setOwnerId))
+                 : isActualPlayerSet = false;
 
     let actionText = "played cards";
     if (actionType === "set") actionText = "played a set of detectives";
     else if (actionType === "detective")
-      actionText = isActualPlayerSet
-        ? `added a detective <br /> to a set of his own`
-        : `added a detective <br /> to a set owned by ${s}`;
-    else if (actionType === "event") actionText = "played an event card";
+      actionText = isActualPlayerSet ? `added a detective <br /> to a set of his own` : 
+                                       `added a detective <br /> to a set owned by ${s}`;
+    else if (actionType === "event") 
+      actionText = "played an event card";
     else if (actionType == "instant") {
       actionText = "played a Not so Fast!";
     }
@@ -687,7 +668,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
 
   const handleCardTrade = (payload) => {
     const { playerId, cardName } = payload;
-    const p = getPlayerNameColored(playerId);
+    const p = getPlayerNameColored(playerId);    
     const card = {
       id: 0,
       name: cardName,
@@ -696,7 +677,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
     };
 
     showNotification({
-      text: `${p} gave you a card`,
+      text:`${p} gave you a card`,
       cards: [card],
       setImage: null,
     });
@@ -725,7 +706,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
   const handlePointYourSuspicious = (payload) => {
     const { playersSelections, selectedPlayerId } = payload;
     const players = publicData.players;
-
+  
     showNotification({
       text: "Point Your Suspicious",
       cards: [],
@@ -825,7 +806,7 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
       />
     );
   }
-
+  
   return (
     <Notification
       text={currentNotification.text}
@@ -835,4 +816,5 @@ export default function Notifier({ publicData, actualPlayerId, wsRef }) {
       shouldAutoClose={!pendingNotification}
     />
   );
+  
 }
