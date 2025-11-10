@@ -126,6 +126,8 @@ export default function EffectManager({
   const [selCard, setSelCard] = useState(null);
   const [selOrderIds, setSelOrderIds] = useState(null);
   const [selDirection, setSelDirection] = useState(null);
+  const [discardPileCards, setDiscardPileCards] = useState([]);
+  const [secretOwnerId, setSecretOwnerId] = useState(null);
 
   const [backRequested, setBackRequested] = useState(false);
   const requestBack = useCallback(() => setBackRequested(true), []);
@@ -208,7 +210,7 @@ export default function EffectManager({
       setSelCard(null);
       setSelOrderIds(null);
       setSelDirection(null);
-      setPayload(data.payload ?? null);
+      setPayload(data.payload);
       setBackRequested(false);
 
       switch (data.event) {
@@ -322,25 +324,35 @@ export default function EffectManager({
 
   const ownSecrets = useMemo(() => privateData?.secrets ?? [], [privateData]);
 
-  const hiddenSecretsOf = useMemo(() => {
+  useEffect(() => {
     if (currentEvent === "selectHiddenSecret") {
-      const playerId = payload.secretOwnerId;
-      const target = playersAll.find((p) => String(p.id) === String(playerId));
-      return target?.secrets ?? [];
-    } else {
-      return [];
+      setSecretOwnerId(payload?.secretOwnerId ?? secretOwnerId);
+      console.log("PAYLOAD Secret owner ID set to", payload?.secretOwnerId);
+      console.log;
+      "Current secretOwnerId:", secretOwnerId;
     }
-  }, [currentEvent]);
+  }, [currentEvent, secretOwnerId, publicData, payload]);
 
-  const discardTopFive = useMemo(
-    () =>
+  const hiddenSecretsOf = useMemo(() => {
+    if (currentEvent !== "selectHiddenSecret" || !secretOwnerId) return [];
+    const target = (publicData?.players ?? []).find(
+      (p) => String(p.id) === String(secretOwnerId)
+    );
+    console.log(
+      "Finding hidden secrets of player ID",
+      secretOwnerId,
+      target.secrets
+    );
+    return (target?.secrets ?? []).filter((s) => !s.revealed);
+  }, [currentEvent, secretOwnerId, publicData, payload]);
+
+  const discardTopFive = useMemo(() => {
+    const isDiscardFlow =
       currentEvent === "lookIntoTheAshes" ||
-      currentEvent === "delayTheMurderersEscape"
-        ? payload
-        : [],
-    [payload]
-  );
-
+      currentEvent === "delayTheMurderersEscape";
+    if (!isDiscardFlow) return [];
+    return Array.isArray(payload) ? payload : [];
+  }, [currentEvent, payload]);
   const ownCards = useMemo(() => privateData?.cards ?? [], [privateData]);
 
   useEffect(() => {
@@ -501,7 +513,7 @@ export default function EffectManager({
       case "selectHiddenSecret": {
         if (step === "selectSecret" && selSecret != null) {
           sendEffectResponse("selectHiddenSecret", {
-            playerId: actualPlayerId,
+            playerId: payload.secretOwnerId,
             secretId: selSecret,
           });
         }
@@ -618,7 +630,7 @@ export default function EffectManager({
       default:
         return [];
     }
-  }, [currentEvent, secretsOfTarget, ownSecrets]);
+  }, [currentEvent, secretsOfTarget, ownSecrets, hiddenSecretsOf]);
 
   const setsForThisStep = setsOfPlayer1;
   const cardsForThisStep = useMemo(() => {
