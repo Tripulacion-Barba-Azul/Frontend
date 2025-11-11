@@ -212,7 +212,7 @@ export default function PlayCardsButton({
 
       {/* Error text — mirrors DiscardButton visual */}
       {error && (
-        <div role="alert" style={{ color: "#f4e1a3", fontSize: "12px" }}>
+        <div role="alert" style={{ color: "#f4e1a3", fontSize: "0.7vw" }}>
           {error}
         </div>
       )}

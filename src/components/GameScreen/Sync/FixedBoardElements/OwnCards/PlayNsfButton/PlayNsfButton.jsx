@@ -94,7 +94,7 @@ export default function PlayNsfButton({
       </button>
 
       {error && (
-        <div role="alert" style={{ color: "#f4e1a3", fontSize: "12px" }}>
+        <div role="alert" style={{ color: "#f4e1a3", fontSize: "0.7vw" }}>
           {error}
         </div>
       )}

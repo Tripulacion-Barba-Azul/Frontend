@@ -31,6 +31,7 @@ import PresentationScreen from "./PresentationScreen/PresentationScreen";
 import BackgroundMusicPlayer from "./BackgroundMusicPlayer/BackgroundMusicPlayer";
 import Clock from "./Clock/Clock";
 import Chat from "./Chat/Chat";
+import EventLog from "./EventLog/EventLog";
 
 export default function GameScreen() {
   // Router params & query: game and the current player id
@@ -186,22 +187,6 @@ export default function GameScreen() {
     <>
       {gameDataReady ? (
         <>
-          {/* Global BGM (mounted once for Presentation + Live game) */}
-
-          {normalizedName === "sheriffmustdie"
-          ? 
-          (<BackgroundMusicPlayer
-            src="/Music/Surrender_To_The_King.mp3"
-            volume={0.05}
-            persistKey="bgm-muted" 
-          />)
-          : 
-          (<BackgroundMusicPlayer
-            src="/Music/BoardMusic.mp3" 
-            volume={0.4}
-            persistKey="bgm-muted" 
-          />)}
-
           {/* Gate: first show the role/ally presentation, then the live game */}
           {!gamePresented ? (
             <PresentationScreen
@@ -246,21 +231,43 @@ export default function GameScreen() {
             actualPlayerId={currentPlayerId}
             wsRef={wsRef}
           />
-          <Chat
-            websocket={wsRef.current}
-            currentPlayerId={currentPlayerId}
-            gameId={gameId}
-            players={publicData.players}
-          />
+
           {gamePresented && (
-            <Clock
-              websocket={wsRef.current}
-              publicPlayers={publicData.players}
-              actualPlayerId={currentPlayerId}
-              activeEffect={false}
-              actionStatus={publicData.actionStatus}
-            />
-          )}
+            <>
+              <Clock
+                websocket={wsRef.current}
+                publicPlayers={publicData.players}
+                actualPlayerId={currentPlayerId}
+                activeEffect={false}
+                actionStatus={publicData.actionStatus}
+              />
+              <Chat
+                websocket={wsRef.current}
+                currentPlayerId={currentPlayerId}
+                gameId={gameId}
+                players={publicData.players}
+              />
+              <EventLog
+                eventLog={publicData.eventLog}
+                publicData={publicData}
+                actualPlayerId={currentPlayerId}
+                buttonLabel="Events"
+              />
+              {normalizedName === "sheriffmustdie"
+              ? 
+              (<BackgroundMusicPlayer
+                src="/Music/Surrender_To_The_King.mp3"
+                volume={0.05}
+                persistKey="bgm-muted" 
+              />)
+              : 
+              (<BackgroundMusicPlayer
+                src="/Music/BoardMusic.mp3" 
+                volume={0.4}
+                persistKey="bgm-muted" 
+              />)}
+                </>
+              )}
 
           <GameEndScreen websocket={wsRef.current} />
         </>

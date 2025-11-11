@@ -415,7 +415,7 @@ describe("Notifier Component", () => {
       playerId: 1,
       cards: [
         { id: 1, name: "Hercule Poirot" },
-        { id: 2, name: "Miss Marple" }
+        { id: 2, name: "Miss Marple" },
       ],
     });
 
@@ -497,7 +497,9 @@ describe("Notifier Component", () => {
       selectedPlayerId: 1,
     });
 
-    const secretImages = document.querySelectorAll('img[src="/Cards/05-secret_front.png"]');
+    const secretImages = document.querySelectorAll(
+      'img[src="/Cards/05-secret_front.png"]'
+    );
     expect(secretImages.length).toBeGreaterThan(0);
   });
 
@@ -513,7 +515,10 @@ describe("Notifier Component", () => {
       });
     }
 
-    expect(consoleSpy).toHaveBeenCalledWith("Error processing websocket message:", expect.any(Error));
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "Error processing websocket message:",
+      expect.any(Error)
+    );
     consoleSpy.mockRestore();
   });
 
@@ -526,20 +531,20 @@ describe("Notifier Component", () => {
   it("handles null publicData without crashing (and logs error on use)", () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     render(<Notifier {...defaultProps} publicData={null} />);
-    
+
     simulateWebSocketMessage("notifierCardsOffTheTable", {
       playerId: 1,
       quantity: 1,
       selectedPlayerId: 2,
     });
-    
+
     // Should catch the error but not crash the application
     expect(consoleSpy).toHaveBeenCalled();
     
     // No notification should be rendered due to error
     const notifierElement = document.querySelector(".notifier-text");
     expect(notifierElement).toBeNull();
-    
+
     consoleSpy.mockRestore();
   });
 
@@ -552,12 +557,14 @@ describe("Notifier Component", () => {
       sets: [],
     }));
 
-    render(<Notifier {...defaultProps} publicData={{ players: manyPlayers }} />);
+    render(
+      <Notifier {...defaultProps} publicData={{ players: manyPlayers }} />
+    );
 
     simulateWebSocketMessage("notifierCardsOffTheTable", {
       playerId: 7, // Should cycle back to color index 0
       quantity: 1,
-      selectedPlayerId: 8, // Should use color index 1  
+      selectedPlayerId: 8, // Should use color index 1
     });
 
     const spans = Array.from(document.querySelectorAll(".notifier-text span"));
@@ -579,7 +586,7 @@ describe("Notifier Component", () => {
           secrets: [],
           sets: [
             { setId: 1, setName: "Tommy Beresford", cards: [] },
-            { setId: 2, setName: "Tuppence Beresford", cards: [] }
+            { setId: 2, setName: "Tuppence Beresford", cards: [] },
           ],
         },
       ],
@@ -617,12 +624,39 @@ describe("Notifier Component", () => {
 
   it("cleans up WebSocket listener on unmount", () => {
     const { unmount } = render(<Notifier {...defaultProps} />);
-    
-    expect(wsMock.addEventListener).toHaveBeenCalledWith("message", expect.any(Function));
-    
+
+    expect(wsMock.addEventListener).toHaveBeenCalledWith(
+      "message",
+      expect.any(Function)
+    );
+
     unmount();
-    
-    expect(wsMock.removeEventListener).toHaveBeenCalledWith("message", expect.any(Function));
+
+    expect(wsMock.removeEventListener).toHaveBeenCalledWith(
+      "message",
+      expect.any(Function)
+    );
+  });
+
+  it("renders Point Your Suspicious overlay and highlights selected player", () => {
+    render(<Notifier {...defaultProps} />);
+    simulateWebSocketMessage("notifierPointYourSuspicious", {
+      playersSelections: [
+        [1, 3],
+        [2, 3],
+        [3, 2],
+      ],
+      selectedPlayerId: 3,
+    });
+
+    // Should render overlay and text containing colored selected player name
+    const textEl = document.querySelector(".notifier-text");
+    expect(textEl).toBeInTheDocument();
+    expect(textEl.innerHTML).toContain("was pointed as a suspicious");
+    // the selected player's colored span should be present
+    expect(textEl.innerHTML).toContain("Charlie");
+    // container for avatars should exist
+    expect(document.querySelector(".pointyour-container")).toBeInTheDocument();
   });
 
   it("renders Point Your Suspicious overlay and highlights selected player", () => {

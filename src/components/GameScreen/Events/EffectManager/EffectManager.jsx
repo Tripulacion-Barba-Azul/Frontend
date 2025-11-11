@@ -99,6 +99,10 @@ const EFFECT_ENDPOINTS = {
     "http://localhost:8000/play/{id}/actions/delay-the-murderers-escape",
   selectOwnCard: "http://localhost:8000/play/{id}/actions/select-own-card",
   selectDirection: "http://localhost:8000/play/{id}/actions/select-direction",
+  cardTradeSelection:
+    "http://localhost:8000/play/{id}/actions/select-any-player",
+  selectHiddenSecret:
+    "http://localhost:8000/play/{id}/actions/select-hidden-secret",
 };
 
 const log = (...a) => console.log("[EffectManager]", ...a);
@@ -122,6 +126,8 @@ export default function EffectManager({
   const [selCard, setSelCard] = useState(null);
   const [selOrderIds, setSelOrderIds] = useState(null);
   const [selDirection, setSelDirection] = useState(null);
+  const [discardPileCards, setDiscardPileCards] = useState([]);
+  const [secretOwnerId, setSecretOwnerId] = useState(null);
 
   const [backRequested, setBackRequested] = useState(false);
   const requestBack = useCallback(() => setBackRequested(true), []);
@@ -204,7 +210,7 @@ export default function EffectManager({
       setSelCard(null);
       setSelOrderIds(null);
       setSelDirection(null);
-      setPayload(data.payload ?? null);
+      setPayload(data.payload);
       setBackRequested(false);
 
       switch (data.event) {
@@ -258,6 +264,16 @@ export default function EffectManager({
           setCurrentEvent("selectDirection");
           gotoStep("selectDirection");
           break;
+        case "cardTradeSelection":
+          log("WS event:", data.event);
+          setCurrentEvent("cardTradeSelection");
+          gotoStep("selectPlayer");
+          break;
+        case "selectHiddenSecret":
+          log("WS event:", data.event);
+          setCurrentEvent("selectHiddenSecret");
+          gotoStep("selectSecret");
+          break;
         default:
           warn("Unknown WS event (EffectManager):", data.event);
           setCurrentEvent(null);
@@ -308,8 +324,35 @@ export default function EffectManager({
 
   const ownSecrets = useMemo(() => privateData?.secrets ?? [], [privateData]);
 
-  const discardTopFive = useMemo(() => payload ?? [], [payload]);
+  useEffect(() => {
+    if (currentEvent === "selectHiddenSecret") {
+      setSecretOwnerId(payload?.secretOwnerId ?? secretOwnerId);
+      console.log("PAYLOAD Secret owner ID set to", payload?.secretOwnerId);
+      console.log;
+      "Current secretOwnerId:", secretOwnerId;
+    }
+  }, [currentEvent, secretOwnerId, publicData, payload]);
 
+  const hiddenSecretsOf = useMemo(() => {
+    if (currentEvent !== "selectHiddenSecret" || !secretOwnerId) return [];
+    const target = (publicData?.players ?? []).find(
+      (p) => String(p.id) === String(secretOwnerId)
+    );
+    console.log(
+      "Finding hidden secrets of player ID",
+      secretOwnerId,
+      target.secrets
+    );
+    return (target?.secrets ?? []).filter((s) => !s.revealed);
+  }, [currentEvent, secretOwnerId, publicData, payload]);
+
+  const discardTopFive = useMemo(() => {
+    const isDiscardFlow =
+      currentEvent === "lookIntoTheAshes" ||
+      currentEvent === "delayTheMurderersEscape";
+    if (!isDiscardFlow) return [];
+    return Array.isArray(payload) ? payload : [];
+  }, [currentEvent, payload]);
   const ownCards = useMemo(() => privateData?.cards ?? [], [privateData]);
 
   useEffect(() => {
@@ -458,6 +501,24 @@ export default function EffectManager({
         }
         break;
       }
+      case "cardTradeSelection": {
+        if (step === "selectPlayer" && selPlayer1 != null) {
+          sendEffectResponse("cardTradeSelection", {
+            playerId: actualPlayerId,
+            selectedPlayerId: selPlayer1,
+          });
+        }
+        break;
+      }
+      case "selectHiddenSecret": {
+        if (step === "selectSecret" && selSecret != null) {
+          sendEffectResponse("selectHiddenSecret", {
+            playerId: payload.secretOwnerId,
+            secretId: selSecret,
+          });
+        }
+        break;
+      }
 
       default:
         break;
@@ -517,7 +578,10 @@ export default function EffectManager({
         return "Select one of your own cards to trade";
       case "selectDirection":
         return "Select a direction for the card trade effect";
-
+      case "cardTradeSelection":
+        return "Select one player to trade a card with";
+      case "selectHiddenSecret":
+        return "Select one of these hidden secrets to see";
       default:
         return "";
     }
@@ -526,6 +590,7 @@ export default function EffectManager({
   const playersForThisStep = useMemo(() => {
     switch (currentEvent) {
       case "stealSet":
+      case "cardTradeSelection":
         return playersExceptMe;
       case "selectAnyPlayer":
       case "andThenThereWasOneMore":
@@ -560,10 +625,12 @@ export default function EffectManager({
         return secretsOfTarget;
       case "revealOwnSecret":
         return ownSecrets;
+      case "selectHiddenSecret":
+        return hiddenSecretsOf;
       default:
         return [];
     }
-  }, [currentEvent, secretsOfTarget, ownSecrets]);
+  }, [currentEvent, secretsOfTarget, ownSecrets, hiddenSecretsOf]);
 
   const setsForThisStep = setsOfPlayer1;
   const cardsForThisStep = useMemo(() => {
@@ -615,7 +682,8 @@ export default function EffectManager({
           revealed={revealedForThisStep}
           selectedSecretId={setSelSecret}
           goBack={
-            currentEvent === "revealOwnSecret"
+            currentEvent === "revealOwnSecret" ||
+            currentEvent === "selectHiddenSecret"
               ? null
               : () => setBackRequested(true)
           }
