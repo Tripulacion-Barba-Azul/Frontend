@@ -187,22 +187,6 @@ export default function GameScreen() {
     <>
       {gameDataReady ? (
         <>
-          {/* Global BGM (mounted once for Presentation + Live game) */}
-
-          {normalizedName === "sheriffmustdie"
-          ? 
-          (<BackgroundMusicPlayer
-            src="/Music/Surrender_To_The_King.mp3"
-            volume={0.05}
-            persistKey="bgm-muted" 
-          />)
-          : 
-          (<BackgroundMusicPlayer
-            src="/Music/BoardMusic.mp3" 
-            volume={0.4}
-            persistKey="bgm-muted" 
-          />)}
-
           {/* Gate: first show the role/ally presentation, then the live game */}
           {!gamePresented ? (
             <PresentationScreen
@@ -269,8 +253,21 @@ export default function GameScreen() {
                 actualPlayerId={currentPlayerId}
                 buttonLabel="Events"
               />
-            </>
-          )}
+              {normalizedName === "sheriffmustdie"
+              ? 
+              (<BackgroundMusicPlayer
+                src="/Music/Surrender_To_The_King.mp3"
+                volume={0.05}
+                persistKey="bgm-muted" 
+              />)
+              : 
+              (<BackgroundMusicPlayer
+                src="/Music/BoardMusic.mp3" 
+                volume={0.4}
+                persistKey="bgm-muted" 
+              />)}
+                </>
+              )}
 
           <GameEndScreen websocket={wsRef.current} />
         </>
