@@ -1,1 +1,31 @@
 @import "tailwindcss";
+
+/* Force override all cursors after Tailwind loads */
+* {
+  cursor: url('/Cursors/normal.png'), auto !important;
+}
+
+*::before,
+*::after {
+  cursor: url('/Cursors/normal.png'), auto !important;
+}
+
+/* Interactive elements get pointer cursor */
+a,
+a *,
+button,
+button *,
+[role="button"],
+[role="button"] *,
+[onclick],
+[onclick] *,
+label[for],
+label[for] *,
+input[type="submit"],
+input[type="button"],
+input[type="checkbox"],
+input[type="radio"],
+select,
+[class*="cursor-pointer"] {
+  cursor: url('/Cursors/pointer.png'), pointer !important;
+}

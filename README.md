@@ -59,12 +59,12 @@ Ctrl + C
 
 1. **Build and run the production container:**
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 2. **Run in background (detached mode):**
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 3. **Access the application:**
@@ -74,7 +74,7 @@ docker-compose up -d --build
 
 1. **Run the development container with hot reload:**
 ```bash
-docker-compose --profile dev up --build
+docker compose --profile dev up --build
 ```
 
 2. **Access the development server:**
@@ -84,7 +84,7 @@ docker-compose --profile dev up --build
 
 #### Stop containers:
 ```bash
-docker-compose down
+docker compose down
 ```
 
 #### View running containers:
@@ -94,17 +94,17 @@ docker ps
 
 #### View logs:
 ```bash
-docker-compose logs -f
+docker compose logs -f
 ```
 
 #### Remove containers and images:
 ```bash
-docker-compose down --rmi all
+docker compose down --rmi all
 ```
 
 #### Build only (without running):
 ```bash
-docker-compose build
+docker compose build
 ```
 
 ### Docker Architecture
@@ -116,15 +116,10 @@ docker-compose build
   - Development: `localhost:5173` → container port `5173`
 
 ## Test coverage
-### Installing dependencies
-
-```bash
-cd Frontend
-npm install --save-dev @vitest/coverage-v8
-```
 
 ### How to run
 
 ```bash
+cd Frontend
 npm run test -- --coverage
 ```

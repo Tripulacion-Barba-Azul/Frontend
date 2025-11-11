@@ -389,7 +389,7 @@ export default function CreateGameForm() {
           onClose={() => setShowAvatarPicker(false)}
           onSelect={(id) => setSettings((s) => ({ ...s, Avatar: String(id) }))}
           selectedId={Number(settings.Avatar)}
-          ids={[1, 2, 3, 4, 5, 6]}
+          ids={[1, 2, 3, 4, 5, 6, 7, 8, 9 ,10]}
         />
       </div>
     </div>

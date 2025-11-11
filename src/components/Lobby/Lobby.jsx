@@ -55,6 +55,8 @@ function Lobby(/** @type {LobbyProps} */ props) {
         currentPlayers: playersArray,
       };
 
+      props.setGameName(data.gameName);
+
       const isCurrentPlayerOwner = props.playerId === data.ownerId;
       setIsOwner(isCurrentPlayerOwner);
 
