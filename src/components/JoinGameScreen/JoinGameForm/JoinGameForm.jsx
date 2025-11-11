@@ -1,91 +1,34 @@
-// JoinGameForm.jsx
-
-/**
- * @file JoinGameForm.jsx
- * @description Join flow for a specific game. Reads ":gameId" from the URL,
- * validates minimal player info, and POSTs to the server. On success, it
- * redirects to "/game/:gameId?playerId=:actualPlayerId".
- *
- * Props: none (this component does not accept props).
- *
- * UX flow:
- * 1) User enters name + birthday and picks an avatar.
- * 2) Client-side validation runs on submit.
- * 3) If valid, POST to /games/:gameId/join with JSON body.
- * 4) If server accepts, navigate to the game screen with the returned ids.
- *
- * API contract (expected server response shape on success):
- * {
- *   "gameId": string | number,
- *   "actualPlayerId": string
- * }
- *
- * Accessibility:
- * - Inputs are labeled via <label htmlFor="...">.
- * - Error messages are rendered next to fields.
- * - Submit button exposes aria-busy/aria-disabled when submitting.
- */
-
-/**
- * @typedef {Object} JoinFormState
- * @property {string} PlayerName - Display name shown to other players (<= 20 chars).
- * @property {string} PlayerBirthday - ISO date string (YYYY-MM-DD). Must not be in the future.
- * @property {string} Avatar - Avatar id as string (mapped to an image by AVATAR_MAP).
- */
-
-/**
- * @typedef {Object} JoinFormErrors
- * @property {string} [PlayerName] - Validation message for PlayerName (optional).
- * @property {string} [PlayerBirthday] - Validation message for PlayerBirthday (optional).
- */
-
 import "./JoinGameForm.css";
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AvatarPicker from "../AvatarPicker/AvatarPicker";
 import { AVATAR_MAP } from "../../../utils/generalMaps";
 
-export default function JoinGameForm() {
-  /**
-   * Local form state.
-   * Note: Avatar is stored as string for easy binding with inputs/pickers;
-   * convert to number only when sending to the API.
-   * @type {[JoinFormState, (s: JoinFormState) => void]}
-   */
+export default function JoinGameForm(props) {
   const [settings, setSettings] = useState({
     PlayerName: "defaultName",
     PlayerBirthday: "1990-01-01",
     Avatar: "1",
+    Password: "",
   });
 
-  /** @type {[JoinFormErrors, (e: JoinFormErrors) => void]} */
   const [formErrors, setFormErrors] = useState({});
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
-
-  // Submission lock to prevent duplicate requests (double click / slow network).
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  // Router utilities
-  const { gameId } = useParams(); // Read ":gameId" from the URL.
+  const { gameId } = useParams();
   const navigate = useNavigate();
 
-  /**
-   * Minimal synchronous validation.
-   * Keep this in sync with any server-side validation to avoid UX mismatches.
-   * @param {JoinFormState} values
-   * @returns {JoinFormErrors}
-   */
   const validate = (values) => {
-    const errors = /** @type {JoinFormErrors} */ ({});
+    const errors = {};
 
-    // Name: required + short cap to avoid long UI overflows.
     if (!values.PlayerName) {
       errors.PlayerName = "You must have a name!";
     } else if (values.PlayerName.length > 20) {
       errors.PlayerName = "Name too long! Must be less than 20 characters";
     }
 
-    // Birthday: required + not in the future.
     if (!values.PlayerBirthday) {
       errors.PlayerBirthday = "You must say your birthday!";
     } else {
@@ -96,31 +39,30 @@ export default function JoinGameForm() {
       }
     }
 
+    if (props.private && !values.Password) {
+      errors.Password = "Password is required for private games!";
+    } else if (values.Password.length > 20) {
+      errors.Password = "Password too long! Must be less than 20 characters";
+    }
+
     return errors;
   };
 
-  /**
-   * Submit handler:
-   * - Prevent default form submit
-   * - Validate locally
-   * - POST to /games/:gameId/join
-   * - On success, redirect to /game/:id?playerId=:pid
-   */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (submitting) return; // Guard re-entrance
+    if (submitting) return;
 
     const errors = validate(settings);
     setFormErrors(errors);
-    if (Object.keys(errors).length > 0) return; // Stop on invalid
+    if (Object.keys(errors).length > 0) return;
 
     setSubmitting(true);
 
-    // API shape: avatar is optional; send as number if present.
     const requestData = {
       playerName: settings.PlayerName,
       birthDate: String(settings.PlayerBirthday),
       avatar: settings.Avatar ? Number(settings.Avatar) : undefined,
+      password: props.private ? settings.Password : null,
     };
 
     try {
@@ -129,34 +71,38 @@ export default function JoinGameForm() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          credentials: "include", // keep cookies/session if server uses them
+          credentials: "include",
           body: JSON.stringify(requestData),
         }
       );
 
-      // On any non-2xx, exit to the generic /join screen
       if (!response.ok) {
         setSubmitting(false);
+
+        if (response.status === 401) {
+          setFormErrors((prevErrors) => ({
+            ...prevErrors,
+            Password: "Incorrect password. Please try again.",
+          }));
+          return;
+        }
+
         navigate(`/join`);
         return;
       }
 
-      // Expect { gameId, actualPlayerId }
       const data = await response.json();
       const fetchedId = data.gameId;
       const fetchedPlayerId = data.actualPlayerId;
 
-      // Safety check: the server should echo back the same game id
       if (String(fetchedId) !== String(gameId)) {
         setSubmitting(false);
         navigate(`/join`);
         return;
       }
 
-      // Navigate to the live game screen with the player's id as query param
       navigate(`/game/${fetchedId}?playerId=${fetchedPlayerId}`);
     } catch (error) {
-      // Network/parse errors land here
       console.error("Error in request:", error);
       setSubmitting(false);
       navigate(`/join`);
@@ -164,16 +110,18 @@ export default function JoinGameForm() {
   };
 
   return (
-    <div className="join-game-container">
+    <div className={`join-game-container ${props.private ? "private-game" : ""}`}>
       <div className="join-game-wrapper">
-        {/* Header area */}
         <div className="join-game-header">
-          <h1 className="join-game-title">Join Game</h1>
+          <h1 className="join-game-title">
+            {props.private ? "Join Private Game" : "Join Game"}
+          </h1>
         </div>
 
-        {/* Form: keep groups aligned to CSS Modules for easy theming */}
         <form onSubmit={handleSubmit} className="join-game-form">
-          <fieldset className="form-section">
+          <fieldset
+            className={`form-section ${props.private ? "form-section-private" : ""}`}
+          >
             {/* Player name */}
             <div className="form-group">
               <label htmlFor="yourName" className="form-label">
@@ -189,7 +137,6 @@ export default function JoinGameForm() {
                 className="form-input"
                 disabled={submitting}
               />
-              {/* Inline error message (if any) */}
               <p className="error-message">{formErrors.PlayerName}</p>
             </div>
 
@@ -207,17 +154,98 @@ export default function JoinGameForm() {
                 }
                 className="form-input"
                 disabled={submitting}
-                // Browser-native date input handles basic formatting
               />
               <p className="error-message">{formErrors.PlayerBirthday}</p>
             </div>
 
-            {/* Avatar picker (modal) */}
+            {/* Password field - only for private games */}
+            {props.private && (
+              <div className="form-group password-group">
+                <label htmlFor="gamePassword" className="form-label">
+                  Game Password
+                </label>
+                <div className="password-wrapper">
+                  <input
+                    id="gamePassword"
+                    type={showPassword ? "text" : "password"}
+                    value={settings.Password}
+                    onChange={(e) =>
+                      setSettings({ ...settings, Password: e.target.value })
+                    }
+                    className="form-input password-input"
+                    disabled={submitting}
+                    placeholder="Enter the game password"
+                  />
+
+                  <button
+                    type="button"
+                    className="toggle-password-visibility"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      /* 👁️ Ojo visible */
+                      <svg
+                        width="1.4vw"
+                        height="1.4vw"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden
+                      >
+                        <path
+                          d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"
+                          stroke="#f4e1a3"
+                          strokeWidth="0.078125vw"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="3"
+                          stroke="#f4e1a3"
+                          strokeWidth="0.078125vw"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    ) : (
+                      /* 🚫 Ojo tachado */
+                      <svg
+                        width="1.4vw"
+                        height="1.4vw"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden
+                      >
+                        <path
+                          d="M17.94 17.94A10.94 10.94 0 0112 19c-7 0-11-7-11-7a20.86 20.86 0 013.68-4.32"
+                          stroke="#f4e1a3"
+                          strokeWidth="0.078125vw"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M1 1l22 22"
+                          stroke="#f4e1a3"
+                          strokeWidth="0.078125vw"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                <p className="error-message">{formErrors.Password}</p>
+              </div>
+            )}
+
+            {/* Avatar picker */}
             <div className="form-group">
               <label className="form-label">Your Avatar</label>
-
               <div className="avatar-row">
-                {/* Opens the avatar modal. Keep button separate from preview for clarity. */}
                 <button
                   type="button"
                   className="choose-avatar-button"
@@ -227,18 +255,13 @@ export default function JoinGameForm() {
                   Choose <br /> Avatar
                 </button>
 
-                {/* Live preview based on AVATAR_MAP and current selection */}
                 <div className="avatar-preview">
-                  <img
-                    src={AVATAR_MAP[settings.Avatar]}
-                    alt="Selected avatar"
-                  />
+                  <img src={AVATAR_MAP[settings.Avatar]} alt="Selected avatar" />
                 </div>
               </div>
             </div>
           </fieldset>
 
-          {/* Submit. aria-busy + aria-disabled advertise async state to ATs */}
           <button
             type="submit"
             className="join-game-submit-button"
@@ -250,7 +273,6 @@ export default function JoinGameForm() {
           </button>
         </form>
 
-        {/* Modal for avatar selection */}
         <AvatarPicker
           isOpen={showAvatarPicker}
           onClose={() => setShowAvatarPicker(false)}

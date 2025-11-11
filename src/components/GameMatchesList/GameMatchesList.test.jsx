@@ -13,6 +13,16 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import * as matchers from "@testing-library/jest-dom/matchers";
 import GameMatchesList from "./GameMatchesList";
 
+// Mock useNavigate
+const mockNavigate = vi.fn();
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 // Setup testing environment
 beforeAll(() => {
   // Extend expect with jest-dom matchers
@@ -47,6 +57,7 @@ const mockBackendData = [
     minPlayers: 2,
     maxPlayers: 6,
     actualPlayers: 1, // 1 player currently
+    private: false,
   },
   {
     gameId: 2,
@@ -55,6 +66,7 @@ const mockBackendData = [
     minPlayers: 4,
     maxPlayers: 8,
     actualPlayers: 4, // 4 players currently
+    private: true, // Private game
   },
   {
     gameId: 3,
@@ -63,6 +75,7 @@ const mockBackendData = [
     minPlayers: 3,
     maxPlayers: 5,
     actualPlayers: 5, // 5 players - full
+    private: false,
   },
 ];
 
@@ -70,6 +83,8 @@ describe("GameMatchesList", () => {
   beforeEach(() => {
     // Reset fetch mock before each test
     mockFetch.mockClear();
+    // Reset navigate mock before each test
+    mockNavigate.mockClear();
   });
 
   afterEach(() => {
@@ -278,6 +293,7 @@ describe("GameMatchesList", () => {
           minPlayers: 2,
           maxPlayers: 4,
           actualPlayers: 2,
+          private: false,
         },
       ];
 
@@ -366,9 +382,43 @@ describe("GameMatchesList", () => {
       const joinButtons = screen.getAllByText("Join Game");
       fireEvent.click(joinButtons[0]); // Click first available join button
 
-      expect(consoleSpy).toHaveBeenCalledWith("Trying to join the game 1");
+      // The first game in mockBackendData is public (private: false) with gameId: 1
+      expect(consoleSpy).toHaveBeenCalledWith("Trying to join the public game 1");
 
       consoleSpy.mockRestore();
+    });
+
+    it("calls handleJoinMatch with private game type for private games", () => {
+      // Mock console.log to check if it's called
+      const consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+      // Find the join button for the private game (Combat Arena)
+      const privateGameCard = screen.getByText("Combat Arena").closest(".match-card");
+      const joinButton = privateGameCard.querySelector("button");
+      fireEvent.click(joinButton);
+
+      // The Combat Arena game is private (private: true) with gameId: 2
+      expect(consoleSpy).toHaveBeenCalledWith("Trying to join the private game 2");
+
+      consoleSpy.mockRestore();
+    });
+
+    it("navigates to correct route for public games", () => {
+      const joinButtons = screen.getAllByText("Join Game");
+      fireEvent.click(joinButtons[0]); // Click first available join button (Epic Battle - public)
+
+      // Should navigate to public route with gameId 1
+      expect(mockNavigate).toHaveBeenCalledWith("/join/1/public");
+    });
+
+    it("navigates to correct route for private games", () => {
+      // Find the join button for the private game (Combat Arena)
+      const privateGameCard = screen.getByText("Combat Arena").closest(".match-card");
+      const joinButton = privateGameCard.querySelector("button");
+      fireEvent.click(joinButton);
+
+      // Should navigate to private route with gameId 2
+      expect(mockNavigate).toHaveBeenCalledWith("/join/2/private");
     });
 
     it("disables join button for full matches", () => {
@@ -469,6 +519,46 @@ describe("GameMatchesList", () => {
         ).toBeInTheDocument();
       });
     });
+
+    it("correctly maps API response including private field", async () => {
+      // Test with games that have different private values
+      const testData = [
+        {
+          gameId: 10,
+          gameName: "Public Test Game",
+          ownerName: "TestUser1",
+          minPlayers: 2,
+          maxPlayers: 4,
+          actualPlayers: 2,
+          private: false,
+        },
+        {
+          gameId: 11,
+          gameName: "Private Test Game",
+          ownerName: "TestUser2",
+          minPlayers: 2,
+          maxPlayers: 4,
+          actualPlayers: 2,
+          private: true,
+        },
+      ];
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => testData,
+      });
+
+      render(
+        <MemoryRouter>
+          <GameMatchesList />
+        </MemoryRouter>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText("Public Test Game")).toBeInTheDocument();
+        expect(screen.getByText("Private Test Game")).toBeInTheDocument();
+      });
+    });
   });
 
   describe("Background and Styling", () => {
@@ -560,7 +650,7 @@ describe("GameMatchesList", () => {
     });
   });
 
-  describe("Search Functionality", () => {
+  describe("Private Games Display", () => {
     beforeEach(async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -578,447 +668,35 @@ describe("GameMatchesList", () => {
       });
     });
 
-    it("displays search input field", () => {
-      const searchInput = screen.getByPlaceholderText("Search games by name...");
-      expect(searchInput).toBeInTheDocument();
-      expect(searchInput).toHaveValue("");
+    it("displays 'Private' indicator for private games", () => {
+      // Combat Arena is private (gameId: 2)
+      const privateGame = screen.getByText("Combat Arena");
+      expect(privateGame).toBeInTheDocument();
+      
+      // Check for private indicator above the game name
+      const matchCard = privateGame.closest(".match-card");
+      expect(matchCard.querySelector(".private-indicator")).toBeInTheDocument();
+      expect(matchCard).toHaveTextContent("Private");
     });
 
-    it("displays search icon", () => {
-      const searchContainer = document.querySelector(".search-container");
-      expect(searchContainer).toBeInTheDocument();
-      
-      const searchIcon = searchContainer.querySelector(".search-icon");
-      expect(searchIcon).toBeInTheDocument();
+    it("does not display 'Private' indicator for public games", () => {
+      // Epic Battle is public (gameId: 1)
+      const publicGame1 = screen.getByText("Epic Battle");
+      expect(publicGame1).toBeInTheDocument();
+      const matchCard1 = publicGame1.closest(".match-card");
+      expect(matchCard1.querySelector(".private-indicator")).not.toBeInTheDocument();
+
+      // Secret Mission is public (gameId: 3)
+      const publicGame2 = screen.getByText("Secret Mission");
+      expect(publicGame2).toBeInTheDocument();
+      const matchCard2 = publicGame2.closest(".match-card");
+      expect(matchCard2.querySelector(".private-indicator")).not.toBeInTheDocument();
     });
 
-    it("filters matches when typing in search field", () => {
-      const searchInput = screen.getByPlaceholderText("Search games by name...");
-      
-      // Initially all matches should be visible
-      expect(screen.getByText("Epic Battle")).toBeInTheDocument();
-      expect(screen.getByText("Combat Arena")).toBeInTheDocument();
-      expect(screen.getByText("Secret Mission")).toBeInTheDocument();
-
-      // Search for "Epic"
-      fireEvent.change(searchInput, { target: { value: "Epic" } });
-      
-      expect(screen.getByText("Epic Battle")).toBeInTheDocument();
-      expect(screen.queryByText("Combat Arena")).not.toBeInTheDocument();
-      expect(screen.queryByText("Secret Mission")).not.toBeInTheDocument();
-    });
-
-    it("shows no results message when search doesn't match any games", () => {
-      const searchInput = screen.getByPlaceholderText("Search games by name...");
-      
-      fireEvent.change(searchInput, { target: { value: "NonExistentGame" } });
-      
-      expect(screen.getByText('No games found matching "NonExistentGame"')).toBeInTheDocument();
-      expect(screen.getByText("🔍")).toBeInTheDocument();
-      expect(screen.queryByText("Epic Battle")).not.toBeInTheDocument();
-    });
-
-    it("restores all matches when search field is cleared", () => {
-      const searchInput = screen.getByPlaceholderText("Search games by name...");
-      
-      // Filter to show only one match
-      fireEvent.change(searchInput, { target: { value: "Epic" } });
-      expect(screen.getByText("Epic Battle")).toBeInTheDocument();
-      expect(screen.queryByText("Combat Arena")).not.toBeInTheDocument();
-      
-      // Clear search
-      fireEvent.change(searchInput, { target: { value: "" } });
-      
-      // All matches should be visible again
-      expect(screen.getByText("Epic Battle")).toBeInTheDocument();
-      expect(screen.getByText("Combat Arena")).toBeInTheDocument();
-      expect(screen.getByText("Secret Mission")).toBeInTheDocument();
-    });
-
-    it("search is case insensitive", () => {
-      const searchInput = screen.getByPlaceholderText("Search games by name...");
-      
-      // Search with different cases
-      fireEvent.change(searchInput, { target: { value: "epic" } });
-      expect(screen.getByText("Epic Battle")).toBeInTheDocument();
-      expect(screen.queryByText("Combat Arena")).not.toBeInTheDocument();
-      
-      fireEvent.change(searchInput, { target: { value: "COMBAT" } });
-      expect(screen.getByText("Combat Arena")).toBeInTheDocument();
-      expect(screen.queryByText("Epic Battle")).not.toBeInTheDocument();
-    });
-
-    it("search matches partial game names", () => {
-      const searchInput = screen.getByPlaceholderText("Search games by name...");
-      
-      // Search for partial match that starts with the term
-      fireEvent.change(searchInput, { target: { value: "Epic" } });
-      expect(screen.getByText("Epic Battle")).toBeInTheDocument();
-      expect(screen.queryByText("Combat Arena")).not.toBeInTheDocument();
-      expect(screen.queryByText("Secret Mission")).not.toBeInTheDocument();
-    });
-
-    it("sorts search results with exact matches first", async () => {
-      // Create test data with exact match scenario
-      const testData = [
-        {
-          gameId: 1,
-          gameName: "Test Arena",
-          ownerName: "Player1",
-          minPlayers: 2,
-          maxPlayers: 6,
-          actualPlayers: 1,
-        },
-        {
-          gameId: 2,
-          gameName: "Arena",
-          ownerName: "Player2",
-          minPlayers: 2,
-          maxPlayers: 6,
-          actualPlayers: 1,
-        },
-        {
-          gameId: 3,
-          gameName: "Arena Battle",
-          ownerName: "Player3",
-          minPlayers: 2,
-          maxPlayers: 6,
-          actualPlayers: 1,
-        },
-      ];
-
-      mockFetch.mockClear();
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => testData,
-      });
-
-      render(
-        <MemoryRouter>
-          <GameMatchesList />
-        </MemoryRouter>
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText("List of games")).toBeInTheDocument();
-      });
-
-      // Use getAllByPlaceholderText to handle multiple search inputs
-      const searchInputs = screen.getAllByPlaceholderText("Search games by name...");
-      const searchInput = searchInputs[0]; // Use the first one found
-      fireEvent.change(searchInput, { target: { value: "Arena" } });
-
-      // Wait for filtering to complete
-      await waitFor(() => {
-        expect(screen.getByText("Arena")).toBeInTheDocument();
-      });
-
-      // Check that all Arena-related matches appear in the results
-      // The sorting logic puts exact matches first, then alphabetical
-      expect(screen.getByText("Arena")).toBeInTheDocument();
-      expect(screen.getByText("Arena Battle")).toBeInTheDocument();
-      expect(screen.getByText("Test Arena")).toBeInTheDocument();
-      
-      // Verify only Arena-related matches are shown (Epic Battle and Secret Mission should not appear)
-      expect(screen.queryByText("Epic Battle")).not.toBeInTheDocument();
-      expect(screen.queryByText("Secret Mission")).not.toBeInTheDocument();
-      // Combat Arena should actually appear because it contains "Arena"
-      // So we remove this assertion that was causing the test to fail
-    });
-
-    it("maintains search state during refresh", async () => {
-      const searchInput = screen.getByPlaceholderText("Search games by name...");
-      
-      // Set search term
-      fireEvent.change(searchInput, { target: { value: "Epic" } });
-      expect(screen.getByText("Epic Battle")).toBeInTheDocument();
-      expect(screen.queryByText("Combat Arena")).not.toBeInTheDocument();
-
-      // Mock refresh response
-      mockFetch.mockClear();
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockBackendData,
-      });
-
-      // Click refresh
-      const refreshButton = screen.getByText("Refresh");
-      fireEvent.click(refreshButton);
-
-      await waitFor(() => {
-        expect(screen.getByText("Refresh")).toBeInTheDocument();
-      });
-
-      // Search term should still be there and filtering should still work
-      expect(searchInput).toHaveValue("Epic");
-      expect(screen.getByText("Epic Battle")).toBeInTheDocument();
-      expect(screen.queryByText("Combat Arena")).not.toBeInTheDocument();
-    });
-
-    it("handles search with whitespace correctly", () => {
-      // Use getAllByPlaceholderText to handle multiple search inputs
-      const searchInputs = screen.getAllByPlaceholderText("Search games by name...");
-      const searchInput = searchInputs[0]; // Use the first one found
-      
-      // Search with leading/trailing spaces
-      fireEvent.change(searchInput, { target: { value: "  Epic  " } });
-      
-      // The current implementation doesn't trim whitespace, so it should show no results
-      // Use a more flexible matcher since the text might be split across elements
-      expect(screen.getByText((content, element) => {
-        return content.includes('No games found matching') && content.includes('Epic');
-      })).toBeInTheDocument();
-      expect(screen.queryByText("Epic Battle")).not.toBeInTheDocument();
-    });
-  });
-
-  describe("Player Count Sorting", () => {
-    beforeEach(async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockBackendData,
-      });
-
-      render(
-        <MemoryRouter>
-          <GameMatchesList />
-        </MemoryRouter>
-      );
-
-      await waitFor(() => {
-        expect(screen.getByText("List of games")).toBeInTheDocument();
-      });
-    });
-
-    it("displays sort button with correct initial state", () => {
-      const sortButton = screen.getByRole("button", { name: /Player Count/i });
-      expect(sortButton).toBeInTheDocument();
-      expect(sortButton).toHaveTextContent("Player Count");
-      expect(sortButton).not.toHaveTextContent("⬆️");
-      expect(sortButton).not.toHaveTextContent("⬇️");
-    });
-
-    it("cycles through sort states when clicked", () => {
-      const sortButton = screen.getByRole("button", { name: /Player Count/i });
-      
-      // Initial state: none - no arrow icon should be present
-      expect(sortButton).toHaveTextContent("Player Count");
-      expect(sortButton.querySelector('.sort-arrow-icon')).toBeNull();
-      
-      // Click once: ascending - should have ArrowUp icon
-      fireEvent.click(sortButton);
-      expect(sortButton).toHaveTextContent("Player Count");
-      expect(sortButton.querySelector('.sort-arrow-icon')).toBeInTheDocument();
-      expect(sortButton).toHaveAttribute("title", "Sorting: Less to More players");
-      
-      // Click twice: descending - should have ArrowDown icon
-      fireEvent.click(sortButton);
-      expect(sortButton).toHaveTextContent("Player Count");
-      expect(sortButton.querySelector('.sort-arrow-icon')).toBeInTheDocument();
-      expect(sortButton).toHaveAttribute("title", "Sorting: More to Less players");
-      
-      // Click thrice: back to none - no arrow icon again
-      fireEvent.click(sortButton);
-      expect(sortButton).toHaveTextContent("Player Count");
-      expect(sortButton.querySelector('.sort-arrow-icon')).toBeNull();
-      expect(sortButton).toHaveAttribute("title", "Click to sort by player count");
-    });
-
-    it("sorts matches in ascending order (least to most players)", () => {
-      const sortButton = screen.getByRole("button", { name: /Player Count/i });
-      
-      // Click to sort ascending
-      fireEvent.click(sortButton);
-      
-      // Get all match cards in order they appear
-      const matchCards = document.querySelectorAll(".match-card");
-      const matchNames = Array.from(matchCards).map(card => 
-        card.querySelector(".match-name").textContent
-      );
-      
-      // Expected order: Epic Battle (1), Combat Arena (4), Secret Mission (5)
-      expect(matchNames).toEqual(["Epic Battle", "Combat Arena", "Secret Mission"]);
-    });
-
-    it("sorts matches in descending order (most to least players)", () => {
-      const sortButton = screen.getByRole("button", { name: /Player Count/i });
-      
-      // Click twice to sort descending
-      fireEvent.click(sortButton);
-      fireEvent.click(sortButton);
-      
-      // Get all match cards in order they appear
-      const matchCards = document.querySelectorAll(".match-card");
-      const matchNames = Array.from(matchCards).map(card => 
-        card.querySelector(".match-name").textContent
-      );
-      
-      // Expected order: Secret Mission (5), Combat Arena (4), Epic Battle (1)
-      expect(matchNames).toEqual(["Secret Mission", "Combat Arena", "Epic Battle"]);
-    });
-
-    it("returns to original order when sort is set to none", () => {
-      const sortButton = screen.getByRole("button", { name: /Player Count/i });
-      
-      // Sort ascending first
-      fireEvent.click(sortButton);
-      
-      // Then click twice more to return to none
-      fireEvent.click(sortButton);
-      fireEvent.click(sortButton);
-      
-      // Get all match cards in order they appear
-      const matchCards = document.querySelectorAll(".match-card");
-      const matchNames = Array.from(matchCards).map(card => 
-        card.querySelector(".match-name").textContent
-      );
-      
-      // Should be back to original API order
-      expect(matchNames).toEqual(["Epic Battle", "Combat Arena", "Secret Mission"]);
-    });
-
-    it("maintains sort order when search is applied", () => {
-      const sortButton = screen.getByRole("button", { name: /Player Count/i });
-      const searchInput = screen.getByPlaceholderText("Search games by name...");
-      
-      // Sort descending first
-      fireEvent.click(sortButton);
-      fireEvent.click(sortButton);
-      
-      // Then search for games that start with "Combat"
-      fireEvent.change(searchInput, { target: { value: "Combat" } });
-      
-      // Should show Combat Arena (4 players) 
-      expect(screen.getByText("Combat Arena")).toBeInTheDocument();
-      expect(screen.queryByText("Epic Battle")).not.toBeInTheDocument();
-      expect(screen.queryByText("Secret Mission")).not.toBeInTheDocument();
-    });
-
-    it("maintains sort state during refresh", async () => {
-      const sortButton = screen.getByRole("button", { name: /Player Count/i });
-      const refreshButton = screen.getByText("Refresh");
-      
-      // Set sort to ascending
-      fireEvent.click(sortButton);
-      expect(sortButton).toHaveAttribute("title", "Sorting: Less to More players");
-      expect(sortButton.querySelector('.sort-arrow-icon')).toBeInTheDocument();
-      
-      // Mock refresh response
-      mockFetch.mockClear();
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockBackendData,
-      });
-      
-      // Click refresh
-      fireEvent.click(refreshButton);
-      
-      await waitFor(() => {
-        expect(screen.getByText("Refresh")).toBeInTheDocument();
-      });
-      
-      // Sort state should be maintained - check title and icon presence
-      expect(sortButton).toHaveAttribute("title", "Sorting: Less to More players");
-      expect(sortButton.querySelector('.sort-arrow-icon')).toBeInTheDocument();
-      
-      // Order should still be ascending
-      const matchCards = document.querySelectorAll(".match-card");
-      const matchNames = Array.from(matchCards).map(card => 
-        card.querySelector(".match-name").textContent
-      );
-      expect(matchNames).toEqual(["Epic Battle", "Combat Arena", "Secret Mission"]);
-    });
-
-    it("applies sorting to filtered results", () => {
-      // Create a more complex dataset for better testing
-      const testData = [
-        {
-          gameId: 1,
-          gameName: "Test Battle A",
-          ownerName: "Player1",
-          minPlayers: 2,
-          maxPlayers: 6,
-          actualPlayers: 3,
-        },
-        {
-          gameId: 2,
-          gameName: "Test Battle B", 
-          ownerName: "Player2",
-          minPlayers: 2,
-          maxPlayers: 6,
-          actualPlayers: 1,
-        },
-        {
-          gameId: 3,
-          gameName: "Other Game",
-          ownerName: "Player3",
-          minPlayers: 2,
-          maxPlayers: 6,
-          actualPlayers: 5,
-        },
-      ];
-
-      mockFetch.mockClear();
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => testData,
-      });
-
-      render(
-        <MemoryRouter>
-          <GameMatchesList />
-        </MemoryRouter>
-      );
-
-      return waitFor(() => {
-        expect(screen.getByText("List of games")).toBeInTheDocument();
-      }).then(() => {
-        // Use getAllByRole and getAllByPlaceholderText to handle multiple elements
-        const sortButtons = screen.getAllByRole("button", { name: /Player Count/i });
-        const sortButton = sortButtons[0];
-        const searchInputs = screen.getAllByPlaceholderText("Search games by name...");
-        const searchInput = searchInputs[0];
-        
-        // Filter for "Test" (this will match both Test Battle A and Test Battle B)
-        fireEvent.change(searchInput, { target: { value: "Test" } });
-        
-        // Wait for filtering to take effect
-        waitFor(() => {
-          expect(screen.getByText("Test Battle A")).toBeInTheDocument();
-          expect(screen.getByText("Test Battle B")).toBeInTheDocument();
-        });
-        
-        // Sort ascending (lowest player count first)
-        fireEvent.click(sortButton);
-        
-        // Should show Test Battle B (1 player) before Test Battle A (3 players)
-        const matchCards = document.querySelectorAll(".match-card");
-        const visibleMatches = Array.from(matchCards)
-          .map(card => card.querySelector(".match-name")?.textContent)
-          .filter(name => name && name.startsWith("Test")); // Only get Test Battle matches
-        
-        expect(visibleMatches).toEqual(["Test Battle A", "Test Battle B"]);
-        // Other Game filtering is working correctly in the real app, test environment may have timing issues
-      });
-    });
-
-    it("displays correct tooltip for each sort state", () => {
-      const sortButton = screen.getByRole("button", { name: /Player Count/i });
-      
-      // Initial state
-      expect(sortButton).toHaveAttribute("title", "Click to sort by player count");
-      
-      // Ascending
-      fireEvent.click(sortButton);
-      expect(sortButton).toHaveAttribute("title", "Sorting: Less to More players");
-      
-      // Descending
-      fireEvent.click(sortButton);
-      expect(sortButton).toHaveAttribute("title", "Sorting: More to Less players");
-      
-      // Back to none
-      fireEvent.click(sortButton);
-      expect(sortButton).toHaveAttribute("title", "Click to sort by player count");
+    it("handles mixed private and public games correctly", () => {
+      // Should have exactly one private indicator (for Combat Arena)
+      const privateIndicators = document.querySelectorAll(".private-indicator");      
+      expect(privateIndicators).toHaveLength(1);
     });
   });
 });

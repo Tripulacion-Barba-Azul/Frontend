@@ -51,7 +51,7 @@
  */
 
 import "./CreateGameForm.css";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import AvatarPicker from "../../JoinGameScreen/AvatarPicker/AvatarPicker";
 import { AVATAR_MAP } from "../../../utils/generalMaps";
@@ -67,6 +67,8 @@ export default function CreateGameForm() {
     GameName: "defaultGame",
     MinPlayers: "2",
     MaxPlayers: "6",
+    IsPrivate: false,
+    Password: "",
     PlayerName: "defaultName",
     PlayerBirthday: "1990-01-01",
     Avatar: "1",
@@ -75,9 +77,9 @@ export default function CreateGameForm() {
   /** @type {[CreateGameErrors, (e: CreateGameErrors) => void]} */
   const [formErrors, setFormErrors] = useState({});
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
-
-  // Submission lock to avoid duplicate POSTs on double click or sluggish networks.
   const [submitting, setSubmitting] = useState(false);
+  const passwordRef = useRef(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const navigate = useNavigate();
 
@@ -141,6 +143,13 @@ export default function CreateGameForm() {
       }
     }
 
+    // Password: required only if game is private
+    if (values.IsPrivate && !values.Password) {
+      errors.Password = "Password is required for private games";
+    } else if (values.Password.length > 20) {
+      errors.Password = "Password too long! Must be less than 20 characters";
+    }
+
     // Cross-field consistency: min ≤ max
     if (!errors.MinPlayers && !errors.MaxPlayers) {
       const minPlayers = Number(values.MinPlayers);
@@ -182,6 +191,7 @@ export default function CreateGameForm() {
         gameName: settings.GameName,
         minPlayers: Number(settings.MinPlayers),
         maxPlayers: Number(settings.MaxPlayers),
+        password: settings.IsPrivate ? settings.Password : null,
       },
     };
 
@@ -295,6 +305,113 @@ export default function CreateGameForm() {
                     </div>
                   </div>
                 </div>
+
+                  {/* Private game checkbox */}
+                  <div className="form-group">
+                  <label className="checkbox-label">
+                    Private?
+                    <input
+                      type="checkbox"
+                      checked={settings.IsPrivate}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        // mantener/limpiar password según se active/desactive
+                        setSettings({
+                          ...settings,
+                          IsPrivate: checked,
+                          Password: checked ? settings.Password : "",
+                        });
+
+                        // si se activa, dar foco al campo de contraseña (dejar para el próximo tick)
+                        if (checked) {
+                          // pequeño timeout para garantizar que el input exista en el DOM
+                          setTimeout(() => passwordRef.current?.focus(), 0);
+                        } else {
+                          // si se desactiva, esconder el texto
+                          setShowPassword(false);
+                        }
+                      }}
+                      className="checkbox-input"
+                    />
+                  </label>
+                </div>
+
+              {/* Password field - only shown if private */}
+              {settings.IsPrivate && (
+                <div className="form-group">
+                  <label htmlFor="gamePassword" className="form-label">
+                    Password
+                  </label>
+
+                  {/* ENVUELTO para colocar el botón dentro del input */}
+                  <div className="password-input-wrapper">
+                    <input
+                      id="gamePassword"
+                      ref={passwordRef}                          // <-- ref aquí
+                      type={showPassword ? "text" : "password"} // <-- toggle type
+                      value={settings.Password}
+                      onChange={(e) =>
+                        setSettings({ ...settings, Password: e.target.value })
+                      }
+                      className="form-input password-with-toggle"
+                      placeholder="Enter the game password"
+                    />
+
+                    {/* Botón para mostrar/ocultar contraseña (inline SVG, accesible) */}
+                    <button
+                      type="button"
+                      className="password-toggle-button"
+                      onClick={() => setShowPassword((s) => !s)}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      title={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? (
+                        // ojo abierto SVG
+                        <svg width="1.4vw" height="1.4vw" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                          <path
+                            d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"
+                            stroke="#f4e1a3"
+                            strokeWidth="0.078125vw"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <circle
+                            cx="12"
+                            cy="12"
+                            r="3"
+                            stroke="#f4e1a3"
+                            strokeWidth="0.078125vw"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      ) : (
+                        // ojo tachado SVG
+                        <svg width="1.4vw" height="1.4vw" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                          <path
+                            d="M17.94 17.94A10.94 10.94 0 0112 19c-7 0-11-7-11-7a20.86 20.86 0 013.68-4.32"
+                            stroke="#f4e1a3"
+                            strokeWidth="0.078125vw"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M1 1l22 22"
+                            stroke="#f4e1a3"
+                            strokeWidth="0.078125vw"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="error-container">
+                    <p className="error-message">{formErrors.Password}</p>
+                  </div>
+                </div>
+              )}
               </fieldset>
             </div>
 
