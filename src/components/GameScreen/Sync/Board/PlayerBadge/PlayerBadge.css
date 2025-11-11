@@ -1,0 +1,240 @@
+@import "tailwindcss";
+
+/* Root container for the badge */
+.player-badge {
+  /* Extra vertical separation to avoid overlay shadow overlap */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.625vw; /* gap-3 -> 12px */
+}
+
+/* Name plate displayed above the avatar */
+/* Modern name plate with edge transparency */
+.player-name-box {
+  font-weight: 500; /* font-medium */
+  line-height: 1; /* leading-none */
+  padding: 0.417vw 0.833vw; /* px-4 py-2 -> 8px 16px */
+  background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--name-bg, rgba(255, 255, 255, 0.95)) 15%,
+      var(--name-bg, rgba(255, 255, 255, 0.95)) 85%,
+      transparent 100%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(255, 255, 255, 0.4) 0%,
+      transparent 70%
+    );
+  font-family: "Metropolis";
+  font-weight: 200;
+  color: #1a1a1a;
+  font-size: 0.8vw;
+  position: relative;
+  z-index: 10;
+  top: 0.15vw;
+  max-width: 11.9vw;
+  height: 1.65vw;
+  transition: all 0.2s ease-in-out;
+  /* --- Correct text shadows --- */
+  text-shadow: 0 0.052vw 0.104vw rgba(0, 0, 0, 0.25),
+    /* 1px,2px */ 0 0.104vw 0.208vw rgba(0, 0, 0, 0.15),
+    /* 2px,4px */ 0 0 0.313vw rgba(78, 26, 21, 0.481); /* 6px glow */
+}
+
+/* ===== Avatar + overlays stack ===== */
+.avatar-stack {
+  position: relative; /* Absolute overlays will anchor here */
+  display: inline-block;
+}
+
+/* Circular avatar with colored ring and thin black inner/outer edges */
+.avatar-circle {
+  @apply rounded-full overflow-hidden bg-slate-300 grid place-items-center w-full h-full;
+  position: relative;
+  z-index: 0;
+
+  /* Ring color is set inline via style={{ ["--tw-ring-color"]: ringCol }} */
+  --tw-ring-color: rgb(51 65 85 / 0.7);
+  --ring-width: 0.26vw; /* 5px */
+  --ring-glow-blur: 1.63vw; /* 30px */
+  --ring-glow-spread: 0.581vw; /* 15px */
+
+  /* Thin black inner edge between the image and the ring */
+  border: 1px solid #000;
+
+  /* Fallback glow: uses the same ring color directly (no alpha).
+     We'll override below with color-mix() when supported. */
+  box-shadow:
+    /* colored ring */ 0 0 0 var(--ring-width) var(--tw-ring-color),
+    /* outer black edge */ 0 0 0 calc(var(--ring-width) + 1px) #000,
+    /* subtle colored glow (fallback) */ 0 0 var(--ring-glow-blur)
+      var(--ring-glow-spread) var(--tw-ring-color),
+    /* soft shadows */ 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 0px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* Prefer a softer glow using color-mix() when available */
+@supports (color: color-mix(in oklab, #000 50%, transparent)) {
+  .avatar-circle {
+    /* Derive a semi-transparent glow from the ring color */
+    --ring-glow: color-mix(in oklab, var(--tw-ring-color) 55%, transparent);
+
+    box-shadow:
+      /* colored ring */ 0 0 0 var(--ring-width)
+        var(--tw-ring-color),
+      /* outer black edge */ 0 0 0 calc(var(--ring-width) + 1px) #000,
+      /* refined colored glow */ 0 0 var(--ring-glow-blur)
+        var(--ring-glow-spread) var(--ring-glow),
+      /* soft shadows */ 0 10px 15px -3px rgb(0 0 0 / 0.1),
+      0 4px 6px -4px rgb(0 0 0 / 0.1);
+  }
+}
+
+/* Remove glow/ambient shadows when the ring is gray */
+.avatar-circle.no-glow {
+  /* Keep the colored ring and the thin black outer edge only */
+  box-shadow: 0 0 0 var(--ring-width) var(--tw-ring-color),
+    0 0 0 calc(var(--ring-width) + 1px) #000;
+}
+
+@supports (color: color-mix(in oklab, #000 50%, transparent)) {
+  /* Ensure the override also wins in browsers that support color-mix */
+  .avatar-circle.no-glow {
+    box-shadow: 0 0 0 var(--ring-width) var(--tw-ring-color),
+      0 0 0 calc(var(--ring-width) + 1px) #000;
+  }
+}
+
+.badge-small {
+  width: 5.833vw; /* 112px */
+  height: 5.833vw;
+  font-size: 1.146vw; /* text-lg approx 22px */
+}
+
+.badge-big {
+  width: 7.917vw; /* 152px */
+  height: 7.917vw;
+  font-size: 1.146vw;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  user-select: none;
+  color: rgba(51, 65, 85, 0.8);
+}
+
+/* ===== Overlays controlled by CSS variables ===== */
+/* CardCount overlay */
+.badge-cardcount {
+  position: absolute;
+  left: var(--cc-left, auto);
+  right: var(--cc-right, auto);
+  top: var(--cc-top, auto);
+  bottom: var(--cc-bottom, auto);
+  pointer-events: none;
+}
+
+/* ViewSecrets overlay */
+.badge-secrets {
+  position: absolute;
+  left: var(--sec-left, auto);
+  right: var(--sec-right, auto);
+  top: var(--sec-top, auto);
+  bottom: var(--sec-bottom, auto);
+  pointer-events: auto;
+  z-index: 2; /* Above sets by default */
+}
+
+/* SetsGrid overlay */
+.badge-sets {
+  position: absolute;
+  pointer-events: auto;
+  z-index: 1;
+
+  /* anchor edge only */
+  top: 0; /* or bottom: 0; depending on position */
+  left: 100%; /* right of avatar, for position-right */
+
+  /* remove width/height: let content size naturally */
+  width: max-content;
+  height: max-content;
+}
+
+/* ===== POSITION PRESETS (hardcoded offsets) =====
+   Tune the pixel values to match your layout needs.
+*/
+/* ----- SMALL (112x112) ----- */
+.avatar-stack.badge-small.position-right {
+  /* CardCount: bottom-right (slightly outside) */
+  --cc-left: 2vw;
+  --cc-bottom: -3.8vw;
+
+  /* Secrets: top-right */
+  --sec-right: -3.8vw;
+  --sec-top: -3.73vw;
+}
+
+.avatar-stack.badge-small.position-left {
+  /* CardCount: bottom-left */
+  --cc-left: 2vw;
+  --cc-bottom: -3.8vw;
+
+  /* Secrets: top-left */
+  --sec-left: -3.8vw;
+  --sec-top: -3.73vw;
+}
+
+.avatar-stack.badge-small.position-up {
+  /* CardCount: centered above (approx) */
+  --cc-left: 7vw;
+  --cc-top: 1.7vw;
+
+  /* Secrets: top-right to avoid overlap */
+  --sec-right: 7.1vw;
+  --sec-top: -3.7vw;
+}
+
+.avatar-stack.position-right .badge-sets {
+  top: -1.8vw;
+  left: -5.2vw;
+}
+
+.avatar-stack.position-left .badge-sets {
+  top: -1.8vw;
+  left: 7.2vw;
+}
+
+.avatar-stack.position-up .badge-sets {
+  top: 5.8vw;
+  left: -2.7vw;
+}
+
+.avatar-stack.position-down .badge-sets {
+  top: -6vw;
+  left: 29.7vw;
+}
+
+/* ===== Social Disgrace Styles =====
+/* Grayscale the avatar image when disgraced */
+.avatar-circle.is-disgraced .avatar-img {
+  filter: grayscale(1) brightness(0.98) contrast(0.85);
+  transition: filter 200ms ease-in-out;
+}
+
+.player-name-box.is-disgraced {
+  /* Keep original base styles and add a subtle pattern */
+  opacity: 0.6;
+  color: #f4f1b4;
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(255, 205, 139, 0.24) 0 4px,
+    transparent 4px 8px
+  );
+}

@@ -1,0 +1,95 @@
+.RegularDeck-container {
+  position: absolute;
+  bottom: 21.225vw; /* 39.6% of full width scaling */
+  left: 27.183vw; /* 28% of full width scaling */
+  z-index: 20;
+  pointer-events: auto;
+  display: inline-block;
+}
+
+.RegularDeck-container * {
+  pointer-events: auto;
+}
+
+.RegularDeck-image {
+  width: 9.895vw; /* 190px / 1920px * 100 */
+  height: auto;
+  display: block;
+  user-select: none;
+  cursor: pointer;
+  transition: transform 0.1s ease, filter 0.1s ease;
+  pointer-events: auto;
+}
+
+.RegularDeck-count {
+  position: absolute;
+  top: -1.042vw; /* 20px / 1920 */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2.083vw; /* 40px */
+  height: 2.083vw; /* 40px */
+  border-radius: 50%;
+  background: rgb(61, 18, 27);
+  border: 0.104vw solid #f4e1a3; /* 2px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1vw; /* 1.4rem ~ 28px / 1920 */
+  font-family: "Metropolis";
+  font-weight: bold;
+  color: #f4e1a3;
+  box-shadow: 0 0vw 1.221vw #f4e1a3cc; /* 0 0 10px */
+}
+
+.RegularDeck-container.full .RegularDeck-count,
+.RegularDeck-container.half .RegularDeck-count,
+.RegularDeck-container.thin .RegularDeck-count {
+  top: -2.304vw; /* 50px */
+}
+
+.RegularDeck-container.thin .RegularDeck-count {
+  color: #ff8522;
+  border: 0.104vw solid #ff8522; /* 2px */
+}
+
+.RegularDeck-container.murderer .RegularDeck-count {
+  top: -3.594vw; /* 69px */
+  color: red;
+  border: 0.104vw solid red;
+}
+
+.RegularDeck-container.murderer .RegularDeck-image {
+  width: 6.771vw; /* 130px */
+  height: auto;
+  object-fit: contain;
+  border-radius: 0.313vw; /* 6px */
+}
+
+.deck--enabled .RegularDeck-image {
+  filter: none;
+  cursor: pointer;
+}
+
+.deck--enabled .RegularDeck-image:hover {
+  transform: scale(1.05);
+}
+
+.deck--disabled .RegularDeck-image {
+  filter: none;
+  cursor: not-allowed;
+}
+
+/* Error message */
+.RegularDeck-error {
+  position: absolute;
+  top: 11.198vw; /* 215px */
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #ff6b6b;
+  padding: 0.208vw 0.417vw; /* 4px 8px */
+  border-radius: 0.208vw; /* 4px */
+  font-size: 0.625vw; /* 12px */
+  border: 0.052vw solid #ff6b6b; /* 1px */
+  white-space: nowrap;
+}

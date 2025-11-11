@@ -1,0 +1,163 @@
+/* === Modal root & overlay === */
+.sdp-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell,
+    "Helvetica Neue", Arial;
+}
+
+.sdp-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  pointer-events: auto;
+}
+
+/* === Panel ===
+   Width auto-adapts to number of cards (1..6) using vw units:
+   width = count * cardWidth + (count - 1) * gap + 2 * panelPad
+*/
+.sdp-panel {
+  --card-w: 11.46vw; /* single card width */
+  --gap: 1.302vw; /* gap between cards */
+  --panel-pad: 1.041vw; /* horizontal padding (each side) */
+  --count: 0; /* provided by JS */
+
+  position: relative;
+  max-width: 96vw;
+  min-width: 50vw;
+  width: calc(
+    var(--count) * var(--card-w) + max(0, var(--count) - 1) * var(--gap) + 2 *
+      var(--panel-pad)
+  );
+  /* Fallback for browsers without max() inside calc(): approximate with 6 cards cap */
+  width: min(
+    96vw,
+    calc(
+      var(--count) * var(--card-w) + (6 - 1) * var(--gap) + 2 * var(--panel-pad)
+    )
+  );
+
+  background: linear-gradient(180deg, #2b2b2b 0%, #232323 100%);
+  color: #e9e4d4;
+  border-radius: 0.729vw;
+  box-shadow: 0 0.729vw 2.083vw rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  pointer-events: auto;
+  border: 0.052vw solid #383838;
+}
+
+/* Header */
+.sdp-header {
+  padding: 0.9375vw 1.041vw;
+  border-bottom: 0.052vw solid #3a3a3a;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.sdp-title {
+  margin: 0;
+  color: #e6d7a6;
+  font-size: 1.6vw; /* keep pure vw to ensure scalable UI */
+  text-align: center;
+}
+
+/* Content */
+.sdp-content {
+  padding: 1.041vw;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
+
+/* Single-row layout: no wrapping */
+.sdp-row {
+  display: flex;
+  flex-wrap: nowrap; /* single row, no line breaks */
+  gap: var(--gap);
+  align-items: center;
+  justify-content: center;
+}
+
+/* Card */
+.sdp-card {
+  position: relative;
+  background: #2f2f2f;
+  border: 0.156vw solid #3c3c3c;
+  border-radius: 0.729vw;
+  padding: 0;
+  cursor: pointer;
+  transform: scale(1);
+  transform-origin: center;
+  transition: transform 120ms ease, border-color 80ms ease, box-shadow 80ms ease;
+  width: var(--card-w);
+  height: auto;
+  flex: 0 0 var(--card-w); /* fixed width cards; prevents shrink/wrap */
+}
+
+.sdp-card:hover {
+  transform: translateY(-0.104vw) scale(1.02);
+  border-color: #6a6a6a;
+  box-shadow: 0 0.4167vw 0.9375vw rgba(0, 0, 0, 0.35);
+}
+
+.sdp-card.selected {
+  border-color: #d6b16a;
+  box-shadow: 0 0 0 0.104vw rgba(214, 177, 106, 0.45) inset,
+    0 0.5208vw 1.1458vw rgba(214, 177, 106, 0.18);
+  transform: scale(1.08);
+  z-index: 1;
+}
+
+.sdp-card.selected:hover {
+  transform: translateY(-0.104vw) scale(1.1);
+}
+
+.sdp-card-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.5208vw;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Footer */
+.sdp-footer {
+  display: flex;
+  justify-content: center;
+  padding: 0.729vw 0.9375vw 0.9375vw;
+  border-top: 0.052vw solid #3a3a3a;
+}
+
+.sdp-confirm {
+  appearance: none;
+  border: none;
+  border-radius: 0.625vw;
+  padding: 0.5208vw 0.9375vw;
+  font-size: 1vw;
+  cursor: pointer;
+  color: #e6d7a6;
+  background: rgb(163, 34, 34);
+  box-shadow: 0 0.3125vw 0.8333vw rgba(90, 44, 44, 0.45);
+}
+
+.sdp-confirm:disabled {
+  background: rgba(163, 34, 34, 0.35);
+  color: rgba(244, 225, 163, 0.3);
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.sdp-confirm:not(:disabled):hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 1vw #f4e1a3cc;
+}

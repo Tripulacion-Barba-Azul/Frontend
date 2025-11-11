@@ -1,0 +1,177 @@
+/* === Modal & overlay converted to explicit viewport units for 1920x883
+     1vw = 19.2px ; 1vh = 8.83px
+*/
+
+/* Overlay: explicit viewport coverage (no inset:0) */
+.ap-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;           /* 1920px */
+  height: 100vh;          /* 883px */
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  backdrop-filter: blur(0.227vw); /* 4px -> 4/19.2 = 0.208vw; kept 0.227vw to match smoothing */
+}
+
+/* Modal container (was max-width:1200px, padding:6rem) */
+.ap-modal {
+  background: #1e1e1ee4;
+  border-radius: 0.9375vw;             /* 18px -> 18/19.2 = 0.9375vw */
+  padding: 5vw;                        /* 6rem -> 96px -> 96/19.2 = 5vw */
+  width: 92vw;                       /* 1200px -> 1200/19.2 = 62.5vw */
+  height: 41vw;
+  color: #f4e1a3;
+  font-family: "Metropolis", sans-serif;
+  box-shadow: 0 0 2.344vw rgba(0, 0, 0, 0.7); /* 45px blur -> 45/19.2 = 2.344vw */
+  border: 0.104vw solid #f4e1a30d;     /* 2px -> 2/19.2 = 0.104vw */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  /* center via overlay flexbox (overlay already centers children) */
+}
+
+/* Internal content width (modal inner width after horizontal padding)
+   modal inner width = modal width - 2*padding = 62.5vw - 10vw = 52.5vw
+*/
+.ap-modal__inner-width { /* helper class if needed for child exact widths */
+  width: 52.5vw;
+  max-width: 52.5vw;
+  box-sizing: border-box;
+
+}
+
+/* Header */
+.ap-head {
+  width: 52.5vw;                      /* inner width */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 0.333vw;             /* 4rem -> 64px -> 64/19.2 = 3.333vw */
+  box-sizing: border-box;
+}
+
+/* Title */
+.ap-title {
+  margin: 0;
+  font-size: 1.75vw;                  /* 3.3rem -> 52.8px -> 52.8/19.2 = 2.75vw */
+  font-family: "Metropolis";
+  color: #f4e1a3;
+  letter-spacing: 0.052vw;            /* 1px -> 1/19.2 = 0.052vw */
+  text-align: center;
+  margin-top: -4vw;
+}
+
+/* Close button (positioned within modal header), explicit offsets and paddings */
+.ap-close {
+  position: absolute;
+  right: -18.9vw;                     /* ~20px -> 20/19.2 = 1.042vw from modal inner edge */
+  top: -4.25vw;                       /* give a small top offset: ~12px -> 12/19.2 = 0.625vw */
+  background: transparent;
+  border: 0.104vw solid #f4e1a30d;    /* 2px */
+  color: #f4e1a3;
+  border-radius: 0.417vw;             /* 8px -> 8/19.2 = 0.417vw */
+  font-size: 1.083vw;                 /* 1.3rem -> 20.8px -> 20.8/19.2 = 1.083vw */
+  padding: 0.104vw 0.521vw;           /* 2px 10px -> 2/19.2=0.104vw, 10/19.2=0.521vw */
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-sizing: border-box;
+}
+
+.ap-close:hover {
+  background: rgb(163, 34, 34);
+  border-color: #f4e1a34d;
+}
+
+/* Avatar grid
+   Converted so columns are fixed in vw based on modal inner width.
+   Each avatar column target = 260px -> 260/19.2 = 13.542vw
+   We can fit 3 columns comfortably inside inner width (3*13.542 + 2*2.5gap = 45.626vw < 52.5vw)
+*/
+.ap-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 15vw);  
+  gap: 2.5vw;
+  width: 56.5vw;
+  height: auto;
+  justify-items: center;
+  align-content: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+
+/* Avatar button */
+.ap-avatarBtn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 0.156vw solid transparent;           /* 3px -> 3/19.2 = 0.156vw */
+  border-radius: 1.042vw;                      /* 20px -> 20/19.2 = 1.042vw */
+  padding: 2.083vw;                            /* 2.5rem -> 40px -> 40/19.2 = 2.083vw */
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 15.363vw;                              /* match the column width to keep consistent sizing */
+}
+
+/* Hover + selected states */
+.ap-avatarBtn:hover {
+  border-color: #f4e1a3;
+  transform: scale(1.05);
+}
+.ap-avatarBtn[data-selected="true"] {
+  border-color: #f4e1a3;
+  box-shadow: 0 0 1.042vw rgba(244, 225, 163, 0.3); /* 20px -> 20/19.2 = 1.042vw */
+}
+
+/* Avatar image: 210px -> 210/19.2 = 10.9375vw */
+.ap-avatarImg {
+  width: 10.938vw; /* 210px */
+  height: 10.938vw; /* 210px */
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+  transition: transform 0.2s ease;
+}
+
+/* Hover scale for avatar image */
+.ap-avatarBtn:hover .ap-avatarImg {
+  transform: scale(1.05);
+}
+
+/* Small screens: reduce modal width & columns so nothing overflows
+   Mobile thresholds kept by px breakpoint as original; all sizes in vw for consistency.
+*/
+@media (max-width: 768px) {
+  /* On narrow screens, set modal to nearly full viewport width */
+  .ap-modal {
+    width: 95vw;
+    max-width: 95vw;
+    padding: 4vw; /* reduce padding on mobile */
+  }
+
+  /* inner width updated */
+  .ap-modal__inner-width { width: 87vw; max-width: 87vw; }
+
+  .ap-head { width: 87vw; margin-bottom: 4vw; }
+  .ap-title { font-size: 5.5vw; } /* scale up readable title on small screens */
+
+  /* grid becomes 2 columns of a smaller fixed width so each item fits */
+  .ap-grid {
+    grid-template-columns: repeat(2, 40vw); /* each column ~40vw on mobile */
+    gap: 4vw;
+    width: 87vw;
+  }
+
+  .ap-avatarBtn { width: 40vw; max-width: 40vw; padding: 3vw; border-radius: 2.5vw; }
+  .ap-avatarImg { width: 30vw; height: 30vw; } /* keep circular but relatively smaller */
+  .ap-close { right: 3.5vw; top: 2.5vw; font-size: 4.5vw; padding: 0.5vw 2vw; }
+}

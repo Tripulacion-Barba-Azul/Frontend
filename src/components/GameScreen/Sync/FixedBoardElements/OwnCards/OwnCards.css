@@ -1,0 +1,251 @@
+/* OwnCards.css */
+
+/* Overlay container: doesn't capture scroll/clicks by default */
+.owncards-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Row that holds the hand (clickable) */
+.owncards-row {
+  position: absolute;
+  left: 50%;
+  bottom: 0.26vw; /* 0.5% of 1920px -> 10px */
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.26vw; /* 5px */
+  user-select: none;
+  pointer-events: auto;
+  z-index: 10;
+
+  /* --- Scroll/gesture FIX ---
+     Allow vertical page scroll but block horizontal panning for the UA,
+     so dragging cards won't scroll the viewport horizontally or trigger nav. */
+  touch-action: pan-y;
+  /* Prevent scroll chaining / overscroll from propagating to the viewport */
+  overscroll-behavior-x: contain;
+}
+
+.owncards-row > * {
+  list-style: none;
+}
+
+/* ---- Card base ---- */
+.owncards-card {
+  width: 7.29vw; /* 140px -> 7.29vw */
+  height: auto;
+  border-radius: 0.417vw; /* 8px -> 0.417vw */
+  border: 0.052vw solid rgba(0, 0, 0, 0.2); /* 1px -> 0.052vw */
+  box-shadow: 0 0.052vw 0.104vw rgba(0, 0, 0, 0.25); /* 1px 2px -> vw */
+  object-fit: cover;
+  pointer-events: auto;
+  cursor: pointer;
+  position: relative;
+  z-index: 10;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1), z-index 0s 0s;
+  transform: translateY(0) scale(1);
+
+  /* --- Scroll/gesture FIX (on the draggable element itself) ---
+     Disable default touch panning/drag-image so Framer handles the drag
+     without moving the page or showing the “ghost” image. */
+  touch-action: none;
+  -webkit-user-drag: none;
+}
+
+/* ---- Selection ---- */
+.owncards-card--selected {
+  transform: translateY(-1.82vw) scale(1); /* -35px -> -1.82vw */
+  z-index: 15;
+}
+
+/* Disabled cards */
+.owncards-card--disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+
+/* ---- Hover effects ---- */
+.owncards-card:not(.owncards-card--disabled):not(
+    .owncards-card--dragging
+  ):hover {
+  transform: scale(1.08);
+  z-index: 20;
+  box-shadow: 0 0.104vw 0.781vw #f4e1a3cc; /* 2px 15px -> vw */
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), z-index 0s 0s,
+    box-shadow 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* When selected, hover adds extra lift */
+.owncards-card--selected:not(.owncards-card--disabled):not(
+    .owncards-card--dragging
+  ):hover {
+  transform: translateY(-2.34vw) scale(1.08); /* -45px -> -2.34vw */
+}
+
+/* Active (click) state */
+.owncards-card:not(.owncards-card--disabled):not(
+    .owncards-card--dragging
+  ):active {
+  transform: translateY(-0.52vw) scale(1); /* -10px -> -0.52vw */
+  transition: transform 0.08s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.owncards-card--selected:not(.owncards-card--disabled):not(
+    .owncards-card--dragging
+  ):active {
+  transform: translateY(-1.56vw) scale(1); /* -30px -> -1.56vw */
+}
+
+/* Dragging state - let Framer Motion handle it */
+.owncards-card--dragging {
+  z-index: 20;
+  filter: brightness(1.05);
+  cursor: grabbing;
+}
+
+/* Disabled cards get subtle hover */
+.owncards-card--disabled:hover {
+  transform: translateY(-0.26vw); /* -5px -> -0.26vw */
+  opacity: 0.85;
+  cursor: not-allowed;
+}
+
+/* ---- Buttons ---- */
+.owncards-actions {
+  position: absolute;
+  right: 10.75vw;
+  bottom: 0.8vw; /* Adjust this number to visually match the desired spacing */
+  display: flex;
+  pointer-events: auto;
+  z-index: 10;
+}
+
+.owncards-action {
+  width: 12.5vw; /* 240px */
+  height: 4.688vw; /* 90px */
+  padding: 0;
+  color: #f4e1a3;
+  background-color: rgb(163, 34, 34);
+  border-radius: 0.625vw; /* 12px */
+  border: 0.15vw solid #f4e1a3; /* 2px */
+  cursor: pointer;
+  font-size: 1.25vw; /* 24px */
+  font-family: "Metropolis";
+  user-select: none;
+  pointer-events: auto;
+  z-index: 10;
+  transition: background-color 0.013vw ease, transform 0.01vw ease,
+    box-shadow 0.013vw ease;
+}
+
+/* Status-based color variants for the left action button.
+   Uses a data attribute on the container to avoid changing child components. */
+.owncards-actions[data-variant="emerald"] .owncards-action {
+  background-color: #10b981; /* emerald-500 */
+}
+.owncards-actions[data-variant="lime"] .owncards-action {
+  background-color: #84cc16; /* lime-500 */
+}
+.owncards-actions[data-variant="amber"] .owncards-action {
+  background-color: #f59e0b; /* amber-500 */
+}
+.owncards-actions[data-variant="lightAmber"] .owncards-action {
+  background-color: #fbbf24; /* amber-400 */
+}
+.owncards-actions[data-variant="red"] .owncards-action {
+  background-color: #ef4444; /* red-500 */
+}
+.owncards-actions[data-variant="blue"] .owncards-action {
+  background-color: #0d4da6; /* blue-500 */
+}
+.owncards-actions[data-variant="gray"] .owncards-action {
+  background-color: #6b7280; /* gray-500 */
+}
+
+/* ----- Variant-matched glow (hover/active/focus) ----- */
+.owncards-action:hover {
+  transform: scale(1.05);
+  box-shadow: none;
+}
+.owncards-action:active {
+  transform: scale(0.97);
+  box-shadow: none;
+}
+.owncards-action:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Per-variant glow colors (match the button color) */
+.owncards-actions[data-variant="emerald"] .owncards-action:hover,
+.owncards-actions[data-variant="emerald"] .owncards-action:active,
+.owncards-actions[data-variant="emerald"] .owncards-action:focus {
+  box-shadow: 0 0 2.427vw rgba(16, 185, 129, 0.8);
+}
+
+.owncards-actions[data-variant="lime"] .owncards-action:hover,
+.owncards-actions[data-variant="lime"] .owncards-action:active,
+.owncards-actions[data-variant="lime"] .owncards-action:focus {
+  box-shadow: 0 0 2.427vw rgba(132, 204, 22, 0.8);
+}
+
+.owncards-actions[data-variant="amber"] .owncards-action:hover,
+.owncards-actions[data-variant="amber"] .owncards-action:active,
+.owncards-actions[data-variant="amber"] .owncards-action:focus {
+  box-shadow: 0 0 2.427vw rgba(245, 158, 11, 0.8);
+}
+
+.owncards-actions[data-variant="lightAmber"] .owncards-action:hover,
+.owncards-actions[data-variant="lightAmber"] .owncards-action:active,
+.owncards-actions[data-variant="lightAmber"] .owncards-action:focus {
+  box-shadow: 0 0 2.427vw rgba(251, 191, 36, 0.8);
+}
+
+.owncards-actions[data-variant="red"] .owncards-action:hover,
+.owncards-actions[data-variant="red"] .owncards-action:active,
+.owncards-actions[data-variant="red"] .owncards-action:focus {
+  box-shadow: 0 0 2.427vw rgba(239, 68, 68, 0.8);
+}
+
+.owncards-actions[data-variant="blue"] .owncards-action:hover,
+.owncards-actions[data-variant="blue"] .owncards-action:active,
+.owncards-actions[data-variant="blue"] .owncards-action:focus {
+  box-shadow: 0 0 2.427vw rgba(49, 111, 228, 0.8);
+}
+
+.owncards-actions[data-variant="gray"] .owncards-action:hover,
+.owncards-actions[data-variant="gray"] .owncards-action:active,
+.owncards-actions[data-variant="gray"] .owncards-action:focus {
+  box-shadow: 0 0 2.427vw rgba(107, 114, 128, 0.8);
+}
+
+/* Disabled state: keep color (from [data-variant]) but block interaction */
+.owncards-action--disabled {
+  pointer-events: none;
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+/* Ensure disabled/invalid never glow */
+.owncards-action--disabled:hover,
+.owncards-action--disabled:active,
+.owncards-action--disabled:focus,
+.owncards-action--invalid:hover,
+.owncards-action--invalid:active,
+.owncards-action--invalid:focus {
+  box-shadow: none !important;
+  transform: none;
+}
+
+/* Waiting gets a lower opacity than drawing, as requested */
+.owncards-actions[data-phase="waiting"] .owncards-action--disabled {
+  opacity: 0.5;
+}
+
+/* Disabled informative button when selection mixes card types */
+.owncards-action--invalid {
+  pointer-events: none;
+  cursor: not-allowed;
+  opacity: 0.75; /* slightly dimmed to signal it's not actionable */
+}

@@ -1,35 +1,73 @@
 // GameScreen.jsx
+
+/**
+ * @file GameScreen.jsx
+ * @description Top-level game orchestrator. Handles WebSocket lifecycle,
+ * switches between Lobby/Presentation/Live game, and mounts global event systems.
+ *
+ * Props: none (this component does not accept props).
+ *
+ * Data flow (high level):
+ * - Connects to WS: ws://localhost:8000/ws/:gameId/:playerId
+ * - Listens for public/private updates (see "API DOCUMENT" for exact payloads)
+ * - Shows <Lobby> until: has both public & private data AND game has started
+ * - Shows <PresentationScreen> once, then <SyncOrchestrator> for the live match
+ *
+ * Notes:
+ * - State is intentionally split: connection flags, game start flag, and the
+ *   public/private payloads. This reduces unnecessary re-renders in children.
+ * - `gamePresented` gates the one-time presentation screen.
+ * - Any event shape assumptions must follow the "API DOCUMENT".
+ */
+
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import Lobby from "../Lobby/Lobby";
-import SyncOrchestrator from "../Sync/SyncOrchestrator";
-import GameEndScreen from "../GameEndScreen/GameEndSreen";
-import Notifier from "../Notifier/Notifier";
-import EffectManager from "../EffectManager/EffectManager";
-import PresentationScreen from "../PresentationScreen/PresentationScreen";
-import BackgroundMusicPlayer from "../BackgroundMusicPlayer/BackgroundMusicPlayer";
+import SyncOrchestrator from "./Sync/SyncOrchestrator";
+import GameEndScreen from "./GameEndScreen/GameEndSreen";
+import Notifier from "./Events/Notifier/Notifier";
+import EffectManager from "./Events/EffectManager/EffectManager";
+import PresentationScreen from "./PresentationScreen/PresentationScreen";
+import BackgroundMusicPlayer from "./BackgroundMusicPlayer/BackgroundMusicPlayer";
+import Clock from "./Clock/Clock";
+import Chat from "./Chat/Chat";
+import EventLog from "./EventLog/EventLog";
 
 export default function GameScreen() {
+  // Router params & query: game and the current player id
   const { gameId } = useParams();
   const [searchParams] = useSearchParams();
   const playerId = searchParams.get("playerId");
   const currentPlayerId = parseInt(playerId);
 
+  // Connection and flow flags
   const [isConnected, setIsConnected] = useState(false);
   const [started, setStarted] = useState(false);
   const [refreshLobby, setRefreshLobby] = useState(0);
-
-  // NEW: has the presentation been shown/acknowledged?
+  const [gameName, setGameName] = useState("");
+  // One-time presentation gate (true after user closes it)
   const [gamePresented, setGamePresented] = useState(false);
 
+  // Latest snapshots received from the server
   const [publicData, setPublicData] = useState(null);
   const [privateData, setPrivateData] = useState(null);
 
+  // WS ref so we can attach/detach listeners and pass downstream without re-renders
   const wsRef = useRef(null);
   const wsEndpoint = `ws://localhost:8000/ws/${gameId}/${playerId}`;
 
+  // When the server notifies "player_joined", bump this to re-fetch lobby
   const handlePlayerJoined = () => setRefreshLobby((prev) => prev + 1);
 
+  /**
+   * WebSocket connection lifecycle:
+   * - Open the socket when we have a gameId
+   * - Set basic open/close/error flags
+   * - Clean up on unmount or when gameId changes
+   *
+   * Event messages are attached in a separate effect to avoid reassigning
+   * handlers on each render.
+   */
   useEffect(() => {
     if (!gameId) return;
 
@@ -59,7 +97,14 @@ export default function GameScreen() {
     };
   }, [gameId]);
 
-  // Handle incoming messages
+  /**
+   * Message dispatcher:
+   * - Parses JSON and routes by `data.event`
+   * - Updates `publicData` / `privateData` and flags accordingly
+   *
+   * Event names & payloads must follow the "API DOCUMENT".
+   * Here we only keep minimal guard logic (e.g., accept both snake/camel case).
+   */
   useEffect(() => {
     const websocket = wsRef.current;
     if (!websocket) return;
@@ -71,7 +116,7 @@ export default function GameScreen() {
         switch (data.event) {
           case "publicUpdate":
             setPublicData(data.payload);
-            // Accept both snake_case and camelCase just in case
+            // Minimal normalization: accept either "in_progress" or "inProgress"
             if (
               data.payload?.gameStatus === "in_progress" ||
               data.payload?.gameStatus === "inProgress"
@@ -101,10 +146,14 @@ export default function GameScreen() {
     };
   }, [wsRef.current]);
 
-  // The game is ready once we have public & private data AND it has started
+  // Ready = we have both data snapshots and the server says the game started
   const gameDataReady = Boolean(publicData && privateData && started);
 
-  // Build props for PresentationScreen when ready
+  /**
+   * Build presentation props once data is ready.
+   * This extracts the current player's public info and optional ally descriptor,
+   * leaving all semantics about roles to the "API DOCUMENT".
+   */
   let presentationActualPlayer = null;
   let presentationAlly = null;
 
@@ -123,7 +172,7 @@ export default function GameScreen() {
       const allyPlayer = findPlayerById(privateData.ally.id);
       presentationAlly = {
         name: allyPlayer?.name ?? "Ally",
-        role: privateData.ally.role, // "murderer" | "accomplice"
+        role: privateData.ally.role, // see "API DOCUMENT"
         avatar: allyPlayer?.avatar,
       };
     } else {
@@ -131,33 +180,32 @@ export default function GameScreen() {
     }
   }
 
+  //Easter egg
+  const normalizedName = gameName?.toLowerCase().replace(/\s+/g, "");
+
   return (
     <>
       {gameDataReady ? (
         <>
-          {/* Mounted once for both PresentationScreen and SyncOrchestrator */}
-          <BackgroundMusicPlayer
-            src="/Music/BoardMusic.mp3" // put your 30s loop here
-            // sources={["/audio/bgm.mp3","/audio/bgm.ogg"]} // optional fallback
-            volume={0.4} // tweak if needed
-            persistKey="bgm-muted" // shared preference across sessions
-          />
-
+          {/* Gate: first show the role/ally presentation, then the live game */}
           {!gamePresented ? (
             <PresentationScreen
               actualPlayer={presentationActualPlayer}
               ally={presentationAlly}
-              close={setGamePresented}
+              close={setGamePresented} // parent-controlled "dismiss"
             />
           ) : (
-            <SyncOrchestrator
-              publicData={publicData}
-              privateData={privateData}
-              currentPlayerId={currentPlayerId}
-            />
+            <>
+              <SyncOrchestrator
+                publicData={publicData}
+                privateData={privateData}
+                currentPlayerId={currentPlayerId}
+              />
+            </>
           )}
         </>
       ) : (
+        // Before start (or while waiting for snapshots), show the lobby
         <Lobby
           id={parseInt(gameId)}
           playerId={currentPlayerId}
@@ -165,10 +213,12 @@ export default function GameScreen() {
           ws={wsRef.current}
           isConnected={isConnected}
           refreshTrigger={refreshLobby}
+          setGameName={setGameName}
         />
       )}
 
-      {isConnected && wsRef.current && (
+      {/* Global, connection-bound systems (notifications, effects, end screen) */}
+      {isConnected && gameDataReady && wsRef.current && (
         <>
           <Notifier
             publicData={publicData}
@@ -181,38 +231,47 @@ export default function GameScreen() {
             actualPlayerId={currentPlayerId}
             wsRef={wsRef}
           />
+
+          {gamePresented && (
+            <>
+              <Clock
+                websocket={wsRef.current}
+                publicPlayers={publicData.players}
+                actualPlayerId={currentPlayerId}
+                activeEffect={false}
+                actionStatus={publicData.actionStatus}
+              />
+              <Chat
+                websocket={wsRef.current}
+                currentPlayerId={currentPlayerId}
+                gameId={gameId}
+                players={publicData.players}
+              />
+              <EventLog
+                eventLog={publicData.eventLog}
+                publicData={publicData}
+                actualPlayerId={currentPlayerId}
+                buttonLabel="Events"
+              />
+              {normalizedName === "sheriffmustdie"
+              ? 
+              (<BackgroundMusicPlayer
+                src="/Music/Surrender_To_The_King.mp3"
+                volume={0.05}
+                persistKey="bgm-muted" 
+              />)
+              : 
+              (<BackgroundMusicPlayer
+                src="/Music/BoardMusic.mp3" 
+                volume={0.4}
+                persistKey="bgm-muted" 
+              />)}
+                </>
+              )}
+
           <GameEndScreen websocket={wsRef.current} />
         </>
       )}
     </>
   );
 }
-
-// event: "privateUpdate"
-// payload:  {
-//   cards: [{ id: int, name: string, type: string }],
-//   secrets: [{ id: int, revealed: bool, name: string }],
-//   role: "murderer" | "accomplice" | "detective",
-//   ally: { id: int, role: "murderer" | "accomplice" } | null
-// }
-
-// event: "publicUpdate"
-// payload: {
-//   actionStatus: "blocked" | "unblocked",
-//   gameStatus: "waiting" | "in_progress" | "finished",
-//   regularDeckCount: int,
-//   discardPileTop: { id: int, name: string },
-//   draftCards: [{ id: int, name: string }],
-//   discardPileCount: int,
-//   players: [{
-//     id: int,
-//     name: string,
-//     avatar: int,
-//     socialDisgrace: bool,
-//     turnOrder: int,
-//     turnStatus: "waiting" | "playing" | "discarding" | "discardingOpt" | "drawing",
-//     cardCount: int,
-//     secrets: [{ id: int, revealed: bool, name: string }],
-//     sets: [{ setId: int, setName: string, cards: [{ id: int, name: string }] }]
-//   }]
-// }

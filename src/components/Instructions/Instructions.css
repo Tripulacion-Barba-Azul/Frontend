@@ -1,8 +1,8 @@
 /* Launcher (image-only) */
 .ins-launcher {
   position: fixed;
-  bottom: 1.042vw; /* 20px -> 20/19.2 = 1.042vw */
-  left: 1.302vw; /* 25px -> 25/19.2 = 1.302vw */
+  bottom: 1vw; /* 20px -> 20/19.2 = 1.042vw */
+  left: 96vw; /* 25px -> 25/19.2 = 1.302vw */
   padding: 0;
   border: 0;
   background: none;
@@ -13,8 +13,8 @@
 
 /* PNG only: fixed size, smooth hover grow + soft white glow */
 .ins-launcherImg {
-  width: 2.708vw; /* 52px -> 52/19.2 */
-  height: 2.708vw;
+  width: 2.9vw;
+  height: 2.9vw;
   display: block;
   border-radius: 0;
   pointer-events: none;
@@ -26,7 +26,9 @@
 .ins-launcher:hover .ins-launcherImg,
 .ins-launcher:focus-visible .ins-launcherImg {
   transform: scale(1.1);
-  filter: drop-shadow(0 0 0.521vw rgba(255, 255, 255, 0.55)); /* 10px -> 10/19.2 */
+  filter: drop-shadow(
+    0 0 0.521vw rgba(255, 255, 255, 0.55)
+  ); /* 10px -> 10/19.2 */
 }
 
 .ins-launcher:active .ins-launcherImg {
@@ -53,7 +55,10 @@
 
 /* Modal */
 .ins-modal {
-  width: min(calc(min(78vh, 880px, calc(92vw * 2048 / 1378)) * 1378 / 2048 + 1.667vw), 96vw);
+  width: min(
+    calc(min(78vh, 880px, calc(92vw * 2048 / 1378)) * 1378 / 2048 + 1.667vw),
+    96vw
+  );
   display: grid;
   grid-template-rows: 2.917vw 1fr; /* 56px -> 2.917vw */
   border: 0.104vw solid #f4e1a30d; /* 2px */
@@ -114,9 +119,15 @@
   border-radius: 0.052vw; /* 1px */
   transform-origin: center;
 }
-.ins-close::before { transform: translate(-50%, -50%) rotate(45deg); }
-.ins-close::after { transform: translate(-50%, -50%) rotate(-45deg); }
-.ins-close:hover { filter: brightness(1.08); }
+.ins-close::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+.ins-close::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+.ins-close:hover {
+  filter: brightness(1.08);
+}
 
 /* Body: stage + counter */
 .ins-body {
@@ -195,8 +206,12 @@
   padding: 0;
   line-height: 0;
 }
-.ins-left { left: 0.938vw; } /* 18px */
-.ins-right { right: 0.938vw; }
+.ins-left {
+  left: 0.938vw;
+} /* 18px */
+.ins-right {
+  right: 0.938vw;
+}
 
 /* Circular button */
 .ins-arrow::after {
@@ -231,8 +246,12 @@
   transform-origin: center;
   z-index: 3;
 }
-.ins-left::before { transform: translate(-30%, -50%) rotate(225deg); }
-.ins-right::before { transform: translate(-70%, -50%) rotate(45deg); }
+.ins-left::before {
+  transform: translate(-30%, -50%) rotate(225deg);
+}
+.ins-right::before {
+  transform: translate(-70%, -50%) rotate(45deg);
+}
 
 /* Focus states */
 .ins-close:focus-visible,

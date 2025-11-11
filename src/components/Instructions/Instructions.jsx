@@ -1,7 +1,22 @@
+// Instructions.jsx
+
+/**
+ * @file Instructions.jsx
+ * @description Modal instructions/help viewer. In "preGame" mode it shows a paginated
+ *              sequence of rule images; in "inGame" mode it shows a single quick-help image.
+ *
+ * @typedef {Object} InstructionsProps
+ * @property {"preGame"|"inGame"} [mode="preGame"] - Presentation mode:
+ *   - "preGame": multi-page rules with arrows + counter
+ *   - "inGame": single quick-help image (no arrows, no counter)
+ */
+
 import { useEffect, useState } from "react";
 import "./Instructions.css";
 
 const ICON_SRC = "/Icons/instructionsIcon.png";
+
+// Image sequence used in "preGame" mode
 const RULE_IMAGES = [
   "/Rules/01-Rules.png",
   "/Rules/02-Rules.png",
@@ -14,23 +29,27 @@ const RULE_IMAGES = [
   "/Rules/09-Rules.png",
 ];
 
-// Single in-game help image
+// Single quick-help image used in "inGame" mode
 const IN_GAME_RULES = "/Rules/00-Rules.png";
 
+/**
+ * @param {InstructionsProps} props
+ */
 export default function Instructions({ mode = "preGame" }) {
-  // --- state ---
+  // Modal visibility + current page index
   const [open, setOpen] = useState(false);
   const [index, setIndex] = useState(0);
 
-  // --- helpers ---
+  // Computed helpers
   const isPreGame = mode === "preGame";
   const isInGame = mode === "inGame";
   const count = RULE_IMAGES.length;
 
+  // Page navigation (wrap-around)
   const next = () => setIndex((i) => (i + 1) % count);
   const prev = () => setIndex((i) => (i - 1 + count) % count);
 
-  // Preload images on mount according to mode
+  // Preload images for smoother UX (per mode)
   useEffect(() => {
     if (isPreGame) {
       RULE_IMAGES.forEach((src) => {
@@ -43,7 +62,9 @@ export default function Instructions({ mode = "preGame" }) {
     }
   }, [isPreGame, isInGame]);
 
-  // Keyboard navigation: only enable arrows in preGame; Esc always closes
+  // Keyboard controls while modal is open:
+  // - Esc closes (all modes)
+  // - Arrows navigate pages (preGame only)
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => {
@@ -56,7 +77,7 @@ export default function Instructions({ mode = "preGame" }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [open, isPreGame, count]);
 
-  // Prevent background scroll when modal is open
+  // Body scroll lock while modal is open
   useEffect(() => {
     if (!open) return;
     const prevOverflow = document.body.style.overflow;
@@ -68,7 +89,7 @@ export default function Instructions({ mode = "preGame" }) {
 
   return (
     <>
-      {/* Launcher button (image only) */}
+      {/* Floating launcher button (icon only) */}
       <button
         type="button"
         className="ins-launcher"
@@ -86,7 +107,7 @@ export default function Instructions({ mode = "preGame" }) {
         />
       </button>
 
-      {/* Modal */}
+      {/* Modal (backdrop + dialog) */}
       {open && (
         <div
           className="ins-overlay"
@@ -94,14 +115,13 @@ export default function Instructions({ mode = "preGame" }) {
           aria-modal="true"
           aria-label="How to Play"
           onMouseDown={(e) => {
-            // Close only when clicking the backdrop (not the modal content)
+            // Close only if the backdrop (not the content) is clicked
             if (e.target === e.currentTarget) setOpen(false);
           }}
         >
           <div className="ins-modal">
             <header className="ins-header">
               <h3 className="ins-title">How to Play</h3>
-              {/* Close button (red cross drawn via CSS) */}
               <button
                 type="button"
                 className="ins-close"
@@ -111,9 +131,8 @@ export default function Instructions({ mode = "preGame" }) {
             </header>
 
             <div className="ins-body">
-              {/* Stage */}
+              {/* Stage: image frame + optional arrows */}
               <div className="ins-stage">
-                {/* Left arrow (only in preGame mode) */}
                 {isPreGame && (
                   <button
                     type="button"
@@ -136,7 +155,6 @@ export default function Instructions({ mode = "preGame" }) {
                   />
                 </figure>
 
-                {/* Right arrow (only in preGame mode) */}
                 {isPreGame && (
                   <button
                     type="button"
@@ -147,7 +165,7 @@ export default function Instructions({ mode = "preGame" }) {
                 )}
               </div>
 
-              {/* Counter (only in preGame mode) */}
+              {/* Page counter (preGame only) */}
               {isPreGame && (
                 <div className="ins-counter">
                   {index + 1} / {count}
