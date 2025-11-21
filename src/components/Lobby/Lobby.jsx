@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import StartGameButton from "./StartGameButton/StartGameButton";
 import AbandonGameButton from "./AbandonGameButton/AbandonGameButton";
 import CancelGameButton from "./CancelGameButton/CancelGameButton";
+import { URL } from "../../utils/path";
 
 function Lobby(/** @type {LobbyProps} */ props) {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ function Lobby(/** @type {LobbyProps} */ props) {
   // Fetch server state for a single game; also validates current player membership/ownership.
   const fetchMatches = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/games/${props.id}`, {
+      const response = await fetch(`${URL}/games/${props.id}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });

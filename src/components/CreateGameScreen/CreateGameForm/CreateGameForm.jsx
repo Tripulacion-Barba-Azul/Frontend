@@ -55,6 +55,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AvatarPicker from "../../JoinGameScreen/AvatarPicker/AvatarPicker";
 import { AVATAR_MAP } from "../../../utils/generalMaps";
+import { URL } from "../../../utils/path";
 
 export default function CreateGameForm() {
   /**
@@ -186,7 +187,7 @@ export default function CreateGameForm() {
     };
 
     try {
-      const response = await fetch("http://localhost:8000/games", {
+      const response = await fetch(`${URL}/games`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include", // preserve cookies/session if backend needs it

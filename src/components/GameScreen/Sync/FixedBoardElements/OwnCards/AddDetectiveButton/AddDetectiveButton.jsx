@@ -4,6 +4,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { createPortal } from "react-dom";
 import SelectPlayer from "../../../../Events/Actions/SelectPlayer/SelectPlayer.jsx";
 import SelectSet from "../../../../Events/Actions/SelectSet/SelectSet.jsx";
+import { URL } from "../../../../../../utils/path.js";
 
 /** Render children into <body> to avoid stacking issues */
 function BodyPortal({ children }) {
@@ -55,7 +56,7 @@ export default function AddDetectiveButton({
   }, [selectionMeta]);
 
   const endpointTemplate =
-    "http://localhost:8000/play/{id}/actions/add-detective-to-set";
+  `${URL}/play/{id}/actions/add-detective-to-set`;
 
   // === VALIDATION RULES (set, card) ===
   // - If set contains a card with the SAME name as card -> valid

@@ -83,26 +83,27 @@ import SelectSecret from "../Actions/SelectSecret/SelectSecret";
 import SelectCard from "../Actions/SelectCard/SelectCard";
 import OrderCards from "../Actions/OrderCards/OrderCards";
 import SelectDirection from "../Actions/SelectDirection/SelectDirection";
+import { URL } from "../../../../utils/path";
 
 /** Endpoints template per effect; {id} is replaced with current :gameId */
 const EFFECT_ENDPOINTS = {
-  selectAnyPlayer: "http://localhost:8000/play/{id}/actions/select-any-player",
+  selectAnyPlayer: `${URL}/play/{id}/actions/select-any-player`,
   andThenThereWasOneMore:
-    "http://localhost:8000/play/{id}/actions/and-then-there-was-one-more",
-  revealSecret: "http://localhost:8000/play/{id}/actions/reveal-secret",
-  revealOwnSecret: "http://localhost:8000/play/{id}/actions/reveal-own-secret",
-  hideSecret: "http://localhost:8000/play/{id}/actions/hide-secret",
-  stealSet: "http://localhost:8000/play/{id}/actions/steal-set",
+    `${URL}/play/{id}/actions/and-then-there-was-one-more`,
+  revealSecret: `${URL}/play/{id}/actions/reveal-secret`,
+  revealOwnSecret: `${URL}/play/{id}/actions/reveal-own-secret`,
+  hideSecret: `${URL}/play/{id}/actions/hide-secret`,
+  stealSet: `${URL}/play/{id}/actions/steal-set`,
   lookIntoTheAshes:
-    "http://localhost:8000/play/{id}/actions/look-into-the-ashes",
+    `${URL}/play/{id}/actions/look-into-the-ashes`,
   delayTheMurderersEscape:
-    "http://localhost:8000/play/{id}/actions/delay-the-murderers-escape",
-  selectOwnCard: "http://localhost:8000/play/{id}/actions/select-own-card",
-  selectDirection: "http://localhost:8000/play/{id}/actions/select-direction",
+    `${URL}/play/{id}/actions/delay-the-murderers-escape`,
+  selectOwnCard: `${URL}/play/{id}/actions/select-own-card`,
+  selectDirection: `${URL}/play/{id}/actions/select-direction`,
   cardTradeSelection:
-    "http://localhost:8000/play/{id}/actions/select-any-player",
+    `${URL}/play/{id}/actions/select-any-player`,
   selectHiddenSecret:
-    "http://localhost:8000/play/{id}/actions/select-hidden-secret",
+    `${URL}/play/{id}/actions/select-hidden-secret`,
 };
 
 const log = (...a) => console.log("[EffectManager]", ...a);

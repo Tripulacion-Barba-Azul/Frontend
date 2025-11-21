@@ -8,7 +8,6 @@
  * Props: none (this component does not accept props).
  *
  * Data flow (high level):
- * - Connects to WS: ws://localhost:8000/ws/:gameId/:playerId
  * - Listens for public/private updates (see "API DOCUMENT" for exact payloads)
  * - Shows <Lobby> until: has both public & private data AND game has started
  * - Shows <PresentationScreen> once, then <SyncOrchestrator> for the live match
@@ -32,6 +31,7 @@ import BackgroundMusicPlayer from "./BackgroundMusicPlayer/BackgroundMusicPlayer
 import Clock from "./Clock/Clock";
 import Chat from "./Chat/Chat";
 import EventLog from "./EventLog/EventLog";
+import { wsURL } from "../../utils/path";
 
 export default function GameScreen() {
   // Router params & query: game and the current player id
@@ -54,7 +54,7 @@ export default function GameScreen() {
 
   // WS ref so we can attach/detach listeners and pass downstream without re-renders
   const wsRef = useRef(null);
-  const wsEndpoint = `ws://localhost:8000/ws/${gameId}/${playerId}`;
+  const wsEndpoint = `${wsURL}/${gameId}/${playerId}`;
 
   // When the server notifies "player_joined", bump this to re-fetch lobby
   const handlePlayerJoined = () => setRefreshLobby((prev) => prev + 1);

@@ -5,7 +5,6 @@
  * @description Public lobby: fetches and lists available games to join. Allows manual refresh and navigation to /join/:gameId.
  * Props: none (this component does not accept props).
  *
- * API: GET http://localhost:8000/games?activeGames=false
  * Expected response item shape (subset used here):
  * {
  *   gameId: string|number,
@@ -31,8 +30,9 @@ import React, { useState, useEffect } from "react";
 import { Users, User, Clock, Play, RefreshCw, Search, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import "./GameMatchesList.css";
 import { useNavigate } from "react-router-dom";
+import { URL } from "../../utils/path"; 
 
-const apiGamesList = "http://localhost:8000/games?activeGames=false";
+const apiGamesList = `${URL}/games?activeGames=false`;
 
 const GameMatchesList = () => {
   /** @type {[Match[], React.Dispatch<React.SetStateAction<Match[]>>]} */

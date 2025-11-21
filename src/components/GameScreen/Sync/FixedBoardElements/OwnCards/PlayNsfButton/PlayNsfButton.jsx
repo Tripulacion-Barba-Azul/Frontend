@@ -1,6 +1,7 @@
 // PlayNsfButton.jsx
 import React, { useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import { URL } from "../../../../../../utils/path";
 
 /**
  * Minimal "Not so fast!" button for the `actionStatus === "unblocked"` mode.
@@ -46,7 +47,7 @@ export default function PlayNsfButton({
 
     setLoading(true);
     try {
-      const url = `http://localhost:8000/play/${gameId}/actions/play-nsf`;
+      const url = `${URL}/play/${gameId}/actions/play-nsf`;
 
       const body =
         k === 0

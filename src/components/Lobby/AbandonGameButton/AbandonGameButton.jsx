@@ -14,6 +14,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./AbandonGameButton.css";
+import { URL } from "../../../utils/path";
 
 export default function AbandonGameButton({ isOwner, playerId, gameId }) {
   const [loading, setLoading] = useState(false);
@@ -29,7 +30,7 @@ export default function AbandonGameButton({ isOwner, playerId, gameId }) {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/games/${gameId}/exit?player_id=${playerId}`,
+        `${URL}/games/${gameId}/exit?player_id=${playerId}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

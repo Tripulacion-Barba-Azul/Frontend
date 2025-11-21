@@ -12,6 +12,7 @@
  * @param {StartGameButtonProps} props
  */
 
+import { URL } from "../../../utils/path";
 import "./StartGameButton.css";
 
 function StartGameButton({ disabled, gameId, actualPlayerId, onStartGame }) {
@@ -21,7 +22,7 @@ function StartGameButton({ disabled, gameId, actualPlayerId, onStartGame }) {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/games/${gameId}/start?owner_id=${actualPlayerId}`,
+        `${URL}/games/${gameId}/start?owner_id=${actualPlayerId}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import { URL } from "../../../../../../utils/path";
 
 /**
  * @file NoActionButton.jsx
@@ -32,7 +33,7 @@ export default function NoActionButton() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/play/${gameId}/actions/play-card`,
+        `${URL}/play/${gameId}/actions/play-card`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

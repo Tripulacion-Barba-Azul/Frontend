@@ -12,6 +12,7 @@
  * @param {CancelGameButtonProps} props
  */
 
+import { URL } from "../../../utils/path";
 import "./CancelGameButton.css";
 
 function CancelGameButton({ disabled, gameId, actualPlayerId, onCancelGame }) {
@@ -21,7 +22,7 @@ function CancelGameButton({ disabled, gameId, actualPlayerId, onCancelGame }) {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/games/${gameId}/delete?player_id=${actualPlayerId}`,
+        `${URL}/games/${gameId}/delete?player_id=${actualPlayerId}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

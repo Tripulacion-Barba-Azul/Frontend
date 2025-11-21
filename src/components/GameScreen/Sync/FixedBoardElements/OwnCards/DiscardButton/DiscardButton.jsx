@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import { URL } from "../../../../../../utils/path";
 
 /**
  * @file DiscardButton.jsx
@@ -62,7 +63,7 @@ export default function DiscardButton({
 
     try {
       const response = await fetch(
-        `http://localhost:8000/play/${gameId}/actions/discard`,
+        `${URL}/play/${gameId}/actions/discard`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

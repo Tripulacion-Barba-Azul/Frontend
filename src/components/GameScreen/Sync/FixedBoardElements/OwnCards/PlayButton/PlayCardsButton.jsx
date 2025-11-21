@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import { URL } from "../../../../../../utils/path";
 
 /**
  * @file PlayCardsButton.jsx
@@ -168,7 +169,7 @@ export default function PlayCardsButton({
 
     try {
       const response = await fetch(
-        `http://localhost:8000/play/${gameId}/actions/play-card`,
+        `${URL}/play/${gameId}/actions/play-card`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

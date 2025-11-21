@@ -21,6 +21,7 @@ import "./RegularDeck.css";
 import { motion } from "framer-motion";
 import React, { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
+import { URL } from "../../../../../utils/path";
 
 const fullDeck = "/Icons/deckicon-full.png";
 const halfDeck = "/Icons/deckicon-half.png";
@@ -69,7 +70,7 @@ export default function RegularDeck({ number, turnStatus = "waiting" }) {
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:8000/play/${gameId}/actions/draw-card`,
+        `${URL}/play/${gameId}/actions/draw-card`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

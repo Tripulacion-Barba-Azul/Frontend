@@ -23,6 +23,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useParams, useSearchParams } from "react-router-dom";
 import "./DrawDraftCardButton.css";
 import { CARDS_MAP } from "../../../../../utils/generalMaps";
+import { URL } from "../../../../../utils/path";
 
 /** @param {DrawDraftCardButtonProps} props */
 export default function DrawDraftCardButton({
@@ -48,7 +49,7 @@ export default function DrawDraftCardButton({
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:8000/play/${gameId}/actions/draw-card`,
+        `${URL}/play/${gameId}/actions/draw-card`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

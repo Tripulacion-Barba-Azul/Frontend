@@ -44,6 +44,7 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AvatarPicker from "../AvatarPicker/AvatarPicker";
 import { AVATAR_MAP } from "../../../utils/generalMaps";
+import { URL } from "../../../utils/path";
 
 export default function JoinGameForm() {
   /**
@@ -125,7 +126,7 @@ export default function JoinGameForm() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/games/${gameId}/join`,
+        `${URL}/games/${gameId}/join`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
