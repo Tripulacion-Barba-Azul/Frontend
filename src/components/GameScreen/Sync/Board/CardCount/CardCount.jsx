@@ -2,8 +2,6 @@
 
 import "./CardCount.css";
 
-const CardIcon = "../../../public/Icons/cardicon.png";
-
 /**
  * @file CardCount.jsx
  * @description Small overlay showing the player's hand size (0..6).
@@ -20,7 +18,7 @@ export default function CardCount({ number }) {
 
   return (
     <div className="cardcount-container">
-      <img src={CardIcon} alt="Card Icon" className="base-image" />
+      <img src={"/Icons/cardicon.png"} alt="cardIcon" className="base-image" />
       <div className="number-overlay">{validatedNumber}</div>
     </div>
   );
