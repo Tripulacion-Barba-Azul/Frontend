@@ -111,7 +111,9 @@ describe("GameScreen (current behavior)", () => {
 
     // WebSocket factory
     mockWebSocket = createMockWebSocket();
-    global.WebSocket = vi.fn(() => mockWebSocket);
+    global.WebSocket = vi.fn().mockImplementation(function MockWebSocket() {
+      return mockWebSocket;
+    });
   });
 
   /* ------------------------------ Smoke ------------------------------ */
