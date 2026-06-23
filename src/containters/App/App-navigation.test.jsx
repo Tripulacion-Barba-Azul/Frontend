@@ -27,6 +27,7 @@ const mockBackendData = [
     minPlayers: 2,
     maxPlayers: 6,
     actualPlayers: 1,
+    private: false, // Add private field for new navigation logic
   },
 ];
 
@@ -68,10 +69,10 @@ describe("Routing Test", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/join");
   });
 
-  it("Game list navigates to /join/:id when Join is clicked", async () => {
+  it("Game list navigates to /join/:id/public when Join is clicked on public game", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => [mockBackendData],
+      json: async () => mockBackendData,
     });
 
     render(
@@ -85,8 +86,44 @@ describe("Routing Test", () => {
     });
     await userEvent.click(joinButtons[0]);
 
+    // Should navigate to public route since mockBackendData[0].private = false
     expect(mockNavigate).toHaveBeenCalledWith(
-      `/join/${mockBackendData.gameId}`
+      `/join/${mockBackendData[0].gameId}/public`
+    );
+  });
+
+  it("Game list navigates to /join/:id/private when Join is clicked on private game", async () => {
+    const privateGameData = [
+      {
+        gameId: 2,
+        gameName: "Private Battle",
+        ownerName: "SecretPlayer",
+        minPlayers: 2,
+        maxPlayers: 4,
+        actualPlayers: 1,
+        private: true, // Private game
+      },
+    ];
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => privateGameData,
+    });
+
+    render(
+      <MemoryRouter>
+        <GameMatchesList />
+      </MemoryRouter>
+    );
+
+    const joinButtons = await screen.findAllByRole("button", {
+      name: /join game/i,
+    });
+    await userEvent.click(joinButtons[0]);
+
+    // Should navigate to private route since privateGameData[0].private = true
+    expect(mockNavigate).toHaveBeenCalledWith(
+      `/join/${privateGameData[0].gameId}/private`
     );
   });
 
@@ -103,9 +140,9 @@ describe("Routing Test", () => {
     console.error = vi.fn();
 
     render(
-      <MemoryRouter initialEntries={["/join/3"]}>
+      <MemoryRouter initialEntries={["/join/3/public"]}>
         <Routes>
-          <Route path="/join/:gameId" element={<JoinGameScreen />} />
+          <Route path="/join/:gameId/public" element={<JoinGameScreen private={false} />} />
         </Routes>
       </MemoryRouter>
     );
@@ -145,9 +182,9 @@ describe("Routing Test", () => {
     global.fetch = mockFetch;
 
     render(
-      <MemoryRouter initialEntries={["/join/3"]}>
+      <MemoryRouter initialEntries={["/join/3/public"]}>
         <Routes>
-          <Route path="/join/:gameId" element={<JoinGameScreen />} />
+          <Route path="/join/:gameId/public" element={<JoinGameScreen private={false} />} />
         </Routes>
       </MemoryRouter>
     );

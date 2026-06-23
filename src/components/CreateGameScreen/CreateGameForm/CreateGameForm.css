@@ -83,7 +83,7 @@
 
 .form-group {
   margin-bottom: 1.042vw; /* 1.25rem -> 20px */
-  min-height: 3.75vw; /* 4.5rem -> 72px */
+  min-height: 1.85vw; /* 4.5rem -> 72px */
   display: flex;
   flex-direction: column;
   font-size: 1.042vw;
@@ -265,4 +265,93 @@
   cursor: not-allowed;
   transform: none;
   pointer-events: none;
+}
+
+/* Checkbox styles */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.425vw; /* 12px */
+  font-weight: 500;
+  color: #f4e1a3;
+  font-family: "Metropolis", sans-serif;
+  font-size: 0.733vw; /* 1rem -> 16px */
+  cursor: pointer;
+  margin-bottom: 0;
+}
+
+.checkbox-input {
+  width: 1.25vw; /* 24px */
+  height: 1.25vw; /* 24px */
+  accent-color: rgb(163, 34, 34);
+  cursor: pointer;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0.104vw solid #f4e1a30d;
+  border-radius: 0.208vw; /* 4px */
+  background-color: #252525e4;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.checkbox-input:checked {
+  background-color: rgb(163, 34, 34);
+  border-color: rgb(163, 34, 34);
+}
+
+.checkbox-input:checked::before {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #f4e1a3;
+  font-size: 0.625vw; /* 12px */
+  font-weight: bold;
+}
+
+.checkbox-input:hover {
+  border-color: #f4e1a3;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Dejamos más espacio a la derecha del input para el botón del ojo */
+.form-input.password-with-toggle {
+  padding-right: 3.6vw; /* ajusta si hace falta; coincide con la escala vw del resto */
+}
+
+/* Botón del ojo dentro del input */
+.password-toggle-button {
+  position: absolute;
+  right: 0.833vw; /* 16px -> 0.833vw, ajusta según tu gusto */
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  padding: 0.312vw; /* pequeño padding para clickable area */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  outline: none;
+}
+
+/* Estado hover/active del botón del ojo */
+.password-toggle-button:hover {
+  transform: translateY(-50%) scale(1.05);
+}
+
+/* Si está deshabilitado (p. ej. submitting), reflejarlo */
+.password-toggle-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
 }

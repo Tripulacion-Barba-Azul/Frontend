@@ -13,7 +13,8 @@
  *   ownerName: string,
  *   minPlayers: number,
  *   maxPlayers: number,
- *   actualPlayers: number
+ *   actualPlayers: number,
+ *   private: boolean
  * }
  */
 
@@ -25,6 +26,7 @@
  * @property {number} minPlayers
  * @property {number} maxPlayers
  * @property {number} currentPlayers
+ * @property {boolean} private
  */
 
 import React, { useState, useEffect } from "react";
@@ -71,6 +73,7 @@ const GameMatchesList = () => {
         minPlayers: game.minPlayers,
         maxPlayers: game.maxPlayers,
         currentPlayers: game.actualPlayers,
+        private: game.private,
       }));
 
       setMatches(mappedData);
@@ -171,8 +174,12 @@ const GameMatchesList = () => {
 
   // Navigate to the join screen for the selected match
   const handleJoinMatch = (matchId) => {
-    console.log(`Trying to join the game ${matchId}`);
-    navigate(`/join/${matchId}`);
+    // Find the match to determine if it's private or public
+    const match = matches.find(m => m.id === matchId);
+        
+    const routeType = match.private ? 'private' : 'public';
+    console.log(`Trying to join the ${routeType} game ${matchId}`);
+    navigate(`/join/${matchId}/${routeType}`);
   };
 
   /**
@@ -294,9 +301,18 @@ const GameMatchesList = () => {
             return (
               <div key={match.id} className="match-card">
                 <div className="match-content">
+                  {/* Private indicator */}
+                  {match.private && (
+                    <div className="private-indicator">
+                      <span>Private</span>
+                    </div>
+                  )}
+                  
                   {/* Name + status pill */}
                   <div className="match-header">
-                    <h3 className="match-name">{match.name}</h3>
+                    <h3 className="match-name">
+                      {match.name}
+                    </h3>
                     <span className={`match-status ${status.color}`}>
                       {status.icon} {status.status}
                     </span>
@@ -410,6 +426,13 @@ const GameMatchesList = () => {
               <span>
                 {" "}
                 Game full <br /> (can't join)
+              </span>
+            </div>
+            <div className="legend-item">
+              <span style={{ fontSize: "16px" }}>🔒</span>
+              <span>
+                {" "}
+                Private game <br /> (requires password)
               </span>
             </div>
           </div>

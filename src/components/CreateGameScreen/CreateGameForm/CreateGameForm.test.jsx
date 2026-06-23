@@ -85,6 +85,7 @@ describe("CreateGameForm (simple & robust)", () => {
     expect(screen.getByLabelText(/game name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/min(imum)? players/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/max(imum)? players/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/private/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/your name/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/your birthday/i)).toBeInTheDocument();
 
@@ -199,6 +200,29 @@ describe("CreateGameForm (simple & robust)", () => {
     fireEvent.click(submit);
     expect(global.fetch).toHaveBeenCalledTimes(1);
 
+    // Check that fetch was called with correct data (public game should have password: null)
+    expect(global.fetch).toHaveBeenCalledWith(
+      "http://localhost:8000/games",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          player_info: {
+            playerName: "Alice",
+            birthDate: "1990-01-01",
+            avatar: 1,
+          },
+          game_info: {
+            gameName: "MyGame",
+            minPlayers: 3,
+            maxPlayers: 4,
+            password: null,
+          },
+        }),
+      })
+    );
+
     // Success response
     d.resolve({ ok: true, json: async () => ({ gameId: 123, ownerId: 45 }) });
     await Promise.resolve();
@@ -219,5 +243,121 @@ describe("CreateGameForm (simple & robust)", () => {
     await Promise.resolve();
 
     expect(navigateMock).toHaveBeenCalledWith("/");
+  });
+
+  it("shows and hides password field when private checkbox is toggled", () => {
+    render(<CreateGameForm />);
+
+    const privateCheckbox = screen.getByRole("checkbox");
+    
+    // Initially, password field should not be visible
+    expect(screen.queryByDisplayValue("")).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText(/enter the game password/i)).not.toBeInTheDocument();
+    
+    // Check the private checkbox
+    fireEvent.click(privateCheckbox);
+    
+    // Now password field should be visible
+    expect(screen.getByPlaceholderText(/enter the game password/i)).toBeInTheDocument();
+    
+    // Uncheck the private checkbox
+    fireEvent.click(privateCheckbox);
+    
+    // Password field should be hidden again
+    expect(screen.queryByPlaceholderText(/enter the game password/i)).not.toBeInTheDocument();
+  });
+
+  it("requires password when private game is selected", () => {
+    render(<CreateGameForm />);
+
+    // Fill valid data except for password
+    fireEvent.change(screen.getByLabelText(/game name/i), {
+      target: { value: "MyGame" },
+    });
+    fireEvent.change(screen.getByLabelText(/min(imum)? players/i), {
+      target: { value: "3" },
+    });
+    fireEvent.change(screen.getByLabelText(/max(imum)? players/i), {
+      target: { value: "4" },
+    });
+    fireEvent.change(screen.getByLabelText(/your name/i), {
+      target: { value: "Alice" },
+    });
+    fireEvent.change(screen.getByLabelText(/your birthday/i), {
+      target: { value: "1990-01-01" },
+    });
+
+    // Check private checkbox
+    fireEvent.click(screen.getByLabelText(/private/i));
+
+    // Don't fill password
+    global.fetch = vi.fn();
+    fireEvent.click(screen.getByRole("button", { name: /create game/i }));
+
+    // Should not submit without password
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(navigateMock).not.toHaveBeenCalled();
+  });
+
+  it("submits with password when private game is selected", async () => {
+    render(<CreateGameForm />);
+
+    // Fill valid data
+    fireEvent.change(screen.getByLabelText(/game name/i), {
+      target: { value: "MyGame" },
+    });
+    fireEvent.change(screen.getByLabelText(/min(imum)? players/i), {
+      target: { value: "3" },
+    });
+    fireEvent.change(screen.getByLabelText(/max(imum)? players/i), {
+      target: { value: "4" },
+    });
+    fireEvent.change(screen.getByLabelText(/your name/i), {
+      target: { value: "Alice" },
+    });
+    fireEvent.change(screen.getByLabelText(/your birthday/i), {
+      target: { value: "1990-01-01" },
+    });
+
+    // Check private checkbox and add password
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.change(screen.getByPlaceholderText(/enter the game password/i), {
+      target: { value: "secretpassword" },
+    });
+
+    const d = deferred();
+    global.fetch = vi.fn().mockImplementation(() => d.promise);
+
+    fireEvent.click(screen.getByRole("button", { name: /create game/i }));
+
+    // Check that fetch was called with the password
+    expect(global.fetch).toHaveBeenCalledWith(
+      "http://localhost:8000/games",
+      expect.objectContaining({
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          player_info: {
+            playerName: "Alice",
+            birthDate: "1990-01-01",
+            avatar: 1,
+          },
+          game_info: {
+            gameName: "MyGame",
+            minPlayers: 3,
+            maxPlayers: 4,
+            password: "secretpassword",
+          },
+        }),
+      })
+    );
+
+    // Success response
+    d.resolve({ ok: true, json: async () => ({ gameId: 123, ownerId: 45 }) });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(navigateMock).toHaveBeenCalledWith("/game/123?playerId=45");
   });
 });
